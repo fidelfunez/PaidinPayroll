@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orangeGradientMono" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Main square background -->
+  <rect x="2" y="2" width="60" height="60" rx="12" ry="12" fill="url(#orangeGradientMono)" filter="url(#shadow)"/>
+  
+  <!-- Cursive P -->
+  <path d="M18 20 Q18 18 20 18 L35 18 Q42 18 42 25 Q42 32 35 32 L25 32 L25 45 Q25 47 23 47 Q21 47 21 45 L21 22 Q21 20 23 20 Z M25 23 L25 28 L33 28 Q37 28 37 25.5 Q37 23 33 23 Z" 
+        fill="white" 
+        stroke="rgba(255,255,255,0.1)" 
+        stroke-width="0.5"/>
+</svg>

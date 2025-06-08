@@ -218,6 +218,7 @@ export default function PayrollPage() {
             </CardContent>
           </Card>
         </main>
+        <Footer />
       </div>
 
       <SchedulePayrollModal 

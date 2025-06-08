@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -5,44 +6,127 @@ import { Button } from "@/components/ui/button";
 import { 
   BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X,
   Users, CreditCard, CheckSquare, Download, Shield, MessageSquare, 
-  Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart
+  Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart, ChevronDown, ChevronRight
 } from "lucide-react";
 
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
+
+  const toggleSection = (sectionId: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
 
   const employeeNavigation = [
-    { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'My Expenses', href: '/my-expenses', icon: Receipt },
-    { name: 'Files', href: '/files', icon: FolderOpen },
-    { name: 'Invoices', href: '/invoices', icon: FileBarChart },
-    { name: 'Profile', href: '/profile', icon: User },
-    { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
-    { name: 'Time Off', href: '/time-off', icon: Calendar },
-    { name: 'Benefits', href: '/benefits', icon: Gift },
-    { name: 'Tax & Compliance', href: '/tax-compliance', icon: Shield },
-    { name: 'Withdrawal Method', href: '/withdrawal-method', icon: Wallet },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
-    { name: 'Messages', href: '/messages', icon: MessageSquare },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    {
+      id: 'overview',
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'My Expenses', href: '/my-expenses', icon: Receipt },
+        { name: 'Invoices', href: '/invoices', icon: FileBarChart },
+      ]
+    },
+    {
+      id: 'time',
+      title: 'Time & Leave',
+      items: [
+        { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
+        { name: 'Time Off', href: '/time-off', icon: Calendar },
+      ]
+    },
+    {
+      id: 'personal',
+      title: 'Personal',
+      items: [
+        { name: 'Profile', href: '/profile', icon: User },
+        { name: 'Files', href: '/files', icon: FolderOpen },
+        { name: 'Benefits', href: '/benefits', icon: Gift },
+      ]
+    },
+    {
+      id: 'finance',
+      title: 'Finance & Tax',
+      items: [
+        { name: 'Withdrawal Method', href: '/withdrawal-method', icon: Wallet },
+        { name: 'Tax & Compliance', href: '/tax-compliance', icon: Shield },
+      ]
+    },
+    {
+      id: 'communication',
+      title: 'Communication',
+      items: [
+        { name: 'Notifications', href: '/notifications', icon: Bell },
+        { name: 'Messages', href: '/messages', icon: MessageSquare },
+      ]
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      items: [
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ]
+    }
   ];
 
   const adminNavigation = [
-    { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'Employees', href: '/employees', icon: Users },
-    { name: 'Payroll', href: '/payroll', icon: DollarSign },
-    { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
-    { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
-    { name: 'Approvals', href: '/approvals', icon: CheckSquare },
-    { name: 'Invoices & Reports', href: '/reports', icon: FileText },
-    { name: 'PDF Payslips', href: '/payslips', icon: Download },
-    { name: 'Tax & Compliance', href: '/admin-tax-compliance', icon: Shield },
-    { name: 'Audit Logs', href: '/audit-logs', icon: FileBarChart },
-    { name: 'Messages', href: '/admin-messages', icon: MessageSquare },
-    { name: 'Bulk Payroll', href: '/bulk-payroll', icon: DollarSign },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    {
+      id: 'overview',
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'Employees', href: '/employees', icon: Users },
+      ]
+    },
+    {
+      id: 'finance',
+      title: 'Finance & Payroll',
+      items: [
+        { name: 'Payroll', href: '/payroll', icon: DollarSign },
+        { name: 'Bulk Payroll', href: '/bulk-payroll', icon: DollarSign },
+        { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
+        { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
+      ]
+    },
+    {
+      id: 'approval',
+      title: 'Approvals & Tasks',
+      items: [
+        { name: 'Approvals', href: '/approvals', icon: CheckSquare },
+        { name: 'Audit Logs', href: '/audit-logs', icon: FileBarChart },
+      ]
+    },
+    {
+      id: 'reports',
+      title: 'Reports & Documents',
+      items: [
+        { name: 'Invoices & Reports', href: '/reports', icon: FileText },
+        { name: 'PDF Payslips', href: '/payslips', icon: Download },
+        { name: 'Tax & Compliance', href: '/admin-tax-compliance', icon: Shield },
+      ]
+    },
+    {
+      id: 'communication',
+      title: 'Communication',
+      items: [
+        { name: 'Messages', href: '/admin-messages', icon: MessageSquare },
+      ]
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      items: [
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ]
+    }
   ];
 
   const navigation = user?.role === 'admin' ? adminNavigation : employeeNavigation;
@@ -52,7 +136,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 ${
+    <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col ${
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200">
@@ -74,34 +158,60 @@ export function Sidebar() {
         </Button>
       </div>
       
-      <nav className="mt-8 px-2">
-        <div className="space-y-2">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href;
-            
-            return (
-              <Link key={item.name} href={item.href}>
-                <div
-                  className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                    isCollapsed 
-                      ? 'px-3 py-3 justify-center' 
-                      : 'px-4 py-3'
-                  } ${
-                    isActive
-                      ? 'text-orange-700 bg-orange-50'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                  title={isCollapsed ? item.name : undefined}
+      <nav className="mt-8 px-2 pb-4 overflow-y-auto flex-1">
+        <div className="space-y-1">
+          {navigation.map((section) => (
+            <div key={section.id}>
+              {!isCollapsed && (
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 transition-colors"
                 >
-                  <Icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
-                  {!isCollapsed && (
-                    <span className="truncate">{item.name}</span>
+                  <span>{section.title}</span>
+                  {expandedSections.has(section.id) ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
                   )}
+                </button>
+              )}
+              
+              {(isCollapsed || expandedSections.has(section.id)) && (
+                <div className={`space-y-1 ${!isCollapsed ? 'ml-2' : ''}`}>
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location === item.href;
+                    
+                    return (
+                      <Link key={item.name} href={item.href}>
+                        <div
+                          className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                            isCollapsed 
+                              ? 'px-3 py-3 justify-center' 
+                              : 'px-3 py-2'
+                          } ${
+                            isActive
+                              ? 'text-orange-700 bg-orange-50'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          }`}
+                          title={isCollapsed ? item.name : undefined}
+                        >
+                          <Icon className={`w-4 h-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                          {!isCollapsed && (
+                            <span className="truncate">{item.name}</span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </Link>
-            );
-          })}
+              )}
+              
+              {!isCollapsed && section.id !== 'settings' && (
+                <div className="h-px bg-slate-200 mx-3 my-2" />
+              )}
+            </div>
+          ))}
         </div>
       </nav>
       

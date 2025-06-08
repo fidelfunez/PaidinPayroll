@@ -64,10 +64,14 @@ export function setupAuth(app: Express) {
       return res.status(400).send("Username already exists");
     }
 
-    const user = await storage.createUser({
+    // Transform numeric fields to handle empty strings
+    const userData = {
       ...req.body,
       password: await hashPassword(req.body.password),
-    });
+      monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
+    };
+
+    const user = await storage.createUser(userData);
 
     req.login(user, (err) => {
       if (err) return next(err);

@@ -15,6 +15,7 @@ import {
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import session from "express-session";
+import * as expressSession from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -46,11 +47,11 @@ export interface IStorage {
   getLatestBtcRate(): Promise<BtcRateHistory | undefined>;
   getBtcRateHistory(startDate?: Date, endDate?: Date): Promise<BtcRateHistory[]>;
 
-  sessionStore: session.SessionStore;
+  sessionStore: expressSession.Store;
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: expressSession.Store;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 

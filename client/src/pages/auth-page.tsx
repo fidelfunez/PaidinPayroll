@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
@@ -30,6 +30,9 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [capsLockOn, setCapsLockOn] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
@@ -148,12 +151,27 @@ export default function AuthPage() {
                             <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Input type="password" placeholder="Enter your password" {...field} />
-                                {capsLockOn && (
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Input 
+                                  type={showLoginPassword ? "text" : "password"} 
+                                  placeholder="Enter your password" 
+                                  {...field} 
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                  {capsLockOn && (
                                     <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                  </div>
-                                )}
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                  >
+                                    {showLoginPassword ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </FormControl>
                             {capsLockOn && (
@@ -276,7 +294,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Monthly Salary (USD)</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="4500.00" {...field} />
+                              <Input type="number" step="0.01" placeholder="2500.00" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -291,12 +309,27 @@ export default function AuthPage() {
                             <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Input type="password" placeholder="••••••••" {...field} />
-                                {capsLockOn && (
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Input 
+                                  type={showRegisterPassword ? "text" : "password"} 
+                                  placeholder="••••••••" 
+                                  {...field} 
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                  {capsLockOn && (
                                     <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                  </div>
-                                )}
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                  >
+                                    {showRegisterPassword ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </FormControl>
                             {capsLockOn && (
@@ -318,12 +351,27 @@ export default function AuthPage() {
                             <FormLabel>Confirm Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Input type="password" placeholder="••••••••" {...field} />
-                                {capsLockOn && (
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Input 
+                                  type={showConfirmPassword ? "text" : "password"} 
+                                  placeholder="••••••••" 
+                                  {...field} 
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                  {capsLockOn && (
                                     <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                  </div>
-                                )}
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                  >
+                                    {showConfirmPassword ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </FormControl>
                             {capsLockOn && (

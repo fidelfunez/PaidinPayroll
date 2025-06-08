@@ -260,6 +260,9 @@ export default function AuthPage() {
                             <FormControl>
                               <Input type="email" placeholder="satoshi@company.com" {...field} />
                             </FormControl>
+                            <p className="text-sm text-muted-foreground">
+                              Note: Each email address can only be used for one account
+                            </p>
                             <FormMessage />
                           </FormItem>
                         )}

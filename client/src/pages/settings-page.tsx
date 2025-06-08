@@ -46,7 +46,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="lg:pl-72">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Settings" 
           subtitle="Manage your account preferences and security settings"

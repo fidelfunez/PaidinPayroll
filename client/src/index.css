@@ -98,6 +98,30 @@
 
 .hover\:bg-bitcoin-600:hover { background-color: var(--bitcoin-600); }
 .hover\:text-bitcoin-700:hover { color: var(--bitcoin-700); }
+
+/* Custom scrollbar for sidebar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Firefox scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
 .hover\:border-bitcoin-300:hover { border-color: var(--bitcoin-300); }
 .hover\:bg-bitcoin-50:hover { background-color: var(--bitcoin-50); }
 

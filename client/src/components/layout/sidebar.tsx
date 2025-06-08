@@ -140,7 +140,7 @@ export function Sidebar() {
   return (
     <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col ${
       isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    } max-h-screen`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
@@ -160,7 +160,7 @@ export function Sidebar() {
         </Button>
       </div>
       
-      <nav className="mt-8 px-2 pb-4 overflow-y-auto flex-1">
+      <nav className="mt-8 px-2 pb-4 overflow-y-auto flex-1 sidebar-scroll">
         <div className="space-y-1">
           {navigation.map((section) => (
             <div key={section.id}>

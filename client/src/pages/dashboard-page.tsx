@@ -106,7 +106,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="ml-64">
+      <div className="lg:ml-64">
         <Header 
           title="Dashboard" 
           subtitle="Overview of your Bitcoin payroll operations"

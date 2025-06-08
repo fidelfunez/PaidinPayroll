@@ -20,6 +20,7 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   btcAddress: text("btc_address"),
   monthlySalary: decimal("monthly_salary", { precision: 10, scale: 2 }),
+  profilePhoto: text("profile_photo"), // Base64 encoded image data
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

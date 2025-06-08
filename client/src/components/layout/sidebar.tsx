@@ -79,8 +79,16 @@ export function Sidebar() {
         <div className={`bg-slate-50 rounded-lg ${isCollapsed ? 'p-2' : 'p-4'}`}>
           {isCollapsed ? (
             <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 bg-slate-300 rounded-full flex items-center justify-center" title={`${user?.firstName} ${user?.lastName}`}>
-                <User className="w-4 h-4 text-slate-600" />
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300 flex items-center justify-center" title={`${user?.firstName} ${user?.lastName}`}>
+                {user?.profilePhoto ? (
+                  <img 
+                    src={user.profilePhoto} 
+                    alt="Profile photo" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-slate-600" />
+                )}
               </div>
               <Button
                 variant="ghost"

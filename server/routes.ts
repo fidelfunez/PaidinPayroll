@@ -345,6 +345,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Profile photo upload endpoint
+  app.patch('/api/user/profile-photo', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { profilePhoto } = req.body;
+
+      // Validate base64 image data (limit to 2MB)
+      if (profilePhoto && profilePhoto.length > 2 * 1024 * 1024 * 1.37) { // Base64 is ~37% larger
+        return res.status(400).json({ message: 'Image too large (max 2MB)' });
+      }
+
+      // Validate base64 format
+      if (profilePhoto && !profilePhoto.match(/^data:image\/(jpeg|jpg|png|webp);base64,/)) {
+        return res.status(400).json({ message: 'Invalid image format' });
+      }
+
+      const updatedUser = await storage.updateUser(user.id, { profilePhoto });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Profile photo update error:', error);
+      res.status(500).json({ message: 'Failed to update profile photo' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

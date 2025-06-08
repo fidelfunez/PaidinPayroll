@@ -52,8 +52,8 @@ export function Sidebar() {
             
             return (
               <Link key={item.name} href={item.href}>
-                <a
-                  className={`flex items-center text-sm font-medium rounded-lg transition-colors ${
+                <div
+                  className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                     isCollapsed 
                       ? 'px-3 py-3 justify-center' 
                       : 'px-4 py-3'
@@ -68,7 +68,7 @@ export function Sidebar() {
                   {!isCollapsed && (
                     <span className="truncate">{item.name}</span>
                   )}
-                </a>
+                </div>
               </Link>
             );
           })}

@@ -30,39 +30,39 @@ interface DashboardStats {
 
 const bitcoinQuotes = [
   {
-    quote: "Bitcoin is a technological tour de force.",
-    author: "Bill Gates",
+    quote: "Running Bitcoin is like planting a tree that will grow to provide shade for our children.",
+    author: "Hal Finney",
     tagline: "Building the future of finance, one satoshi at a time"
   },
   {
-    quote: "Bitcoin is the beginning of something great: a currency without a government, something necessary and imperative.",
-    author: "Nassim Taleb",
-    tagline: "Empowering financial sovereignty worldwide"
+    quote: "The root problem with conventional currency is all the trust that's required to make it work.",
+    author: "Satoshi Nakamoto",
+    tagline: "Empowering trustless financial sovereignty"
   },
   {
-    quote: "I think Bitcoin is the first [encrypted money] that has the potential to do something like change the world.",
-    author: "Peter Thiel",
-    tagline: "Transforming how we think about money"
+    quote: "Bitcoin is peer-to-peer electronic cash that is valuable over legacy systems because of the mathematical proof inherent in the system.",
+    author: "Adam Back",
+    tagline: "Transforming money through cryptographic proof"
   },
   {
-    quote: "Bitcoin is a very exciting development, it might lead to a world currency.",
-    author: "Kim Dotcom",
-    tagline: "Connecting global economies through innovation"
+    quote: "Bitcoin is the exit from the modern monetary system, a system that is slowly enslaving us all.",
+    author: "Saifedean Ammous",
+    tagline: "Breaking free from monetary manipulation"
   },
   {
-    quote: "Bitcoin is the most important invention in the history of the world since the Internet.",
-    author: "Roger Ver",
-    tagline: "Revolutionizing value transfer across borders"
+    quote: "Bitcoin is not just a currency, it's a revolution in how we think about money, property, and human organization.",
+    author: "Andreas Antonopoulos",
+    tagline: "Revolutionizing human organization through code"
   },
   {
-    quote: "Bitcoin is a remarkable cryptographic achievement and the ability to create something that is not duplicable in the digital world has enormous value.",
-    author: "Eric Schmidt",
-    tagline: "Pioneering digital scarcity and authenticity"
+    quote: "Bitcoin is the most honest form of money we've ever had. It cannot be debased, inflated, or manipulated.",
+    author: "Michael Saylor",
+    tagline: "Preserving purchasing power through digital gold"
   },
   {
-    quote: "Bitcoin is the currency of resistance.",
-    author: "Max Keiser",
-    tagline: "Enabling financial freedom for everyone"
+    quote: "In the long run, Bitcoin will be seen as humanity's greatest monetary innovation.",
+    author: "Vijay Boyapati",
+    tagline: "Enabling sound money for the digital age"
   },
   {
     quote: "Bitcoin gives us, for the first time, a way for one Internet user to transfer a unique piece of digital property to another Internet user.",

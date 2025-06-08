@@ -48,7 +48,7 @@ export default function AuthPage() {
       firstName: "",
       lastName: "",
       role: "employee" as const,
-      monthlySalary: undefined,
+      monthlySalary: "",
       btcAddress: "",
     },
   });

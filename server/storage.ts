@@ -188,18 +188,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBtcRateHistory(startDate?: Date, endDate?: Date): Promise<BtcRateHistory[]> {
-    let query = db.select().from(btcRateHistory).orderBy(desc(btcRateHistory.timestamp));
-    
     if (startDate && endDate) {
-      query = query.where(
-        and(
-          gte(btcRateHistory.timestamp, startDate),
-          lte(btcRateHistory.timestamp, endDate)
+      return await db.select()
+        .from(btcRateHistory)
+        .where(
+          and(
+            gte(btcRateHistory.timestamp, startDate),
+            lte(btcRateHistory.timestamp, endDate)
+          )
         )
-      );
+        .orderBy(desc(btcRateHistory.timestamp));
     }
     
-    return await query;
+    return await db.select()
+      .from(btcRateHistory)
+      .orderBy(desc(btcRateHistory.timestamp));
   }
 }
 

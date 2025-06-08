@@ -24,14 +24,14 @@ async function fetchBtcRate(): Promise<number> {
 }
 
 function requireAuth(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: 'Authentication required' });
   }
   next();
 }
 
 function requireAdmin(req: any, res: any, next: any) {
-  if (!req.isAuthenticated() || req.user.role !== 'admin') {
+  if (!req.isAuthenticated() || !req.user || req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
   next();
@@ -74,12 +74,13 @@ export function registerRoutes(app: Express): Server {
   // Dashboard endpoints
   app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
     try {
-      const userId = req.user.role === 'admin' ? undefined : req.user.id;
+      const user = req.user!; // TypeScript assertion - user is guaranteed to exist after requireAuth
+      const userId = user.role === 'admin' ? undefined : user.id;
       
       const [payrollPayments, expenseReimbursements, employees, currentRate] = await Promise.all([
         storage.getPayrollPayments(userId),
         storage.getExpenseReimbursements(userId),
-        req.user.role === 'admin' ? storage.getEmployees() : [],
+        user.role === 'admin' ? storage.getEmployees() : [],
         fetchBtcRate()
       ]);
 
@@ -144,7 +145,8 @@ export function registerRoutes(app: Express): Server {
   // Payroll endpoints
   app.get('/api/payroll', requireAuth, async (req, res) => {
     try {
-      const userId = req.user.role === 'admin' ? undefined : req.user.id;
+      const user = req.user!;
+      const userId = user.role === 'admin' ? undefined : user.id;
       const payments = await storage.getPayrollPayments(userId);
       res.json(payments);
     } catch (error) {
@@ -202,7 +204,8 @@ export function registerRoutes(app: Express): Server {
   // Expense endpoints
   app.get('/api/expenses', requireAuth, async (req, res) => {
     try {
-      const userId = req.user.role === 'admin' ? undefined : req.user.id;
+      const user = req.user!;
+      const userId = user.role === 'admin' ? undefined : user.id;
       const expenses = await storage.getExpenseReimbursements(userId);
       res.json(expenses);
     } catch (error) {
@@ -212,9 +215,10 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/expenses', requireAuth, async (req, res) => {
     try {
+      const user = req.user!;
       const validation = insertExpenseReimbursementSchema.safeParse({
         ...req.body,
-        userId: req.user.id
+        userId: user.id
       });
       
       if (!validation.success) {

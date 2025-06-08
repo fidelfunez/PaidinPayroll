@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Button } from "@/components/ui/button";
 import { BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X } from "lucide-react";
-import { PaidinLogo } from "@/components/ui/paidin-logo";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -28,10 +27,11 @@ export function Sidebar() {
     }`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200">
         <div className="flex items-center space-x-3">
-          {isCollapsed ? (
-            <PaidinLogo variant="icon" size="sm" />
-          ) : (
-            <PaidinLogo variant="full" size="sm" />
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+            <span className="text-sm font-bold text-white">₿</span>
+          </div>
+          {!isCollapsed && (
+            <span className="text-xl font-bold text-foreground">Paidin</span>
           )}
         </div>
         <Button

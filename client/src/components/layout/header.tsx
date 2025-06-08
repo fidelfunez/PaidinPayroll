@@ -1,5 +1,3 @@
-import { PaidinLogo } from "@/components/ui/paidin-logo";
-
 interface HeaderProps {
   title: string;
   subtitle?: string;
@@ -14,7 +12,9 @@ export function Header({ title, subtitle, btcRate }: HeaderProps) {
     <header className="bg-white shadow-sm border-b border-slate-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <PaidinLogo variant="icon" size="sm" />
+          <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg">
+            <span className="text-xl font-bold text-white">₿</span>
+          </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             {subtitle && (

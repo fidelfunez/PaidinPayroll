@@ -123,8 +123,8 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">₿</span>
+                  <div className="flex items-center justify-center">
+                    <PaidinLogo variant="icon" size="sm" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">

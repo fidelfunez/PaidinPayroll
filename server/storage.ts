@@ -3,6 +3,12 @@ import {
   payrollPayments, 
   expenseReimbursements, 
   btcRateHistory,
+  timeTracking,
+  timeOffRequests,
+  notifications,
+  messages,
+  auditLogs,
+  taxDocuments,
   type User, 
   type InsertUser,
   type PayrollPayment,
@@ -10,7 +16,19 @@ import {
   type ExpenseReimbursement,
   type InsertExpenseReimbursement,
   type BtcRateHistory,
-  type InsertBtcRateHistory
+  type InsertBtcRateHistory,
+  type TimeTracking,
+  type InsertTimeTracking,
+  type TimeOffRequest,
+  type InsertTimeOffRequest,
+  type Notification,
+  type InsertNotification,
+  type Message,
+  type InsertMessage,
+  type AuditLog,
+  type InsertAuditLog,
+  type TaxDocument,
+  type InsertTaxDocument
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -41,6 +59,37 @@ export interface IStorage {
   getExpenseReimbursements(userId?: number): Promise<ExpenseReimbursement[]>;
   updateExpenseReimbursement(id: number, updates: Partial<ExpenseReimbursement>): Promise<ExpenseReimbursement | undefined>;
   getPendingExpenseReimbursements(): Promise<ExpenseReimbursement[]>;
+
+  // Time tracking management
+  createTimeTracking(timeEntry: InsertTimeTracking): Promise<TimeTracking>;
+  getTimeTracking(userId?: number): Promise<TimeTracking[]>;
+  updateTimeTracking(id: number, updates: Partial<TimeTracking>): Promise<TimeTracking | undefined>;
+  clockOut(id: number): Promise<TimeTracking | undefined>;
+
+  // Time off management
+  createTimeOffRequest(request: InsertTimeOffRequest): Promise<TimeOffRequest>;
+  getTimeOffRequests(userId?: number): Promise<TimeOffRequest[]>;
+  updateTimeOffRequest(id: number, updates: Partial<TimeOffRequest>): Promise<TimeOffRequest | undefined>;
+  getPendingTimeOffRequests(): Promise<TimeOffRequest[]>;
+
+  // Notification management
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: number): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<Notification | undefined>;
+
+  // Message management
+  createMessage(message: InsertMessage): Promise<Message>;
+  getMessages(userId: number): Promise<Message[]>;
+  markMessageAsRead(id: number): Promise<Message | undefined>;
+
+  // Audit log management
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(): Promise<AuditLog[]>;
+
+  // Tax document management
+  createTaxDocument(document: InsertTaxDocument): Promise<TaxDocument>;
+  getTaxDocuments(userId?: number): Promise<TaxDocument[]>;
+  deleteTaxDocument(id: number): Promise<boolean>;
 
   // BTC rate management
   saveBtcRate(rate: InsertBtcRateHistory): Promise<BtcRateHistory>;

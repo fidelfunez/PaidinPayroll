@@ -64,6 +64,13 @@ export const btcRateHistory = pgTable("btc_rate_history", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
+// Session table for express-session storage
+export const session = pgTable("session", {
+  sid: text("sid").primaryKey().notNull(),
+  sess: text("sess").notNull(), // JSON as text
+  expire: timestamp("expire").notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   payrollPayments: many(payrollPayments),

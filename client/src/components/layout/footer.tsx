@@ -30,31 +30,23 @@ export function Footer() {
             <h3 className="font-semibold text-foreground mb-3">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Dashboard
-                  </a>
+                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/payroll">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Payroll
-                  </a>
+                <Link href="/payroll" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Payroll
                 </Link>
               </li>
               <li>
-                <Link href="/reimbursements">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Reimbursements
-                  </a>
+                <Link href="/reimbursements" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Reimbursements
                 </Link>
               </li>
               <li>
-                <Link href="/reports">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Reports
-                  </a>
+                <Link href="/reports" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Reports
                 </Link>
               </li>
             </ul>
@@ -80,10 +72,8 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <Link href="/settings">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors">
-                    Settings
-                  </a>
+                <Link href="/settings" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Settings
                 </Link>
               </li>
             </ul>

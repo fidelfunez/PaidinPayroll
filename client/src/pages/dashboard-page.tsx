@@ -6,7 +6,6 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Loader2, TrendingUp, Clock, DollarSign, Users } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
@@ -75,19 +74,9 @@ const bitcoinQuotes = [
 export default function DashboardPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
-  const [, setLocation] = useLocation();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
-
-  // Redirect to role-specific dashboard
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      setLocation('/admin');
-    } else if (user?.role === 'employee') {
-      setLocation('/employee');
-    }
-  }, [user, setLocation]);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],

@@ -59,38 +59,24 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    try {
-      // Check for existing username
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-
-      // Check for existing email if provided
-      if (req.body.email) {
-        const existingEmailUser = await storage.getUserByEmail(req.body.email);
-        if (existingEmailUser) {
-          return res.status(400).json({ message: "Email already exists" });
-        }
-      }
-
-      // Transform numeric fields to handle empty strings
-      const userData = {
-        ...req.body,
-        password: await hashPassword(req.body.password),
-        monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
-      };
-
-      const user = await storage.createUser(userData);
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: 'Registration failed' });
+    const existingUser = await storage.getUserByUsername(req.body.username);
+    if (existingUser) {
+      return res.status(400).send("Username already exists");
     }
+
+    // Transform numeric fields to handle empty strings
+    const userData = {
+      ...req.body,
+      password: await hashPassword(req.body.password),
+      monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
+    };
+
+    const user = await storage.createUser(userData);
+
+    req.login(user, (err) => {
+      if (err) return next(err);
+      res.status(201).json(user);
+    });
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {

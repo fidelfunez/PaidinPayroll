@@ -9,8 +9,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard-page";
-import EmployeeDashboard from "@/pages/employee-dashboard";
-import AdminDashboard from "@/pages/admin-dashboard";
 import PayrollPage from "@/pages/payroll-page";
 import ReimbursementsPage from "@/pages/reimbursements-page";
 import ReportsPage from "@/pages/reports-page";
@@ -20,8 +18,6 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/employee" component={EmployeeDashboard} />
-      <ProtectedRoute path="/admin" component={AdminDashboard} />
       <ProtectedRoute path="/payroll" component={PayrollPage} />
       <ProtectedRoute path="/reimbursements" component={ReimbursementsPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />

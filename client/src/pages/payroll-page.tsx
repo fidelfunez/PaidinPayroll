@@ -10,12 +10,14 @@ import { Loader2, Plus, DollarSign, Users, Calendar, Bitcoin } from "lucide-reac
 import { useState } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PayrollPayment, User } from "@shared/schema";
 
 export default function PayrollPage() {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
 
@@ -88,7 +90,7 @@ export default function PayrollPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="ml-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Payroll Management" 
           subtitle="Schedule and manage Bitcoin salary payments"

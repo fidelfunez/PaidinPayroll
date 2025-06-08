@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
@@ -17,6 +18,7 @@ import { User, Settings, Shield, Bell, Trash2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const [notifications, setNotifications] = useState({
     payrollReminders: true,
     expenseUpdates: true,

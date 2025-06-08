@@ -11,12 +11,14 @@ import { Loader2, Plus, Clock, DollarSign, Bitcoin, Timer } from "lucide-react";
 import { useState } from "react";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { ExpenseReimbursement } from "@shared/schema";
 
 export default function ReimbursementsPage() {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -116,7 +118,7 @@ export default function ReimbursementsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="ml-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Reimbursements" 
           subtitle="Manage expense claims and Bitcoin payouts"

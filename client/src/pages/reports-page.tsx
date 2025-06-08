@@ -9,9 +9,11 @@ import { Footer } from "@/components/layout/footer";
 import { Loader2, Download, FileText, Calendar } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const [payrollDateRange, setPayrollDateRange] = useState({
     startDate: '',
     endDate: ''
@@ -115,7 +117,7 @@ export default function ReportsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="ml-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Reports" 
           subtitle="Export and analyze payroll and expense data"

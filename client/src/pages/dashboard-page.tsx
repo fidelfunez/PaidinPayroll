@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Loader2, TrendingUp, Clock, DollarSign, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,14 +26,71 @@ interface DashboardStats {
   }>;
 }
 
+const bitcoinQuotes = [
+  {
+    quote: "Bitcoin is a technological tour de force.",
+    author: "Bill Gates",
+    tagline: "Building the future of finance, one satoshi at a time"
+  },
+  {
+    quote: "Bitcoin is the beginning of something great: a currency without a government, something necessary and imperative.",
+    author: "Nassim Taleb",
+    tagline: "Empowering financial sovereignty worldwide"
+  },
+  {
+    quote: "I think Bitcoin is the first [encrypted money] that has the potential to do something like change the world.",
+    author: "Peter Thiel",
+    tagline: "Transforming how we think about money"
+  },
+  {
+    quote: "Bitcoin is a very exciting development, it might lead to a world currency.",
+    author: "Kim Dotcom",
+    tagline: "Connecting global economies through innovation"
+  },
+  {
+    quote: "Bitcoin is the most important invention in the history of the world since the Internet.",
+    author: "Roger Ver",
+    tagline: "Revolutionizing value transfer across borders"
+  },
+  {
+    quote: "Bitcoin is a remarkable cryptographic achievement and the ability to create something that is not duplicable in the digital world has enormous value.",
+    author: "Eric Schmidt",
+    tagline: "Pioneering digital scarcity and authenticity"
+  },
+  {
+    quote: "Bitcoin is the currency of resistance.",
+    author: "Max Keiser",
+    tagline: "Enabling financial freedom for everyone"
+  },
+  {
+    quote: "Bitcoin gives us, for the first time, a way for one Internet user to transfer a unique piece of digital property to another Internet user.",
+    author: "Marc Andreessen",
+    tagline: "Redefining digital ownership and exchange"
+  }
+];
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
   });
+
+  // Rotate quotes every 10 minutes (600000 ms)
+  useEffect(() => {
+    const quoteRotationInterval = setInterval(() => {
+      setCurrentQuoteIndex((prevIndex) => 
+        (prevIndex + 1) % bitcoinQuotes.length
+      );
+    }, 600000); // 10 minutes
+
+    return () => clearInterval(quoteRotationInterval);
+  }, []);
+
+  const currentQuote = bitcoinQuotes[currentQuoteIndex];
 
   if (isLoading) {
     return (
@@ -76,10 +133,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
                   <p className="text-lg font-medium mb-2">
-                    "Bitcoin is a technological tour de force."
+                    "{currentQuote.quote}"
                   </p>
                   <p className="text-orange-100 text-sm">
-                    — Bill Gates • Building the future of finance, one satoshi at a time
+                    — {currentQuote.author} • {currentQuote.tagline}
                   </p>
                 </div>
               </div>

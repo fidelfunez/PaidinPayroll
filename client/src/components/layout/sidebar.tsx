@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { 
   BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X,
   Users, CreditCard, CheckSquare, Download, Shield, MessageSquare, 
-  Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart, ChevronDown, ChevronRight
+  Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart, ChevronDown, ChevronRight,
+  TrendingUp, Building2, Layers, Target, Search, Archive, Award, Banknote, 
+  ScrollText, PieChart, Mail, Zap
 } from "lucide-react";
 
 export function Sidebar() {
@@ -32,7 +34,7 @@ export function Sidebar() {
       items: [
         { name: 'Dashboard', href: '/', icon: BarChart3 },
         { name: 'My Expenses', href: '/my-expenses', icon: Receipt },
-        { name: 'Invoices', href: '/invoices', icon: FileBarChart },
+        { name: 'Invoices', href: '/invoices', icon: ScrollText },
       ]
     },
     {
@@ -49,7 +51,7 @@ export function Sidebar() {
       items: [
         { name: 'Profile', href: '/profile', icon: User },
         { name: 'Files', href: '/files', icon: FolderOpen },
-        { name: 'Benefits', href: '/benefits', icon: Gift },
+        { name: 'Benefits', href: '/benefits', icon: Award },
       ]
     },
     {
@@ -65,7 +67,7 @@ export function Sidebar() {
       title: 'Communication',
       items: [
         { name: 'Notifications', href: '/notifications', icon: Bell },
-        { name: 'Messages', href: '/messages', icon: MessageSquare },
+        { name: 'Messages', href: '/messages', icon: Mail },
       ]
     },
     {
@@ -82,7 +84,7 @@ export function Sidebar() {
       id: 'overview',
       title: 'Overview',
       items: [
-        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'Dashboard', href: '/', icon: TrendingUp },
         { name: 'Employees', href: '/employees', icon: Users },
       ]
     },
@@ -91,7 +93,7 @@ export function Sidebar() {
       title: 'Finance & Payroll',
       items: [
         { name: 'Payroll', href: '/payroll', icon: DollarSign },
-        { name: 'Bulk Payroll', href: '/bulk-payroll', icon: DollarSign },
+        { name: 'Bulk Payroll', href: '/bulk-payroll', icon: Zap },
         { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
         { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
       ]
@@ -101,14 +103,14 @@ export function Sidebar() {
       title: 'Approvals & Tasks',
       items: [
         { name: 'Approvals', href: '/approvals', icon: CheckSquare },
-        { name: 'Audit Logs', href: '/audit-logs', icon: FileBarChart },
+        { name: 'Audit Logs', href: '/audit-logs', icon: Search },
       ]
     },
     {
       id: 'reports',
       title: 'Reports & Documents',
       items: [
-        { name: 'Invoices & Reports', href: '/reports', icon: FileText },
+        { name: 'Invoices & Reports', href: '/reports', icon: PieChart },
         { name: 'PDF Payslips', href: '/payslips', icon: Download },
         { name: 'Tax & Compliance', href: '/admin-tax-compliance', icon: Shield },
       ]

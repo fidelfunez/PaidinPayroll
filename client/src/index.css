@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(24, 96%, 53%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Bitcoin theme colors */
+  --bitcoin-50: hsl(33, 100%, 97%);
+  --bitcoin-100: hsl(33, 100%, 92%);
+  --bitcoin-200: hsl(33, 96%, 80%);
+  --bitcoin-300: hsl(33, 95%, 65%);
+  --bitcoin-400: hsl(24, 95%, 60%);
+  --bitcoin-500: hsl(24, 96%, 53%);
+  --bitcoin-600: hsl(20, 94%, 45%);
+  --bitcoin-700: hsl(17, 88%, 34%);
+  --bitcoin-800: hsl(15, 79%, 28%);
+  --bitcoin-900: hsl(15, 75%, 24%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(24, 96%, 53%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Bitcoin themed utilities */
+.text-bitcoin-50 { color: var(--bitcoin-50); }
+.text-bitcoin-100 { color: var(--bitcoin-100); }
+.text-bitcoin-200 { color: var(--bitcoin-200); }
+.text-bitcoin-300 { color: var(--bitcoin-300); }
+.text-bitcoin-400 { color: var(--bitcoin-400); }
+.text-bitcoin-500 { color: var(--bitcoin-500); }
+.text-bitcoin-600 { color: var(--bitcoin-600); }
+.text-bitcoin-700 { color: var(--bitcoin-700); }
+.text-bitcoin-800 { color: var(--bitcoin-800); }
+.text-bitcoin-900 { color: var(--bitcoin-900); }
+
+.bg-bitcoin-50 { background-color: var(--bitcoin-50); }
+.bg-bitcoin-100 { background-color: var(--bitcoin-100); }
+.bg-bitcoin-200 { background-color: var(--bitcoin-200); }
+.bg-bitcoin-300 { background-color: var(--bitcoin-300); }
+.bg-bitcoin-400 { background-color: var(--bitcoin-400); }
+.bg-bitcoin-500 { background-color: var(--bitcoin-500); }
+.bg-bitcoin-600 { background-color: var(--bitcoin-600); }
+.bg-bitcoin-700 { background-color: var(--bitcoin-700); }
+.bg-bitcoin-800 { background-color: var(--bitcoin-800); }
+.bg-bitcoin-900 { background-color: var(--bitcoin-900); }
+
+.border-bitcoin-300 { border-color: var(--bitcoin-300); }
+.border-bitcoin-500 { border-color: var(--bitcoin-500); }
+
+.hover\:bg-bitcoin-600:hover { background-color: var(--bitcoin-600); }
+.hover\:text-bitcoin-700:hover { color: var(--bitcoin-700); }
+.hover\:border-bitcoin-300:hover { border-color: var(--bitcoin-300); }
+.hover\:bg-bitcoin-50:hover { background-color: var(--bitcoin-50); }
+
+.focus\:ring-bitcoin-500:focus { 
+  --tw-ring-color: var(--bitcoin-500);
+}

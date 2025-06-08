@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
@@ -29,6 +29,7 @@ const registerSchema = insertUserSchema.extend({
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
@@ -52,6 +53,29 @@ export default function AuthPage() {
       btcAddress: "",
     },
   });
+
+  // Caps lock detection
+  const handleKeyEvent = (event: KeyboardEvent) => {
+    if (event.getModifierState && event.getModifierState('CapsLock')) {
+      setCapsLockOn(true);
+    } else {
+      setCapsLockOn(false);
+    }
+  };
+
+  // Add caps lock detection on password fields
+  useEffect(() => {
+    const handleKeyUp = (event: KeyboardEvent) => handleKeyEvent(event);
+    const handleKeyDown = (event: KeyboardEvent) => handleKeyEvent(event);
+    
+    document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -123,8 +147,21 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Enter your password" {...field} />
+                              <div className="relative">
+                                <Input type="password" placeholder="Enter your password" {...field} />
+                                {capsLockOn && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                  </div>
+                                )}
+                              </div>
                             </FormControl>
+                            {capsLockOn && (
+                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Caps Lock is on
+                              </p>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}
@@ -253,8 +290,21 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
+                              <div className="relative">
+                                <Input type="password" placeholder="••••••••" {...field} />
+                                {capsLockOn && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                  </div>
+                                )}
+                              </div>
                             </FormControl>
+                            {capsLockOn && (
+                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Caps Lock is on
+                              </p>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}
@@ -267,8 +317,21 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Confirm Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
+                              <div className="relative">
+                                <Input type="password" placeholder="••••••••" {...field} />
+                                {capsLockOn && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                  </div>
+                                )}
+                              </div>
                             </FormControl>
+                            {capsLockOn && (
+                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Caps Lock is on
+                              </p>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}

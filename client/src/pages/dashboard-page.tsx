@@ -10,6 +10,7 @@ import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { PaidinLogo } from "@/components/ui/paidin-logo";
 
 interface DashboardStats {
   totalBtcBalance: number;

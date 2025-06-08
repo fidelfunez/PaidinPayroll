@@ -13,6 +13,7 @@ import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaidinLogo } from "@/components/ui/paidin-logo";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -80,11 +81,9 @@ export default function AuthPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-3xl font-bold text-white">₿</span>
-              </div>
+              <PaidinLogo variant="icon" size="lg" />
             </div>
-            <h2 className="text-3xl font-bold text-foreground">Welcome to Paidin</h2>
+            <h2 className="text-3xl font-bold text-foreground">Welcome to PaidIn</h2>
             <p className="mt-2 text-muted-foreground">Bitcoin-native payroll for remote teams</p>
           </div>
 

@@ -82,10 +82,10 @@ export function setupAuth(app: Express) {
       // Handle unique constraint violations
       if (error.code === '23505') {
         if (error.constraint === 'users_email_unique') {
-          return res.status(400).json({ message: 'Email address is already in use' });
+          return res.status(400).json({ message: 'Oops! This email address is already in use. Please try another one.' });
         }
         if (error.constraint === 'users_username_unique') {
-          return res.status(400).json({ message: 'Username is already taken' });
+          return res.status(400).json({ message: 'Oops! This username is already taken. Please try another one.' });
         }
       }
       console.error('Registration error:', error);

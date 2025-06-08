@@ -235,11 +235,12 @@ export function registerRoutes(app: Express): Server {
 
   app.patch('/api/expenses/:id', requireAuth, async (req, res) => {
     try {
+      const user = req.user!;
       const id = parseInt(req.params.id);
       const updates = req.body;
 
       // If approving expense, calculate BTC amount
-      if (updates.status === 'approved' && req.user.role === 'admin') {
+      if (updates.status === 'approved' && user.role === 'admin') {
         const currentRate = await fetchBtcRate();
         const expense = await storage.getExpenseReimbursements();
         const targetExpense = expense.find(e => e.id === id);
@@ -250,13 +251,13 @@ export function registerRoutes(app: Express): Server {
           
           updates.amountBtc = amountBtc.toString();
           updates.btcRate = currentRate.toString();
-          updates.approvedBy = req.user.id;
+          updates.approvedBy = user.id;
           updates.approvedDate = new Date();
         }
       }
 
       // If marking as paid
-      if (updates.status === 'paid' && req.user.role === 'admin') {
+      if (updates.status === 'paid' && user.role === 'admin') {
         updates.paidDate = new Date();
         updates.transactionHash = `mock_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       }

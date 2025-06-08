@@ -345,6 +345,177 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Time tracking endpoints
+  app.get('/api/time-tracking', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const userId = user.role === 'admin' ? undefined : user.id;
+      const timeEntries = await storage.getTimeTracking(userId);
+      res.json(timeEntries);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch time tracking data' });
+    }
+  });
+
+  app.post('/api/time-tracking/clock-in', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const timeEntry = await storage.createTimeTracking({
+        userId: user.id,
+        clockIn: new Date(),
+        description: req.body.description || ''
+      });
+      res.status(201).json(timeEntry);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to clock in' });
+    }
+  });
+
+  app.post('/api/time-tracking/:id/clock-out', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const timeEntry = await storage.clockOut(id);
+      if (!timeEntry) {
+        return res.status(404).json({ message: 'Time entry not found' });
+      }
+      res.json(timeEntry);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to clock out' });
+    }
+  });
+
+  // Time off endpoints
+  app.get('/api/time-off', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const userId = user.role === 'admin' ? undefined : user.id;
+      const requests = await storage.getTimeOffRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch time off requests' });
+    }
+  });
+
+  app.post('/api/time-off', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const request = await storage.createTimeOffRequest({
+        ...req.body,
+        userId: user.id
+      });
+      res.status(201).json(request);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create time off request' });
+    }
+  });
+
+  // Notification endpoints
+  app.get('/api/notifications', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const notifications = await storage.getNotifications(user.id);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const notification = await storage.markNotificationAsRead(id);
+      if (!notification) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      res.json(notification);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to mark notification as read' });
+    }
+  });
+
+  // Admin-specific endpoints
+  app.get('/api/admin/expenses', requireAdmin, async (req, res) => {
+    try {
+      const expenses = await storage.getExpenseReimbursements();
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch all expenses' });
+    }
+  });
+
+  app.get('/api/admin/payroll', requireAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getPayrollPayments();
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch all payroll' });
+    }
+  });
+
+  app.get('/api/admin/time-off', requireAdmin, async (req, res) => {
+    try {
+      const requests = await storage.getTimeOffRequests();
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch time off requests' });
+    }
+  });
+
+  app.patch('/api/admin/time-off/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      if (updates.status === 'approved') {
+        updates.approvedBy = req.user!.id;
+        updates.approvedDate = new Date();
+      }
+
+      const request = await storage.updateTimeOffRequest(id, updates);
+      if (!request) {
+        return res.status(404).json({ message: 'Time off request not found' });
+      }
+
+      res.json(request);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update time off request' });
+    }
+  });
+
+  app.get('/api/admin/audit-logs', requireAdmin, async (req, res) => {
+    try {
+      const logs = await storage.getAuditLogs();
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+
+  // Tax document endpoints
+  app.get('/api/tax-documents', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const userId = user.role === 'admin' ? undefined : user.id;
+      const documents = await storage.getTaxDocuments(userId);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch tax documents' });
+    }
+  });
+
+  app.post('/api/tax-documents', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const document = await storage.createTaxDocument({
+        ...req.body,
+        userId: user.id
+      });
+      res.status(201).json(document);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to upload tax document' });
+    }
+  });
+
   // Profile photo upload endpoint
   app.patch('/api/user/profile-photo', requireAuth, async (req, res) => {
     try {

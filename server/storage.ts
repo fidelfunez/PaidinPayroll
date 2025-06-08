@@ -253,6 +253,184 @@ export class DatabaseStorage implements IStorage {
       .from(btcRateHistory)
       .orderBy(desc(btcRateHistory.timestamp));
   }
+
+  // Time tracking management
+  async createTimeTracking(timeEntry: InsertTimeTracking): Promise<TimeTracking> {
+    const [entry] = await db
+      .insert(timeTracking)
+      .values(timeEntry)
+      .returning();
+    return entry;
+  }
+
+  async getTimeTracking(userId?: number): Promise<TimeTracking[]> {
+    const query = db.select().from(timeTracking);
+    
+    if (userId) {
+      return await query
+        .where(eq(timeTracking.userId, userId))
+        .orderBy(desc(timeTracking.date));
+    }
+    
+    return await query.orderBy(desc(timeTracking.date));
+  }
+
+  async updateTimeTracking(id: number, updates: Partial<TimeTracking>): Promise<TimeTracking | undefined> {
+    const [entry] = await db
+      .update(timeTracking)
+      .set(updates)
+      .where(eq(timeTracking.id, id))
+      .returning();
+    return entry || undefined;
+  }
+
+  async clockOut(id: number): Promise<TimeTracking | undefined> {
+    const clockOutTime = new Date();
+    const [entry] = await db
+      .update(timeTracking)
+      .set({ 
+        clockOut: clockOutTime,
+        hoursWorked: "8.00"
+      })
+      .where(eq(timeTracking.id, id))
+      .returning();
+    return entry || undefined;
+  }
+
+  // Time off management
+  async createTimeOffRequest(request: InsertTimeOffRequest): Promise<TimeOffRequest> {
+    const [timeOffRequest] = await db
+      .insert(timeOffRequests)
+      .values(request)
+      .returning();
+    return timeOffRequest;
+  }
+
+  async getTimeOffRequests(userId?: number): Promise<TimeOffRequest[]> {
+    const query = db.select().from(timeOffRequests);
+    
+    if (userId) {
+      return await query
+        .where(eq(timeOffRequests.userId, userId))
+        .orderBy(desc(timeOffRequests.createdAt));
+    }
+    
+    return await query.orderBy(desc(timeOffRequests.createdAt));
+  }
+
+  async updateTimeOffRequest(id: number, updates: Partial<TimeOffRequest>): Promise<TimeOffRequest | undefined> {
+    const [request] = await db
+      .update(timeOffRequests)
+      .set(updates)
+      .where(eq(timeOffRequests.id, id))
+      .returning();
+    return request || undefined;
+  }
+
+  async getPendingTimeOffRequests(): Promise<TimeOffRequest[]> {
+    return await db
+      .select()
+      .from(timeOffRequests)
+      .where(eq(timeOffRequests.status, 'pending'))
+      .orderBy(desc(timeOffRequests.createdAt));
+  }
+
+  // Notification management
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [notif] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return notif;
+  }
+
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const [notification] = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification || undefined;
+  }
+
+  // Message management
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [msg] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+    return msg;
+  }
+
+  async getMessages(userId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.toUserId, userId))
+      .orderBy(desc(messages.createdAt));
+  }
+
+  async markMessageAsRead(id: number): Promise<Message | undefined> {
+    const [message] = await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(eq(messages.id, id))
+      .returning();
+    return message || undefined;
+  }
+
+  // Audit log management
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [auditLog] = await db
+      .insert(auditLogs)
+      .values(log)
+      .returning();
+    return auditLog;
+  }
+
+  async getAuditLogs(): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(100);
+  }
+
+  // Tax document management
+  async createTaxDocument(document: InsertTaxDocument): Promise<TaxDocument> {
+    const [taxDoc] = await db
+      .insert(taxDocuments)
+      .values(document)
+      .returning();
+    return taxDoc;
+  }
+
+  async getTaxDocuments(userId?: number): Promise<TaxDocument[]> {
+    const query = db.select().from(taxDocuments);
+    
+    if (userId) {
+      return await query
+        .where(eq(taxDocuments.userId, userId))
+        .orderBy(desc(taxDocuments.uploadedAt));
+    }
+    
+    return await query.orderBy(desc(taxDocuments.uploadedAt));
+  }
+
+  async deleteTaxDocument(id: number): Promise<boolean> {
+    const result = await db
+      .delete(taxDocuments)
+      .where(eq(taxDocuments.id, id));
+    return (result.rowCount || 0) > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();

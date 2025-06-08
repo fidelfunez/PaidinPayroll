@@ -1,0 +1,76 @@
+Perfect — your content is excellent. I've polished the wording, added structure, and made it crystal clear for Replit’s AI builder so nothing gets misinterpreted. Here’s the **final, professional version of the prompt** you can copy and paste into Replit:
+
+---
+
+### 🚧 Replit AI Prompt — PaidIn App: Two Distinct Role-Based Apps (Admin & Employee)
+
+Please build **two distinct versions of the app**, based on user roles:
+
+---
+
+### 🧑‍💼 **Employee App: Sidebar Navigation Items**
+
+Please add the following as separate sidebar items (pages/sections):
+
+* **My Expenses** – View submitted expense claims
+* **Files** – Create a dedicated section for uploaded documents or files
+* **Invoices** – View/download past invoices or payslips
+* **Profile** – Expand to include:
+
+  * Personal info
+  * Optional address field
+  * Emergency contact section
+* **Time Tracking** – Submit hours worked or clock in/out
+* **Time Off** – Request/view leave
+
+  * Include a **calendar view** for better visibility
+* **Benefits** – View available perks or company policies
+* **Tax & Compliance** – View and upload tax documents
+* **Withdrawal Method** – Submit payout preference:
+
+  * BTC wallet address
+  * Bank account details
+* **Notifications** – View status updates for payroll, requests, etc.
+* **Messages** *(Optional)* – Message or receive communication from admin
+
+---
+
+### 👨‍💼 **Admin App: Sidebar Navigation Items**
+
+Along with the already existing navigation items, please add:
+
+* **Employees** – View and manage employee data
+* **Payroll** – Manage and send payments
+* **Withdrawal Methods** – View submitted payout preferences
+* **Approvals** – Approve expenses, time off, and time tracking
+* **Invoices & Reports** – View/export invoices and CSV reports
+* **PDF Payslips** – Generate downloadable payslips
+* **Tax & Compliance** – View tax documents by employee
+* **Audit Logs** – Track changes (e.g., edits, deletions, payments)
+* **Messages** *(Optional)* – Communicate with employees
+* **Bulk Payroll** – Run payroll payments for multiple employees at once
+
+---
+
+### 🔄 **Testing Instructions**
+
+I need to test both user roles, so please do one of the following:
+
+* Allow **role selection** on signup (admin vs. employee), **or**
+* Preload **test accounts** for each role
+
+---
+
+### ✅ Additional Notes
+
+* **Do not modify** the login or registration pages — the current UI/UX is perfect.
+* Keep **all current styling and UI**:
+
+  * Orange-themed design
+  * Sidebar layout and responsiveness
+  * Animations, transitions, and mobile compatibility
+* If certain navigation items can be **logically grouped** (e.g., under categories like "HR", "Finance", or "Settings"), feel free to organize them that way. The goal is to maintain clarity without overwhelming users.
+
+---
+
+Let me know how Replit responds or if you'd like help checking the results!

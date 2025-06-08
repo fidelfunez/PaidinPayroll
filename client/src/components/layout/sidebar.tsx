@@ -2,20 +2,50 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Button } from "@/components/ui/button";
-import { BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X } from "lucide-react";
+import { 
+  BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X,
+  Users, CreditCard, CheckSquare, Download, Shield, MessageSquare, 
+  Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart
+} from "lucide-react";
 
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { isCollapsed, toggleSidebar } = useSidebar();
 
-  const navigation = [
+  const employeeNavigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'Payroll', href: '/payroll', icon: DollarSign },
-    { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
-    { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'My Expenses', href: '/my-expenses', icon: Receipt },
+    { name: 'Files', href: '/files', icon: FolderOpen },
+    { name: 'Invoices', href: '/invoices', icon: FileBarChart },
+    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
+    { name: 'Time Off', href: '/time-off', icon: Calendar },
+    { name: 'Benefits', href: '/benefits', icon: Gift },
+    { name: 'Tax & Compliance', href: '/tax-compliance', icon: Shield },
+    { name: 'Withdrawal Method', href: '/withdrawal-method', icon: Wallet },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
+    { name: 'Messages', href: '/messages', icon: MessageSquare },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  const adminNavigation = [
+    { name: 'Dashboard', href: '/', icon: BarChart3 },
+    { name: 'Employees', href: '/employees', icon: Users },
+    { name: 'Payroll', href: '/payroll', icon: DollarSign },
+    { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
+    { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
+    { name: 'Approvals', href: '/approvals', icon: CheckSquare },
+    { name: 'Invoices & Reports', href: '/reports', icon: FileText },
+    { name: 'PDF Payslips', href: '/payslips', icon: Download },
+    { name: 'Tax & Compliance', href: '/admin-tax-compliance', icon: Shield },
+    { name: 'Audit Logs', href: '/audit-logs', icon: FileBarChart },
+    { name: 'Messages', href: '/admin-messages', icon: MessageSquare },
+    { name: 'Bulk Payroll', href: '/bulk-payroll', icon: DollarSign },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  const navigation = user?.role === 'admin' ? adminNavigation : employeeNavigation;
 
   const handleLogout = () => {
     logoutMutation.mutate();

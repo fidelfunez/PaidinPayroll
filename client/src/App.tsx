@@ -11,6 +11,7 @@ import DashboardPage from "@/pages/dashboard-page";
 import PayrollPage from "@/pages/payroll-page";
 import ReimbursementsPage from "@/pages/reimbursements-page";
 import ReportsPage from "@/pages/reports-page";
+import SettingsPage from "@/pages/settings-page";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <ProtectedRoute path="/payroll" component={PayrollPage} />
       <ProtectedRoute path="/reimbursements" component={ReimbursementsPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

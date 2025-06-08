@@ -23,10 +23,8 @@ export function Sidebar() {
     <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
       <div className="flex items-center justify-between h-16 px-6 border-b border-slate-200">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.546z"/>
-            </svg>
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+            <span className="text-sm font-bold text-white">₿</span>
           </div>
           <span className="text-xl font-bold text-foreground">Paidin</span>
         </div>

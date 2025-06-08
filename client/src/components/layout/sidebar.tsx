@@ -7,7 +7,7 @@ import { BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu,
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
@@ -37,7 +37,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleSidebar}
           className="h-8 w-8 p-0"
         >
           {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}

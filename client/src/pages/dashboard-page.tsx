@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 
 interface DashboardStats {
   totalBtcBalance: number;
@@ -71,6 +72,7 @@ const bitcoinQuotes = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
@@ -106,7 +108,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="lg:ml-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Dashboard" 
           subtitle="Overview of your Bitcoin payroll operations"

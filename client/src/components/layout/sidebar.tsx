@@ -104,8 +104,16 @@ export function Sidebar() {
           ) : (
             <>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-slate-300 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-slate-600" />
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-300 flex items-center justify-center">
+                  {user?.profilePhoto ? (
+                    <img 
+                      src={user.profilePhoto} 
+                      alt="Profile photo" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-slate-600" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">

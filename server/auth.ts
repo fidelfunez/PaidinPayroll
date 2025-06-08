@@ -71,12 +71,26 @@ export function setupAuth(app: Express) {
       monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
     };
 
-    const user = await storage.createUser(userData);
+    try {
+      const user = await storage.createUser(userData);
 
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error: any) {
+      // Handle unique constraint violations
+      if (error.code === '23505') {
+        if (error.constraint === 'users_email_unique') {
+          return res.status(400).json({ message: 'Email address is already in use' });
+        }
+        if (error.constraint === 'users_username_unique') {
+          return res.status(400).json({ message: 'Username is already taken' });
+        }
+      }
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Failed to create account' });
+    }
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {

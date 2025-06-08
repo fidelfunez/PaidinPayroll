@@ -292,33 +292,64 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Hero section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-50 to-orange-100 items-center justify-center p-8">
-        <div className="max-w-md text-center space-y-6">
-          <div className="w-32 h-32 mx-auto bg-orange-500/20 rounded-full flex items-center justify-center">
-            <span className="text-6xl font-bold text-orange-600">₿</span>
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 items-center justify-center p-12 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 right-10 w-20 h-20 bg-white rounded-full"></div>
+          <div className="absolute top-1/3 left-8 w-12 h-12 bg-white rounded-full"></div>
+          <div className="absolute bottom-20 right-1/3 w-16 h-16 bg-white rounded-full"></div>
+          <div className="absolute bottom-10 left-10 w-8 h-8 bg-white rounded-full"></div>
+        </div>
+        
+        <div className="max-w-lg text-center space-y-8 relative z-10">
+          {/* Main Bitcoin icon with glow effect */}
+          <div className="relative">
+            <div className="w-40 h-40 mx-auto bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border border-white/30">
+              <span className="text-7xl font-bold text-white drop-shadow-lg">₿</span>
+            </div>
+            <div className="absolute inset-0 w-40 h-40 mx-auto bg-white/10 rounded-3xl blur-xl"></div>
           </div>
-          <h3 className="text-2xl font-bold text-foreground">Bitcoin-Native Payroll</h3>
-          <p className="text-muted-foreground">
-            Streamline your remote team payments with real-time Bitcoin conversions, 
-            automated payroll scheduling, and comprehensive expense management.
-          </p>
-          <div className="space-y-4 text-left">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Real-time BTC/USD conversions</span>
+          
+          {/* Main heading */}
+          <div className="space-y-4">
+            <h3 className="text-4xl font-bold text-white leading-tight">
+              Bitcoin-Native
+              <span className="block text-orange-100">Payroll Platform</span>
+            </h3>
+            <p className="text-orange-100 text-lg leading-relaxed max-w-md mx-auto">
+              Streamline your remote team payments with real-time Bitcoin conversions, 
+              automated payroll scheduling, and comprehensive expense management.
+            </p>
+          </div>
+          
+          {/* Feature list - properly centered */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="space-y-4">
+              <div className="flex items-center justify-start space-x-4">
+                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                <span className="text-white font-medium">Real-time BTC/USD conversions</span>
+              </div>
+              <div className="flex items-center justify-start space-x-4">
+                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                <span className="text-white font-medium">Automated salary scheduling</span>
+              </div>
+              <div className="flex items-center justify-start space-x-4">
+                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                <span className="text-white font-medium">Expense reimbursement workflow</span>
+              </div>
+              <div className="flex items-center justify-start space-x-4">
+                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                <span className="text-white font-medium">Comprehensive reporting</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Automated salary scheduling</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Expense reimbursement workflow</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Comprehensive reporting</span>
-            </div>
+          </div>
+          
+          {/* Trust indicator */}
+          <div className="flex items-center justify-center space-x-2 text-orange-100">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">Secure • Transparent • Lightning Fast</span>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Loader2, Download, FileText, Calendar } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";

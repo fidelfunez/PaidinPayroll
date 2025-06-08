@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Loader2, Plus, DollarSign, Users, Calendar, Bitcoin } from "lucide-react";
 import { useState } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";

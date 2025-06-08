@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Loader2, Plus, Clock, DollarSign, Bitcoin, Timer } from "lucide-react";
 import { useState } from "react";
 import { ExpenseModal } from "@/components/modals/expense-modal";

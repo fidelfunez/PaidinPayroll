@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Loader2, TrendingUp, Clock, DollarSign, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
@@ -335,6 +336,7 @@ export default function DashboardPage() {
             </Card>
           </div>
         </main>
+        <Footer />
       </div>
 
       <SchedulePayrollModal 

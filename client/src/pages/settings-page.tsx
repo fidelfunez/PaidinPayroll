@@ -42,11 +42,7 @@ export default function SettingsPage() {
 
   const profilePhotoMutation = useMutation({
     mutationFn: async (profilePhoto: string) => {
-      return await apiRequest({
-        url: "/api/user/profile-photo",
-        method: "PATCH",
-        body: { profilePhoto },
-      });
+      return await apiRequest("PATCH", "/api/user/profile-photo", { profilePhoto });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });

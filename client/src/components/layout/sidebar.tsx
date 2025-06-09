@@ -162,8 +162,9 @@ export function Sidebar() {
           ? 'translate-x-0' 
           : 'translate-x-0 lg:translate-x-0'
       }`}>
-      <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200 flex-shrink-0">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
+      <div className="flex items-center h-16 px-3 border-b border-slate-200 flex-shrink-0">
+        {/* Logo section */}
+        <div className="flex items-center space-x-3 flex-1">
           {/* Hide logo on mobile when collapsed, show on desktop */}
           {(!isMobile || !isCollapsed) && (
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
@@ -174,7 +175,9 @@ export function Sidebar() {
             <span className="text-xl font-bold text-foreground">Paidin</span>
           )}
         </div>
-        <div className="flex-shrink-0">
+        
+        {/* Toggle button */}
+        <div className="w-8 flex justify-center">
           <Button
             variant="ghost"
             size="sm"

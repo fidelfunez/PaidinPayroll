@@ -107,16 +107,16 @@ export default function DashboardPage() {
   const formatUsd = (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} ${isCollapsed ? 'ml-0' : 'ml-0'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <Header 
           title="Dashboard" 
           subtitle="Overview of your Bitcoin payroll operations"
           btcRate={stats?.currentBtcRate}
         />
         
-        <main className="p-6 space-y-6">
+        <main className="p-4 lg:p-6 space-y-6">
           {/* Welcome Banner */}
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
             <div className="flex items-center justify-between">

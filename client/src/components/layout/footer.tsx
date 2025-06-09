@@ -82,19 +82,19 @@ export function Footer() {
             <h3 className="font-semibold text-foreground mb-3">Support</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/help-center" className="text-muted-foreground hover:text-foreground transition-colors">
                   Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/api-documentation" className="text-muted-foreground hover:text-foreground transition-colors">
                   API Documentation
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/security" className="text-muted-foreground hover:text-foreground transition-colors">
                   Security
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/settings" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -112,12 +112,12 @@ export function Footer() {
               © {currentYear} Paidin. Built for the Bitcoin economy.
             </div>
             <div className="flex items-center space-x-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">
+              <Link href="/privacy-policy" className="hover:text-foreground transition-colors">
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-foreground transition-colors">
+              </Link>
+              <Link href="/terms-of-service" className="hover:text-foreground transition-colors">
                 Terms of Service
-              </a>
+              </Link>
               <div className="flex items-center space-x-1">
                 <span>Powered by</span>
                 <span className="text-orange-600 font-semibold">Bitcoin</span>

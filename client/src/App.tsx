@@ -21,6 +21,11 @@ import TimeTrackingPage from "@/pages/time-tracking-page";
 import TimeOffPage from "@/pages/time-off-page";
 import EmployeesPage from "@/pages/employees-page";
 import PlaceholderPage from "@/pages/placeholder-page";
+import HelpCenterPage from "@/pages/help-center-page";
+import ApiDocumentationPage from "@/pages/api-documentation-page";
+import SecurityPage from "@/pages/security-page";
+import PrivacyPolicyPage from "@/pages/privacy-policy-page";
+import TermsOfServicePage from "@/pages/terms-of-service-page";
 
 // Page wrapper components for placeholders
 const BenefitsPage = () => <PlaceholderPage title="Benefits" subtitle="View company benefits and perks" />;
@@ -63,6 +68,11 @@ function Router() {
       <ProtectedRoute path="/audit-logs" component={AuditLogsPage} />
       <ProtectedRoute path="/admin-messages" component={AdminMessagesPage} />
       <ProtectedRoute path="/bulk-payroll" component={BulkPayrollPage} />
+      <Route path="/help-center" component={HelpCenterPage} />
+      <Route path="/api-documentation" component={ApiDocumentationPage} />
+      <Route path="/security" component={SecurityPage} />
+      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+      <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

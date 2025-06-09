@@ -111,14 +111,14 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} flex flex-col`}>
         <Header 
           title="Messages" 
           subtitle="Communicate with your team and support"
         />
         
-        <main className="p-4 lg:p-6 pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[calc(100vh-240px)]">
+        <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full max-h-[calc(100vh-180px)]">
             {/* Conversations List */}
             <Card className="lg:col-span-1">
               <CardHeader>

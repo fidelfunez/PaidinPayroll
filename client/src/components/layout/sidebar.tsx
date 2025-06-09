@@ -174,7 +174,7 @@ export function Sidebar() {
             <span className="text-xl font-bold text-foreground">Paidin</span>
           )}
         </div>
-        <div className={`${isCollapsed ? 'mx-auto' : ''}`}>
+        <div className={`${isCollapsed && isMobile ? 'mx-auto' : ''}`}>
           <Button
             variant="ghost"
             size="sm"

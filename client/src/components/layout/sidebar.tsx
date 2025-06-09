@@ -164,9 +164,12 @@ export function Sidebar() {
       }`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200 flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-sm font-bold text-white">₿</span>
-          </div>
+          {/* Hide logo on mobile when collapsed, show on desktop */}
+          {(!isMobile || !isCollapsed) && (
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <span className="text-sm font-bold text-white">₿</span>
+            </div>
+          )}
           {!isCollapsed && (
             <span className="text-xl font-bold text-foreground">Paidin</span>
           )}

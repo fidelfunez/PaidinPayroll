@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Loader2, TrendingUp, Clock, DollarSign, Users } from "lucide-react";
+import { Loader2, TrendingUp, Clock, DollarSign, Users, CheckSquare, FileBarChart, Receipt, Wallet, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
@@ -82,13 +83,13 @@ export default function DashboardPage() {
     queryKey: ['/api/dashboard/stats'],
   });
 
-  // Rotate quotes every 5 minutes (300000 ms)
+  // Rotate quotes every 10 seconds for testing, then 5 minutes in production
   useEffect(() => {
     const quoteRotationInterval = setInterval(() => {
       setCurrentQuoteIndex((prevIndex) => 
         (prevIndex + 1) % bitcoinQuotes.length
       );
-    }, 300000); // 5 minutes
+    }, 10000); // 10 seconds for testing - change to 300000 for 5 minutes
 
     return () => clearInterval(quoteRotationInterval);
   }, []);
@@ -266,73 +267,137 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
+            {/* Role-based Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {user?.role === 'admin' && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-between h-auto p-4 hover:border-bitcoin-300 hover:bg-bitcoin-50"
-                    onClick={() => setShowPayrollModal(true)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-bitcoin-100 rounded-lg flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-bitcoin-600" />
+                {user?.role === 'admin' ? (
+                  // Admin Quick Actions
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-between h-auto p-4 hover:border-bitcoin-300 hover:bg-bitcoin-50"
+                      onClick={() => setShowPayrollModal(true)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-bitcoin-100 rounded-lg flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-bitcoin-600" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-foreground">Process Payroll</p>
+                          <p className="text-sm text-muted-foreground">Schedule salary payments</p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="font-medium text-foreground">Process Payroll</p>
-                        <p className="text-sm text-muted-foreground">Schedule salary payments</p>
+                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Button>
+                    
+                    <Link href="/approvals">
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-between h-auto p-4 hover:border-red-300 hover:bg-red-50"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <CheckSquare className="w-5 h-5 text-red-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-foreground">Review Approvals</p>
+                            <p className="text-sm text-muted-foreground">Pending requests</p>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Button>
+                    </Link>
+                    
+                    <Link href="/reports">
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-between h-auto p-4 hover:border-green-300 hover:bg-green-50"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <FileBarChart className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-foreground">Generate Reports</p>
+                            <p className="text-sm text-muted-foreground">Download analytics</p>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  // Employee Quick Actions
+                  <>
+                    <Button 
+                      variant="outline"
+                      className="w-full justify-between h-auto p-4 hover:border-blue-300 hover:bg-blue-50"
+                      onClick={() => setShowExpenseModal(true)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Receipt className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-foreground">Submit Expense</p>
+                          <p className="text-sm text-muted-foreground">File reimbursement claim</p>
+                        </div>
                       </div>
-                    </div>
-                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Button>
+                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Button>
+                    
+                    <Link href="/withdrawal-method">
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-between h-auto p-4 hover:border-orange-300 hover:bg-orange-50"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Wallet className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-foreground">Update Wallet</p>
+                            <p className="text-sm text-muted-foreground">Manage Bitcoin address</p>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Button>
+                    </Link>
+                    
+                    <Link href="/time-off">
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-between h-auto p-4 hover:border-purple-300 hover:bg-purple-50"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-foreground">Request Time Off</p>
+                            <p className="text-sm text-muted-foreground">Submit leave request</p>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Button>
+                    </Link>
+                  </>
                 )}
-                
-                <Button 
-                  variant="outline"
-                  className="w-full justify-between h-auto p-4 hover:border-blue-300 hover:bg-blue-50"
-                  onClick={() => setShowExpenseModal(true)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">New Reimbursement</p>
-                      <p className="text-sm text-muted-foreground">Submit expense claim</p>
-                    </div>
-                  </div>
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Button>
-                
-                <Button 
-                  variant="outline"
-                  className="w-full justify-between h-auto p-4 hover:border-green-300 hover:bg-green-50"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">Export Report</p>
-                      <p className="text-sm text-muted-foreground">Download CSV reports</p>
-                    </div>
-                  </div>
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Button>
               </CardContent>
             </Card>
           </div>

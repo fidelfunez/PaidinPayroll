@@ -127,9 +127,25 @@ export function Sidebar() {
   };
 
   return (
-    <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    } h-screen flex flex-col`}>
+    <>
+      {/* Mobile overlay */}
+      {!isCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 h-screen flex flex-col ${
+        isCollapsed 
+          ? 'w-16' 
+          : 'w-64'
+      } ${
+        isCollapsed ? '' : 'lg:translate-x-0'
+      } ${
+        isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
+      }`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
@@ -272,5 +288,6 @@ export function Sidebar() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -36,9 +36,9 @@ import MessagesPage from "@/pages/messages-page";
 import AdminWithdrawalMethodsPage from "@/pages/admin-withdrawal-methods-page";
 import AdminApprovalsPage from "@/pages/admin-approvals-page";
 import AdminMessagesPage from "@/pages/admin-messages-page";
-const PayslipsPage = () => <PlaceholderPage title="PDF Payslips" subtitle="Generate and download payslips" />;
+import PayslipsPage from "@/pages/payslips-page";
+import AuditLogsPage from "@/pages/audit-logs-page";
 const AdminTaxCompliancePage = () => <PlaceholderPage title="Tax & Compliance" subtitle="Review employee tax documents" />;
-const AuditLogsPage = () => <PlaceholderPage title="Audit Logs" subtitle="Track system changes and activities" />;
 const BulkPayrollPage = () => <PlaceholderPage title="Bulk Payroll" subtitle="Process multiple payments" />;
 
 function Router() {

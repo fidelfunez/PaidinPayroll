@@ -15,14 +15,15 @@ export default function AdminApprovalsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
 
-  const { data: pendingExpenses } = useQuery({
-    queryKey: ['/api/expenses'],
-    select: (data) => data.filter((expense: any) => expense.status === 'pending')
+  const { data: allExpenses } = useQuery({
+    queryKey: ['/api/expenses']
   });
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees']
   });
+
+  const pendingExpenses = Array.isArray(allExpenses) ? allExpenses.filter((expense: any) => expense.status === 'pending') : [];
 
   const pendingPayrollApprovals = [
     {
@@ -167,7 +168,12 @@ export default function AdminApprovalsPage() {
                               <User className="w-5 h-5 text-slate-500" />
                               <div>
                                 <h3 className="font-medium">
-                                  {employees?.find((emp: any) => emp.id === expense.userId)?.firstName} {employees?.find((emp: any) => emp.id === expense.userId)?.lastName}
+                                  {Array.isArray(employees) ? 
+                                    (() => {
+                                      const emp = employees.find((emp: any) => emp.id === expense.userId);
+                                      return emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : 'Employee';
+                                    })()
+                                    : 'Employee'}
                                 </h3>
                                 <p className="text-sm text-slate-600">{expense.description}</p>
                               </div>

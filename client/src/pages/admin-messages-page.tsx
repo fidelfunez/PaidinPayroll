@@ -322,7 +322,7 @@ export default function AdminMessagesPage() {
                     <div className="text-sm">
                       <p className="font-medium text-blue-900 mb-1">Broadcast Notice</p>
                       <p className="text-blue-700">
-                        This message will be sent to all {employees?.length || 0} employees. 
+                        This message will be sent to all {Array.isArray(employees) ? employees.length : 0} employees. 
                         They will receive both an in-app notification and an email.
                       </p>
                     </div>

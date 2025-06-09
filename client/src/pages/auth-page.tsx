@@ -13,6 +13,7 @@ import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PasswordStrength } from "@/components/ui/password-strength";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -342,6 +343,7 @@ export default function AuthPage() {
                               </p>
                             )}
                             <FormMessage />
+                            <PasswordStrength password={field.value || ""} className="mt-2" />
                           </FormItem>
                         )}
                       />

@@ -1,18 +1,9 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { User, Upload, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ProfileForm } from "@/components/profile/profile-form";
 
 export default function ProfilePage() {
   const { user } = useAuth();

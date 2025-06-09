@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   role: roleEnum("role").notNull().default('employee'),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
+  bio: text("bio"),
   btcAddress: text("btc_address"),
   monthlySalary: decimal("monthly_salary", { precision: 10, scale: 2 }),
   profilePhoto: text("profile_photo"), // Base64 encoded image data

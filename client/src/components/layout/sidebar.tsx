@@ -75,7 +75,7 @@ export function Sidebar() {
       id: 'overview',
       title: 'Overview',
       items: [
-        { name: 'Dashboard', href: '/', icon: TrendingUp },
+        { name: 'Dashboard', href: '/', icon: BarChart3 },
         { name: 'Employees', href: '/employees', icon: Users },
       ]
     },

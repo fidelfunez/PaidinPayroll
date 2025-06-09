@@ -32,7 +32,7 @@ import WithdrawalMethodPage from "@/pages/withdrawal-method-page";
 import NotificationsPage from "@/pages/notifications-page";
 
 // Page wrapper components for remaining placeholders
-const MessagesPage = () => <PlaceholderPage title="Messages" subtitle="Communication center" />;
+import MessagesPage from "@/pages/messages-page";
 const WithdrawalMethodsPage = () => <PlaceholderPage title="Withdrawal Methods" subtitle="Manage employee payout preferences" />;
 const ApprovalsPage = () => <PlaceholderPage title="Approvals" subtitle="Review and approve requests" />;
 const PayslipsPage = () => <PlaceholderPage title="PDF Payslips" subtitle="Generate and download payslips" />;

@@ -26,7 +26,7 @@ export default function MessagesPage() {
       lastMessage: "Your expense reimbursement has been approved",
       timestamp: "2 hours ago",
       unread: 2,
-      avatar: null
+      avatar: undefined as string | undefined
     },
     {
       id: 2,
@@ -35,7 +35,7 @@ export default function MessagesPage() {
       lastMessage: "Bitcoin payment schedule updated for next month",
       timestamp: "1 day ago",
       unread: 0,
-      avatar: null
+      avatar: undefined as string | undefined
     },
     {
       id: 3,
@@ -44,7 +44,7 @@ export default function MessagesPage() {
       lastMessage: "Thank you for reporting the issue. We'll investigate...",
       timestamp: "3 days ago",
       unread: 1,
-      avatar: null
+      avatar: undefined as string | undefined
     },
     {
       id: 4,
@@ -53,7 +53,7 @@ export default function MessagesPage() {
       lastMessage: "Great work on the project! Let's discuss next steps",
       timestamp: "1 week ago",
       unread: 0,
-      avatar: null
+      avatar: undefined as string | undefined
     }
   ];
 
@@ -147,7 +147,7 @@ export default function MessagesPage() {
                       }`}
                     >
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.avatar} />
+                        <AvatarImage src={conversation.avatar || undefined} />
                         <AvatarFallback>
                           {conversation.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>

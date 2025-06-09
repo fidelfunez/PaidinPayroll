@@ -118,7 +118,7 @@ export default function MessagesPage() {
         />
         
         <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full max-h-[calc(100vh-180px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)] max-h-[calc(100vh-300px)]">
             {/* Conversations List */}
             <Card className="lg:col-span-1">
               <CardHeader>

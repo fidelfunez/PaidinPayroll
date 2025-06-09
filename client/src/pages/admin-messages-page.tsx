@@ -178,7 +178,7 @@ export default function AdminMessagesPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto">
                     {conversations.map((conversation) => (
                       <div
                         key={conversation.id}

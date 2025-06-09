@@ -33,12 +33,12 @@ import NotificationsPage from "@/pages/notifications-page";
 
 // Page wrapper components for remaining placeholders
 import MessagesPage from "@/pages/messages-page";
-const WithdrawalMethodsPage = () => <PlaceholderPage title="Withdrawal Methods" subtitle="Manage employee payout preferences" />;
-const ApprovalsPage = () => <PlaceholderPage title="Approvals" subtitle="Review and approve requests" />;
+import AdminWithdrawalMethodsPage from "@/pages/admin-withdrawal-methods-page";
+import AdminApprovalsPage from "@/pages/admin-approvals-page";
+import AdminMessagesPage from "@/pages/admin-messages-page";
 const PayslipsPage = () => <PlaceholderPage title="PDF Payslips" subtitle="Generate and download payslips" />;
 const AdminTaxCompliancePage = () => <PlaceholderPage title="Tax & Compliance" subtitle="Review employee tax documents" />;
 const AuditLogsPage = () => <PlaceholderPage title="Audit Logs" subtitle="Track system changes and activities" />;
-const AdminMessagesPage = () => <PlaceholderPage title="Messages" subtitle="Communicate with employees" />;
 const BulkPayrollPage = () => <PlaceholderPage title="Bulk Payroll" subtitle="Process multiple payments" />;
 
 function Router() {
@@ -61,8 +61,8 @@ function Router() {
       <ProtectedRoute path="/notifications" component={NotificationsPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/employees" component={EmployeesPage} />
-      <ProtectedRoute path="/withdrawal-methods" component={WithdrawalMethodsPage} />
-      <ProtectedRoute path="/approvals" component={ApprovalsPage} />
+      <ProtectedRoute path="/withdrawal-methods" component={AdminWithdrawalMethodsPage} />
+      <ProtectedRoute path="/approvals" component={AdminApprovalsPage} />
       <ProtectedRoute path="/payslips" component={PayslipsPage} />
       <ProtectedRoute path="/admin-tax-compliance" component={AdminTaxCompliancePage} />
       <ProtectedRoute path="/audit-logs" component={AuditLogsPage} />

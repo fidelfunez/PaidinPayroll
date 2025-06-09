@@ -142,8 +142,11 @@ export function Sidebar() {
           ? 'w-16' 
           : 'w-64'
       } ${
-        // On mobile, show collapsed sidebar as small fixed bar, expanded as overlay
-        isCollapsed ? 'translate-x-0' : 'translate-x-0 lg:translate-x-0'
+        // On mobile: collapsed = visible as thin bar, expanded = overlay
+        // On desktop: always visible at proper position
+        isCollapsed 
+          ? 'translate-x-0' 
+          : 'translate-x-0 lg:translate-x-0'
       }`}>
       <div className="flex items-center justify-between h-16 px-3 border-b border-slate-200 flex-shrink-0">
         <div className="flex items-center space-x-3">

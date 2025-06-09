@@ -41,7 +41,7 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
       lastName: user?.lastName || "",
       email: user?.email || "",
       bio: user?.bio || "",
-      profilePhoto: user?.profilePhoto || "",
+      profilePhoto: user?.profilePhoto || undefined,
     },
   });
 
@@ -107,7 +107,7 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
             <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
               {selectedPhoto || user?.profilePhoto ? (
                 <img
-                  src={selectedPhoto || user?.profilePhoto}
+                  src={selectedPhoto || user?.profilePhoto || ""}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

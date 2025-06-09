@@ -127,7 +127,7 @@ export default function AdminMessagesPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-72'} flex flex-col`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} flex flex-col`}>
         <Header 
           title="Admin Messages" 
           subtitle={`${totalUnread} unread messages from employees`}

@@ -82,13 +82,13 @@ export default function DashboardPage() {
     queryKey: ['/api/dashboard/stats'],
   });
 
-  // Rotate quotes every 10 minutes (600000 ms)
+  // Rotate quotes every 5 minutes (300000 ms)
   useEffect(() => {
     const quoteRotationInterval = setInterval(() => {
       setCurrentQuoteIndex((prevIndex) => 
         (prevIndex + 1) % bitcoinQuotes.length
       );
-    }, 600000); // 10 minutes
+    }, 300000); // 5 minutes
 
     return () => clearInterval(quoteRotationInterval);
   }, []);

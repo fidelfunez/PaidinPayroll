@@ -26,12 +26,12 @@ import ApiDocumentationPage from "@/pages/api-documentation-page";
 import SecurityPage from "@/pages/security-page";
 import PrivacyPolicyPage from "@/pages/privacy-policy-page";
 import TermsOfServicePage from "@/pages/terms-of-service-page";
+import BenefitsPage from "@/pages/benefits-page";
+import TaxCompliancePage from "@/pages/tax-compliance-page";
+import WithdrawalMethodPage from "@/pages/withdrawal-method-page";
+import NotificationsPage from "@/pages/notifications-page";
 
-// Page wrapper components for placeholders
-const BenefitsPage = () => <PlaceholderPage title="Benefits" subtitle="View company benefits and perks" />;
-const TaxCompliancePage = () => <PlaceholderPage title="Tax & Compliance" subtitle="Manage tax documents and compliance" />;
-const WithdrawalMethodPage = () => <PlaceholderPage title="Withdrawal Method" subtitle="Set your payout preferences" />;
-const NotificationsPage = () => <PlaceholderPage title="Notifications" subtitle="View your notifications" />;
+// Page wrapper components for remaining placeholders
 const MessagesPage = () => <PlaceholderPage title="Messages" subtitle="Communication center" />;
 const WithdrawalMethodsPage = () => <PlaceholderPage title="Withdrawal Methods" subtitle="Manage employee payout preferences" />;
 const ApprovalsPage = () => <PlaceholderPage title="Approvals" subtitle="Review and approve requests" />;

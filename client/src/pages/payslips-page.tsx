@@ -133,7 +133,7 @@ This payslip confirms Bitcoin salary payment for the specified period.
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-72'}`}>
         <Header 
           title="PDF Payslips" 
           subtitle="Generate and manage employee payslips"

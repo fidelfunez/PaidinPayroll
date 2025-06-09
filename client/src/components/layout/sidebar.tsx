@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { 
   BarChart3, DollarSign, Receipt, FileText, Settings, LogOut, User, Menu, X,
@@ -15,6 +16,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { isCollapsed, toggleSidebar, expandedSections, toggleSection } = useSidebar();
+  const isMobile = useIsMobile();
 
   const employeeNavigation = [
     {
@@ -122,6 +124,18 @@ export function Sidebar() {
 
   const navigation = user?.role === 'admin' ? adminNavigation : employeeNavigation;
 
+  // Get main navigation items for mobile (first item from each section)
+  const getMobileNavigation = () => {
+    return navigation.map((section) => ({
+      id: section.id,
+      title: section.title,
+      icon: section.items[0].icon, // Use first item's icon as section icon
+      href: section.items[0].href, // Use first item's href as section link
+    }));
+  };
+
+  const mobileNavigation = getMobileNavigation();
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
@@ -170,58 +184,82 @@ export function Sidebar() {
       <div className="flex-1 overflow-hidden flex flex-col">
         <nav className="flex-1 overflow-y-auto px-2 py-4 sidebar-scroll">
           <div className="space-y-1">
-            {navigation.map((section) => (
-              <div key={section.id}>
-                {!isCollapsed && (
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 transition-colors"
-                  >
-                    <span>{section.title}</span>
-                    {expandedSections.has(section.id) ? (
-                      <ChevronDown className="w-3 h-3" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3" />
-                    )}
-                  </button>
-                )}
+            {/* Mobile: Show only main navigation icons */}
+            {isMobile && isCollapsed ? (
+              mobileNavigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href;
                 
-                {(isCollapsed || expandedSections.has(section.id)) && (
-                  <div className={`space-y-1 ${!isCollapsed ? 'ml-2' : ''}`}>
-                    {section.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = location === item.href;
-                      
-                      return (
-                        <Link key={item.name} href={item.href}>
-                          <div
-                            className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                              isCollapsed 
-                                ? 'px-3 py-3 justify-center' 
-                                : 'px-3 py-2'
-                            } ${
-                              isActive
-                                ? 'text-orange-700 bg-orange-50'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                            }`}
-                            title={isCollapsed ? item.name : undefined}
-                          >
-                            <Icon className={`w-4 h-4 ${isCollapsed ? '' : 'mr-3'}`} />
-                            {!isCollapsed && (
-                              <span className="truncate">{item.name}</span>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                {!isCollapsed && section.id !== 'settings' && (
-                  <div className="h-px bg-slate-200 mx-3 my-2" />
-                )}
-              </div>
-            ))}
+                return (
+                  <Link key={item.id} href={item.href}>
+                    <div
+                      className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer px-3 py-3 justify-center ${
+                        isActive
+                          ? 'text-orange-700 bg-orange-50'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`}
+                      title={item.title}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              /* Desktop: Show full navigation with sections */
+              navigation.map((section) => (
+                <div key={section.id}>
+                  {!isCollapsed && (
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 transition-colors"
+                    >
+                      <span>{section.title}</span>
+                      {expandedSections.has(section.id) ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3" />
+                      )}
+                    </button>
+                  )}
+                  
+                  {(isCollapsed || expandedSections.has(section.id)) && (
+                    <div className={`space-y-1 ${!isCollapsed ? 'ml-2' : ''}`}>
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location === item.href;
+                        
+                        return (
+                          <Link key={item.name} href={item.href}>
+                            <div
+                              className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                                isCollapsed 
+                                  ? 'px-3 py-3 justify-center' 
+                                  : 'px-3 py-2'
+                              } ${
+                                isActive
+                                  ? 'text-orange-700 bg-orange-50'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                              }`}
+                              title={isCollapsed ? item.name : undefined}
+                            >
+                              <Icon className={`w-4 h-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                              {!isCollapsed && (
+                                <span className="truncate">{item.name}</span>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {!isCollapsed && section.id !== 'settings' && (
+                    <div className="h-px bg-slate-200 mx-3 my-2" />
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </nav>
       </div>

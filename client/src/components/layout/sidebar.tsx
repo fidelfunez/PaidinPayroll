@@ -154,7 +154,7 @@ export function Sidebar() {
       <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 h-screen flex flex-col ${
         isCollapsed 
           ? 'w-16' 
-          : 'w-64'
+          : 'w-72'
       } ${
         // On mobile: collapsed = visible as thin bar, expanded = overlay
         // On desktop: always visible at proper position

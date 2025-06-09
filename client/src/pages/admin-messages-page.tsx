@@ -127,13 +127,13 @@ export default function AdminMessagesPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} flex flex-col`}>
         <Header 
           title="Admin Messages" 
           subtitle={`${totalUnread} unread messages from employees`}
         />
         
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6 overflow-hidden pb-4">
           {/* Message Type Selector */}
           <div className="mb-6">
             <Card>
@@ -161,7 +161,7 @@ export default function AdminMessagesPage() {
           </div>
 
           {messageType === 'individual' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)] max-h-[calc(100vh-300px)]">
               {/* Employee Conversations */}
               <Card className="lg:col-span-1">
                 <CardHeader>

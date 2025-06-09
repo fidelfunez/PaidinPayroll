@@ -94,7 +94,7 @@ export default function ReportsPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Sidebar />
-        <div className="ml-64">
+        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
           <Header 
             title="Reports" 
             subtitle="Access Denied"

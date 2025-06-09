@@ -118,7 +118,7 @@ export default function ReimbursementsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
         <Header 
           title="Reimbursements" 
           subtitle="Manage expense claims and Bitcoin payouts"

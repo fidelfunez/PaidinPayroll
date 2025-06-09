@@ -1,7 +1,10 @@
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   return (
     <footer className="bg-white border-t border-slate-200 mt-auto">
@@ -34,21 +37,43 @@ export function Footer() {
                   Dashboard
                 </Link>
               </li>
-              <li>
-                <Link href="/payroll" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Payroll
-                </Link>
-              </li>
-              <li>
-                <Link href="/reimbursements" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Reimbursements
-                </Link>
-              </li>
-              <li>
-                <Link href="/reports" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Reports
-                </Link>
-              </li>
+              {isAdmin ? (
+                <>
+                  <li>
+                    <Link href="/payroll" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Payroll
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/reimbursements" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Reimbursements
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/reports" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Reports
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link href="/my-expenses" className="text-muted-foreground hover:text-foreground transition-colors">
+                      My Expenses
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/time-tracking" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Time Tracking
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/profile" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Profile
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 

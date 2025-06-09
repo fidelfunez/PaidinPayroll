@@ -14,18 +14,7 @@ import {
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const { isCollapsed, toggleSidebar } = useSidebar();
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
-
-  const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId);
-    } else {
-      newExpanded.add(sectionId);
-    }
-    setExpandedSections(newExpanded);
-  };
+  const { isCollapsed, toggleSidebar, expandedSections, toggleSection } = useSidebar();
 
   const employeeNavigation = [
     {

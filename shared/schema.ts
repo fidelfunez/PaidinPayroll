@@ -98,10 +98,16 @@ export const expenseReimbursementsRelations = relations(expenseReimbursements, (
   }),
 }));
 
+// Password validation regex
+const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  password: z.string().min(8, "Password must be at least 8 characters")
+    .regex(strongPasswordRegex, "Password must contain at least 1 uppercase letter, 1 number, and 1 special character"),
 });
 
 export const insertPayrollPaymentSchema = createInsertSchema(payrollPayments).omit({

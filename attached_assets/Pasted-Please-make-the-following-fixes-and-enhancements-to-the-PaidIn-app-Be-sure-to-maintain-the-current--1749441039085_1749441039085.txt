@@ -1,0 +1,84 @@
+Please make the following fixes and enhancements to the PaidIn app. Be sure to maintain the current design system and UI/UX, especially the login and registration pages, which are complete and should remain unchanged.
+
+1. 🦶 Employee Footer Links
+On the employee side of the app:
+
+Remove or replace footer links that are restricted to admin users (e.g., Reports).
+
+Replace them with links relevant and accessible to employees only.
+
+2. 📂 Sidebar Navigation Behavior
+On both admin and employee sides:
+
+When a user clicks a category that contains sub-items, keep that category expanded even after navigating to a sub-item.
+
+Currently, the category collapses, which causes a poor UX.
+
+3. 👤 Profile Editing Consistency
+On the employee side, there are two profile editing areas:
+
+Settings > Profile
+
+Personal > Profile
+
+Ensure both:
+
+Sync seamlessly (editing one updates the same info as the other)
+
+Do not conflict or cause bugs/crashes
+
+4. ✅ Functional Features (Remove Mockups)
+Convert all mockups or placeholders into working features wherever possible.
+
+No more "coming soon" or fake buttons — make sure every feature is either functional or clearly marked and safely inactive.
+
+5. 🔐 Stronger Password Requirements
+Implement strong password validation:
+
+At least 1 uppercase letter
+
+At least 1 number
+
+At least 1 special character
+
+Also, prompt existing users without strong passwords to update their passwords before continuing use.
+
+6. 📱 Mobile Sidebar Bug
+Fix mobile layout issues where the sidebar overlaps the main screen (even when collapsed).
+
+Use a responsive drawer/menu approach if needed
+
+Ensure smooth navigation on all screen sizes
+
+7. 📄 Static Pages – Basic Placeholder Content
+Ensure the following pages/links are fully functional — even with basic placeholder content:
+
+Help Center
+
+API Documentation
+
+Security
+
+Settings
+
+Privacy Policy
+
+Terms of Service
+
+Each should have a separate route/page and contain at least minimal placeholder text.
+
+8. 💬 Bitcoin Quote Rotation
+Fix the issue with the rotating Bitcoin quotes (e.g., from Hal Finney, Satoshi, Andreas).
+
+These quotes should update every 10 minutes
+
+Confirm the backend logic is working correctly and triggering updates
+
+Quotes should be displayed dynamically and visibly rotate
+
+✅ Final Notes:
+
+Keep the orange-themed styling, animations, layout, and sidebar intact.
+
+You may group navigation items logically to reduce clutter but retain full functionality.
+

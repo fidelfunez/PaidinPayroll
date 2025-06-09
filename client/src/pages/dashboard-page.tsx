@@ -118,41 +118,41 @@ export default function DashboardPage() {
         
         <main className="p-4 lg:p-6 space-y-6">
           {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">₿</span>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-xl lg:text-2xl">₿</span>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">
-                      Welcome back, {user?.firstName}!
+                    <h2 className="text-xl lg:text-2xl font-bold">
+                      Welcome back, {user?.firstName || 'User'}!
                     </h2>
-                    <p className="text-orange-100">
+                    <p className="text-orange-100 text-sm lg:text-base">
                       Ready to revolutionize payroll with Bitcoin
                     </p>
                   </div>
                 </div>
-                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                  <p className="text-lg font-medium mb-2">
+                <div className="bg-white/10 rounded-lg p-3 lg:p-4 backdrop-blur-sm">
+                  <p className="text-base lg:text-lg font-medium mb-2 leading-relaxed">
                     "{currentQuote.quote}"
                   </p>
-                  <p className="text-orange-100 text-sm">
+                  <p className="text-orange-100 text-xs lg:text-sm">
                     — {currentQuote.author} • {currentQuote.tagline}
                   </p>
                 </div>
               </div>
               <div className="hidden lg:block">
-                <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center">
-                  <span className="text-6xl">₿</span>
+                <div className="w-24 h-24 lg:w-32 lg:h-32 bg-white/10 rounded-full flex items-center justify-center">
+                  <span className="text-4xl lg:text-6xl">₿</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Balance Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">

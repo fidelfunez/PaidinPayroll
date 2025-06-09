@@ -174,14 +174,16 @@ export function Sidebar() {
             <span className="text-xl font-bold text-foreground">Paidin</span>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="h-8 w-8 p-0"
-        >
-          {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-        </Button>
+        <div className={`${isCollapsed ? 'mx-auto' : ''}`}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="h-8 w-8 p-0"
+          >
+            {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          </Button>
+        </div>
       </div>
       
       <div className="flex-1 overflow-hidden flex flex-col">

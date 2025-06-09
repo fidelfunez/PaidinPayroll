@@ -134,7 +134,8 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <div className="bg-white/10 rounded-lg p-3 lg:p-4 backdrop-blur-sm">
+                {/* Bitcoin Quotes - Desktop Only */}
+                <div className="hidden lg:block bg-white/10 rounded-lg p-3 lg:p-4 backdrop-blur-sm">
                   <p className="text-base lg:text-lg font-medium mb-2 leading-relaxed">
                     "{currentQuote.quote}"
                   </p>

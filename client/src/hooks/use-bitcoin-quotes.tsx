@@ -52,13 +52,13 @@ const BitcoinQuotesContext = createContext<BitcoinQuotesContextType | null>(null
 export function BitcoinQuotesProvider({ children }: { children: ReactNode }) {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
-  // Rotate quotes every 30 seconds for testing, then 5 minutes in production
+  // Rotate quotes every 2.5 minutes across entire app session
   useEffect(() => {
     const quoteRotationInterval = setInterval(() => {
       setCurrentQuoteIndex((prevIndex) => 
         (prevIndex + 1) % bitcoinQuotes.length
       );
-    }, 30000); // 30 seconds for testing
+    }, 150000); // 2.5 minutes
 
     return () => clearInterval(quoteRotationInterval);
   }, []);

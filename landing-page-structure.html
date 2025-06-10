@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaidIn - Bitcoin-Native Payroll & Reimbursement Platform</title>
+    <meta name="description" content="Streamline your business finances with Bitcoin. Modern payroll, expense reimbursements, and financial operations built for the Bitcoin economy.">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="PaidIn - Bitcoin-Native Payroll Platform">
+    <meta property="og:description" content="Revolutionary payroll and reimbursement platform designed for Bitcoin-first businesses.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-landing-page.replit.app">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bitcoin: '#f97316',
+                        'bitcoin-dark': '#ea580c',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+        
+        .bitcoin-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.05' fill-rule='nonzero'%3E%3Cpath d='M30 30c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20zm20 0c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-bitcoin rounded-lg flex items-center justify-center">
+                        <span class="text-xl font-bold text-white">₿</span>
+                    </div>
+                    <span class="text-xl font-bold text-slate-900">PaidIn</span>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-slate-600 hover:text-slate-900 transition-colors">Features</a>
+                    <a href="#how-it-works" class="text-slate-600 hover:text-slate-900 transition-colors">How It Works</a>
+                    <a href="#pricing" class="text-slate-600 hover:text-slate-900 transition-colors">Pricing</a>
+                    <a href="#contact" class="text-slate-600 hover:text-slate-900 transition-colors">Contact</a>
+                </div>
+                
+                <!-- CTA Buttons -->
+                <div class="flex items-center space-x-3">
+                    <a href="https://your-app.replit.app/auth" class="text-slate-600 hover:text-slate-900 transition-colors">Sign In</a>
+                    <a href="https://your-app.replit.app/auth" class="bg-bitcoin hover:bg-bitcoin-dark text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg bitcoin-pattern relative overflow-hidden">
+        <div class="absolute inset-0 bg-black/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+            <div class="text-center fade-in">
+                <h1 class="text-4xl lg:text-6xl font-bold text-white mb-6">
+                    Bitcoin-Native Payroll
+                    <span class="block">Made Simple</span>
+                </h1>
+                <p class="text-xl lg:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto">
+                    Streamline your business finances with the world's first comprehensive Bitcoin payroll and reimbursement platform. Built for the future of money.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="https://your-app.replit.app/auth" class="bg-white text-bitcoin px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-50 transition-colors">
+                        Start Free Trial
+                    </a>
+                    <a href="#demo" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors">
+                        Watch Demo
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Floating Bitcoin Icons -->
+            <div class="absolute top-20 left-10 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+                <span class="text-white">₿</span>
+            </div>
+            <div class="absolute bottom-20 right-10 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center animate-bounce" style="animation-delay: 1s;">
+                <span class="text-white text-sm">₿</span>
+            </div>
+            <div class="absolute top-40 right-20 w-4 h-4 bg-white/20 rounded-full flex items-center justify-center animate-bounce" style="animation-delay: 2s;">
+                <span class="text-white text-xs">₿</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+                    Everything You Need for Bitcoin Payroll
+                </h2>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                    From automated payroll processing to expense reimbursements, PaidIn handles all your Bitcoin-native financial operations.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">Automated Payroll</h3>
+                    <p class="text-slate-600">
+                        Schedule and process Bitcoin payments automatically with real-time rate conversion and transparent reporting.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">Expense Management</h3>
+                    <p class="text-slate-600">
+                        Streamline reimbursements with instant Bitcoin payments and comprehensive expense tracking for your team.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">Real-time Analytics</h3>
+                    <p class="text-slate-600">
+                        Track Bitcoin holdings, payroll costs, and financial metrics with powerful dashboards and reporting tools.
+                    </p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">Enterprise Security</h3>
+                    <p class="text-slate-600">
+                        Bank-level security with multi-signature wallets, audit trails, and compliance-ready documentation.
+                    </p>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">Team Management</h3>
+                    <p class="text-slate-600">
+                        Role-based access controls, employee onboarding, and comprehensive user management for growing teams.
+                    </p>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="bg-slate-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-bitcoin rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-3">API Integration</h3>
+                    <p class="text-slate-600">
+                        Connect with existing systems through our comprehensive API and webhook integrations for seamless workflows.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+                    Simple, Powerful, Bitcoin-Native
+                </h2>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                    Get started in minutes with our intuitive platform designed for modern businesses embracing Bitcoin.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-bitcoin rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-4">Connect Your Wallet</h3>
+                    <p class="text-slate-600">
+                        Securely connect your Bitcoin wallet and set up your organization's payment infrastructure in minutes.
+                    </p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-bitcoin rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-4">Add Your Team</h3>
+                    <p class="text-slate-600">
+                        Invite employees, set roles and permissions, and configure payroll schedules with our intuitive dashboard.
+                    </p>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-bitcoin rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-4">Automate Payments</h3>
+                    <p class="text-slate-600">
+                        Schedule recurring payroll, process reimbursements, and track all transactions with complete transparency.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+                    Trusted by Bitcoin Businesses
+                </h2>
+                <p class="text-xl text-slate-600">
+                    Join hundreds of companies already using PaidIn for their Bitcoin payroll operations.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
+                <!-- Placeholder for company logos -->
+                <div class="bg-slate-100 h-16 rounded-lg flex items-center justify-center">
+                    <span class="text-slate-400 font-medium">Company Logo</span>
+                </div>
+                <div class="bg-slate-100 h-16 rounded-lg flex items-center justify-center">
+                    <span class="text-slate-400 font-medium">Company Logo</span>
+                </div>
+                <div class="bg-slate-100 h-16 rounded-lg flex items-center justify-center">
+                    <span class="text-slate-400 font-medium">Company Logo</span>
+                </div>
+                <div class="bg-slate-100 h-16 rounded-lg flex items-center justify-center">
+                    <span class="text-slate-400 font-medium">Company Logo</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+                    Simple, Transparent Pricing
+                </h2>
+                <p class="text-xl text-slate-600">
+                    Choose the plan that scales with your business. All plans include core features.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Starter</h3>
+                    <p class="text-slate-600 mb-6">Perfect for small teams getting started with Bitcoin payroll.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-slate-900">$29</span>
+                        <span class="text-slate-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Up to 10 employees
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Basic payroll automation
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Expense reimbursements
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Email support
+                        </li>
+                    </ul>
+                    <a href="https://your-app.replit.app/auth" class="block w-full bg-slate-100 text-slate-900 text-center py-3 rounded-lg font-medium hover:bg-slate-200 transition-colors">
+                        Start Free Trial
+                    </a>
+                </div>
+                
+                <!-- Professional Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-lg border-2 border-bitcoin relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-bitcoin text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Professional</h3>
+                    <p class="text-slate-600 mb-6">Ideal for growing companies with advanced needs.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-slate-900">$99</span>
+                        <span class="text-slate-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Up to 50 employees
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Advanced analytics
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            API access
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Priority support
+                        </li>
+                    </ul>
+                    <a href="https://your-app.replit.app/auth" class="block w-full bg-bitcoin text-white text-center py-3 rounded-lg font-medium hover:bg-bitcoin-dark transition-colors">
+                        Start Free Trial
+                    </a>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Enterprise</h3>
+                    <p class="text-slate-600 mb-6">Custom solutions for large organizations.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-slate-900">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Unlimited employees
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Custom integrations
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Dedicated support
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-bitcoin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            On-premise deployment
+                        </li>
+                    </ul>
+                    <a href="#contact" class="block w-full bg-slate-100 text-slate-900 text-center py-3 rounded-lg font-medium hover:bg-slate-200 transition-colors">
+                        Contact Sales
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="gradient-bg py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl lg:text-5xl font-bold text-white mb-6">
+                Ready to Revolutionize Your Payroll?
+            </h2>
+            <p class="text-xl text-orange-100 mb-8">
+                Join the Bitcoin economy with confidence. Start your free trial today and experience the future of business finance.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://your-app.replit.app/auth" class="bg-white text-bitcoin px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-50 transition-colors">
+                    Start Free Trial
+                </a>
+                <a href="#contact" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors">
+                    Schedule Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-slate-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 bg-bitcoin rounded-lg flex items-center justify-center">
+                            <span class="text-xl font-bold text-white">₿</span>
+                        </div>
+                        <span class="text-xl font-bold">PaidIn</span>
+                    </div>
+                    <p class="text-slate-400 mb-6 max-w-md">
+                        The world's first comprehensive Bitcoin-native payroll and reimbursement platform. Built for businesses embracing the future of money.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Product Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Product</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-slate-400 hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#pricing" class="text-slate-400 hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">API Docs</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">Integration</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">Security</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors">Privacy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-slate-700 mt-12 pt-8 text-center">
+                <p class="text-slate-400">
+                    © 2024 PaidIn. All rights reserved. Built for the Bitcoin economy.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Simple JavaScript for smooth scrolling -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

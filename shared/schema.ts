@@ -6,6 +6,7 @@ import { relations } from "drizzle-orm";
 // Enums
 export const roleEnum = pgEnum('role', ['admin', 'employee']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processing', 'completed', 'failed']);
+export const withdrawalMethodEnum = pgEnum('withdrawal_method', ['bitcoin', 'bank_transfer', 'not_set']);
 export const expenseStatusEnum = pgEnum('expense_status', ['pending', 'approved', 'rejected', 'paid']);
 export const transactionTypeEnum = pgEnum('transaction_type', ['salary', 'reimbursement', 'bonus']);
 
@@ -20,6 +21,8 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   bio: text("bio"),
   btcAddress: text("btc_address"),
+  withdrawalMethod: withdrawalMethodEnum("withdrawal_method").notNull().default('not_set'),
+  bankAccountDetails: text("bank_account_details"), // JSON string for bank details
   monthlySalary: decimal("monthly_salary", { precision: 10, scale: 2 }),
   profilePhoto: text("profile_photo"), // Base64 encoded image data
   isActive: boolean("is_active").notNull().default(true),
@@ -37,6 +40,9 @@ export const payrollPayments = pgTable("payroll_payments", {
   scheduledDate: timestamp("scheduled_date").notNull(),
   paidDate: timestamp("paid_date"),
   transactionHash: text("transaction_hash"),
+  lnbitsPaymentHash: text("lnbits_payment_hash"),
+  lnbitsInvoiceId: text("lnbits_invoice_id"),
+  processingNotes: text("processing_notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

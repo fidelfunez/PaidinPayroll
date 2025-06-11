@@ -35,6 +35,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   getEmployees(): Promise<User[]>;
+  getEmployeesWithWithdrawalMethods(): Promise<User[]>;
 
   // Payroll management
   createPayrollPayment(payment: InsertPayrollPayment): Promise<PayrollPayment>;

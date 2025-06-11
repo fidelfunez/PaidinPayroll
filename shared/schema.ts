@@ -73,36 +73,6 @@ export const session = pgTable("session", {
   expire: timestamp("expire").notNull(),
 });
 
-// Conversations table
-export const conversations = pgTable("conversations", {
-  id: serial("id").primaryKey(),
-  title: text("title"),
-  type: text("type").notNull().default('individual'), // 'individual', 'group', 'broadcast'
-  createdBy: integer("created_by").notNull().references(() => users.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// Messages table
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
-  senderId: integer("sender_id").notNull().references(() => users.id),
-  content: text("content").notNull(),
-  messageType: text("message_type").notNull().default('text'), // 'text', 'broadcast'
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  readAt: timestamp("read_at"),
-});
-
-// Conversation participants table
-export const conversationParticipants = pgTable("conversation_participants", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  joinedAt: timestamp("joined_at").notNull().defaultNow(),
-  lastReadAt: timestamp("last_read_at"),
-});
-
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   payrollPayments: many(payrollPayments),
@@ -126,37 +96,6 @@ export const expenseReimbursementsRelations = relations(expenseReimbursements, (
     fields: [expenseReimbursements.approvedBy],
     references: [users.id],
     relationName: "approver",
-  }),
-}));
-
-export const conversationsRelations = relations(conversations, ({ one, many }) => ({
-  creator: one(users, {
-    fields: [conversations.createdBy],
-    references: [users.id],
-  }),
-  messages: many(messages),
-  participants: many(conversationParticipants),
-}));
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  conversation: one(conversations, {
-    fields: [messages.conversationId],
-    references: [conversations.id],
-  }),
-  sender: one(users, {
-    fields: [messages.senderId],
-    references: [users.id],
-  }),
-}));
-
-export const conversationParticipantsRelations = relations(conversationParticipants, ({ one }) => ({
-  conversation: one(conversations, {
-    fields: [conversationParticipants.conversationId],
-    references: [conversations.id],
-  }),
-  user: one(users, {
-    fields: [conversationParticipants.userId],
-    references: [users.id],
   }),
 }));
 
@@ -195,24 +134,6 @@ export const insertBtcRateHistorySchema = createInsertSchema(btcRateHistory).omi
   timestamp: true,
 });
 
-export const insertConversationSchema = createInsertSchema(conversations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  createdAt: true,
-  readAt: true,
-});
-
-export const insertConversationParticipantSchema = createInsertSchema(conversationParticipants).omit({
-  id: true,
-  joinedAt: true,
-  lastReadAt: true,
-});
-
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -222,9 +143,3 @@ export type ExpenseReimbursement = typeof expenseReimbursements.$inferSelect;
 export type InsertExpenseReimbursement = z.infer<typeof insertExpenseReimbursementSchema>;
 export type BtcRateHistory = typeof btcRateHistory.$inferSelect;
 export type InsertBtcRateHistory = z.infer<typeof insertBtcRateHistorySchema>;
-export type Conversation = typeof conversations.$inferSelect;
-export type InsertConversation = z.infer<typeof insertConversationSchema>;
-export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type ConversationParticipant = typeof conversationParticipants.$inferSelect;
-export type InsertConversationParticipant = z.infer<typeof insertConversationParticipantSchema>;

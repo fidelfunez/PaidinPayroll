@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -13,159 +13,115 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageSquare, Send, Search, Plus, User, Users, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
-import { socketManager } from "@/lib/socket";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 export default function AdminMessagesPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
-  const { toast } = useToast();
-  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState(1);
   const [newMessage, setNewMessage] = useState("");
   const [messageType, setMessageType] = useState("individual");
-  const [broadcastSubject, setBroadcastSubject] = useState("");
-  const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees']
   });
 
-  // Fetch conversations for admin
-  const { data: conversations = [], refetch: refetchConversations } = useQuery({
-    queryKey: ['/api/conversations'],
-    enabled: !!user,
-  });
-
-  // Fetch messages for selected conversation
-  const { data: messages = [], refetch: refetchMessages } = useQuery({
-    queryKey: [`/api/conversations/${selectedConversation}/messages`],
-    enabled: !!selectedConversation,
-  });
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: { conversationId: number; content: string }) => {
-      return apiRequest(`/api/conversations/${data.conversationId}/messages`, {
-        method: 'POST',
-        body: data,
-      });
+  const conversations = [
+    {
+      id: 1,
+      employeeName: "Sarah Johnson",
+      role: "HR Manager",
+      lastMessage: "Thank you for approving my expense reimbursement",
+      timestamp: "1 hour ago",
+      unread: 0,
+      priority: "normal",
+      avatar: undefined as string | undefined
     },
-    onSuccess: () => {
-      setNewMessage("");
-      refetchMessages();
+    {
+      id: 2,
+      employeeName: "Mike Chen",
+      role: "Finance Director", 
+      lastMessage: "Could you review my salary adjustment request?",
+      timestamp: "3 hours ago",
+      unread: 1,
+      priority: "high",
+      avatar: undefined as string | undefined
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
+    {
+      id: 3,
+      employeeName: "Alex Rodriguez",
+      role: "Team Lead",
+      lastMessage: "The new withdrawal method has been set up successfully",
+      timestamp: "1 day ago",
+      unread: 0,
+      priority: "normal",
+      avatar: undefined as string | undefined
     },
-  });
-
-  // Broadcast message mutation
-  const broadcastMutation = useMutation({
-    mutationFn: async (data: { subject: string; content: string }) => {
-      return apiRequest('/api/conversations/broadcast', {
-        method: 'POST',
-        body: data,
-      });
-    },
-    onSuccess: () => {
-      setBroadcastSubject("");
-      setBroadcastMessage("");
-      toast({
-        title: "Success",
-        description: "Broadcast message sent to all employees",
-      });
-      refetchConversations();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to send broadcast message",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Initialize WebSocket connection
-  useEffect(() => {
-    if (!user) return;
-
-    const socket = socketManager.connect(user.id);
-
-    socketManager.onNewMessage((message) => {
-      if (message.conversationId === selectedConversation) {
-        refetchMessages();
-      }
-      refetchConversations();
-    });
-
-    socketManager.onConversationUpdated(() => {
-      refetchConversations();
-    });
-
-    return () => {
-      socketManager.offAllListeners();
-      socketManager.disconnect();
-    };
-  }, [user, selectedConversation, refetchMessages, refetchConversations]);
-
-  useEffect(() => {
-    if (selectedConversation) {
-      socketManager.joinConversation(selectedConversation);
+    {
+      id: 4,
+      employeeName: "Jennifer Davis",
+      role: "Developer",
+      lastMessage: "I have a question about my Bitcoin payment schedule",
+      timestamp: "2 days ago",
+      unread: 2,
+      priority: "normal",
+      avatar: undefined as string | undefined
     }
-  }, [selectedConversation]);
+  ];
 
-  const selectedConv = conversations.find((c: any) => c.id === selectedConversation);
-  const totalUnread = conversations.reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0);
+  const messages = [
+    {
+      id: 1,
+      senderId: 2,
+      senderName: "Mike Chen",
+      content: "Hi, I hope you're doing well. I wanted to follow up on my salary adjustment request that I submitted last week.",
+      timestamp: "2:30 PM",
+      isOwn: false
+    },
+    {
+      id: 2,
+      senderId: 1,
+      senderName: "You",
+      content: "Hi Mike! I received your request and I'm currently reviewing it with the finance team. The promotion to Senior Developer definitely warrants a salary adjustment.",
+      timestamp: "2:45 PM",
+      isOwn: true
+    },
+    {
+      id: 3,
+      senderId: 2,
+      senderName: "Mike Chen",
+      content: "Thank you for the quick response! I really appreciate it. Do you have an estimated timeline for when this might be processed?",
+      timestamp: "2:47 PM",
+      isOwn: false
+    },
+    {
+      id: 4,
+      senderId: 1,
+      senderName: "You",
+      content: "I expect to have a decision by Friday this week. The new salary would be effective from the next payroll cycle. I'll keep you updated on the progress.",
+      timestamp: "3:15 PM",
+      isOwn: true
+    },
+    {
+      id: 5,
+      senderId: 2,
+      senderName: "Mike Chen",
+      content: "Perfect! That timeline works great for me. Thanks again for your help with this process.",
+      timestamp: "3:17 PM",
+      isOwn: false
+    }
+  ];
+
+  const selectedConv = conversations.find(c => c.id === selectedConversation);
+  const totalUnread = conversations.reduce((sum, conv) => sum + conv.unread, 0);
 
   const sendMessage = () => {
-    if (!newMessage.trim() || !selectedConversation) return;
-    
-    sendMessageMutation.mutate({
-      conversationId: selectedConversation,
-      content: newMessage.trim(),
-    });
+    if (!newMessage.trim()) return;
+    console.log("Sending message:", newMessage);
+    setNewMessage("");
   };
 
   const sendBroadcast = () => {
-    if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in both subject and message",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    broadcastMutation.mutate({
-      subject: broadcastSubject.trim(),
-      content: broadcastMessage.trim(),
-    });
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const formatLastMessageTime = (timestamp: string) => {
-    const now = new Date();
-    const messageTime = new Date(timestamp);
-    const diffInHours = (now.getTime() - messageTime.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 1) {
-      return `${Math.floor(diffInHours * 60)} minutes ago`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} hours ago`;
-    } else {
-      return `${Math.floor(diffInHours / 24)} days ago`;
-    }
+    console.log("Sending broadcast message to all employees");
   };
 
   return (
@@ -223,7 +179,7 @@ export default function AdminMessagesPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto">
-                    {conversations.map((conversation: any) => (
+                    {conversations.map((conversation) => (
                       <div
                         key={conversation.id}
                         onClick={() => setSelectedConversation(conversation.id)}
@@ -232,39 +188,28 @@ export default function AdminMessagesPage() {
                         }`}
                       >
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={conversation.otherUser?.profilePhoto || undefined} />
+                          <AvatarImage src={conversation.avatar} />
                           <AvatarFallback>
-                            {conversation.otherUser ? 
-                              `${conversation.otherUser.firstName[0]}${conversation.otherUser.lastName[0]}` : 
-                              conversation.title?.[0] || 'C'
-                            }
+                            {conversation.employeeName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-medium truncate">
-                              {conversation.type === 'broadcast' ? 
-                                conversation.title : 
-                                `${conversation.otherUser?.firstName} ${conversation.otherUser?.lastName}`
-                              }
-                            </h3>
+                            <h3 className="font-medium truncate">{conversation.employeeName}</h3>
                             <div className="flex items-center gap-2">
-                              {conversation.unreadCount > 0 && (
+                              {conversation.priority === 'high' && (
+                                <AlertCircle className="w-4 h-4 text-red-500" />
+                              )}
+                              {conversation.unread > 0 && (
                                 <Badge variant="default" className="text-xs">
-                                  {conversation.unreadCount}
+                                  {conversation.unread}
                                 </Badge>
                               )}
                             </div>
                           </div>
-                          <p className="text-xs text-slate-500">
-                            {conversation.type === 'broadcast' ? 'Broadcast Message' : conversation.otherUser?.role}
-                          </p>
-                          <p className="text-sm text-slate-600 truncate">
-                            {conversation.lastMessage || 'No messages yet'}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {conversation.lastMessageTime ? formatLastMessageTime(conversation.lastMessageTime) : ''}
-                          </p>
+                          <p className="text-xs text-slate-500">{conversation.role}</p>
+                          <p className="text-sm text-slate-600 truncate">{conversation.lastMessage}</p>
+                          <p className="text-xs text-slate-400 mt-1">{conversation.timestamp}</p>
                         </div>
                       </div>
                     ))}
@@ -290,46 +235,41 @@ export default function AdminMessagesPage() {
 
                 {/* Messages */}
                 <CardContent className="flex-1 overflow-y-auto space-y-4">
-                  {messages.map((message: any) => {
-                    const isOwn = message.senderId === user?.id;
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${isOwn ? 'justify-end' : 'justify-start'}`}
-                      >
-                        {!isOwn && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={message.sender.profilePhoto || undefined} />
-                            <AvatarFallback>
-                              {`${message.sender.firstName[0]}${message.sender.lastName[0]}`}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-first' : ''}`}>
-                          <div
-                            className={`p-3 rounded-lg ${
-                              isOwn
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-slate-100 text-slate-900'
-                            }`}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                          </div>
-                          <p className={`text-xs text-slate-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
-                            {formatTimestamp(message.createdAt)}
-                          </p>
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex gap-3 ${message.isOwn ? 'justify-end' : 'justify-start'}`}
+                    >
+                      {!message.isOwn && (
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback>
+                            {message.senderName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className={`max-w-xs lg:max-w-md ${message.isOwn ? 'order-first' : ''}`}>
+                        <div
+                          className={`p-3 rounded-lg ${
+                            message.isOwn
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-slate-100 text-slate-900'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
                         </div>
-                        {isOwn && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={user?.profilePhoto || undefined} />
-                            <AvatarFallback>
-                              <User className="w-4 h-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                        <p className={`text-xs text-slate-400 mt-1 ${message.isOwn ? 'text-right' : 'text-left'}`}>
+                          {message.timestamp}
+                        </p>
                       </div>
-                    );
-                  })}
+                      {message.isOwn && (
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback>
+                            <User className="w-4 h-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
                 </CardContent>
 
                 {/* Message Input */}
@@ -367,19 +307,13 @@ export default function AdminMessagesPage() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Subject</label>
-                  <Input 
-                    placeholder="Enter message subject..."
-                    value={broadcastSubject}
-                    onChange={(e) => setBroadcastSubject(e.target.value)}
-                  />
+                  <Input placeholder="Enter message subject..." />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Message</label>
                   <Textarea 
                     placeholder="Enter your company-wide message..."
                     className="min-h-[200px]"
-                    value={broadcastMessage}
-                    onChange={(e) => setBroadcastMessage(e.target.value)}
                   />
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -394,12 +328,8 @@ export default function AdminMessagesPage() {
                     </div>
                   </div>
                 </div>
-                <Button 
-                  onClick={sendBroadcast} 
-                  className="w-full"
-                  disabled={!broadcastSubject.trim() || !broadcastMessage.trim() || broadcastMutation.isPending}
-                >
-                  {broadcastMutation.isPending ? 'Sending...' : 'Send to All Employees'}
+                <Button onClick={sendBroadcast} className="w-full">
+                  Send to All Employees
                 </Button>
               </CardContent>
             </Card>

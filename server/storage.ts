@@ -3,28 +3,19 @@ import {
   payrollPayments, 
   expenseReimbursements, 
   btcRateHistory,
-  session,
-  conversations,
-  messages,
-  conversationParticipants,
   type User, 
-  type InsertUser, 
-  type PayrollPayment, 
+  type InsertUser,
+  type PayrollPayment,
   type InsertPayrollPayment,
-  type ExpenseReimbursement, 
+  type ExpenseReimbursement,
   type InsertExpenseReimbursement,
   type BtcRateHistory,
-  type InsertBtcRateHistory,
-  type Conversation,
-  type InsertConversation,
-  type Message,
-  type InsertMessage,
-  type ConversationParticipant,
-  type InsertConversationParticipant
+  type InsertBtcRateHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, gte, lte, ne, sql } from "drizzle-orm";
-import expressSession from "express-session";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
+import session from "express-session";
+import * as expressSession from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -57,16 +48,6 @@ export interface IStorage {
   getBtcRateHistory(startDate?: Date, endDate?: Date): Promise<BtcRateHistory[]>;
 
   sessionStore: expressSession.Store;
-
-  // Chat methods
-  createConversation(conversation: InsertConversation): Promise<Conversation>;
-  getConversations(userId: number): Promise<any[]>;
-  getConversationById(id: number): Promise<any>;
-  addConversationParticipant(participant: InsertConversationParticipant): Promise<ConversationParticipant>;
-  createMessage(message: InsertMessage): Promise<Message>;
-  getMessages(conversationId: number): Promise<any[]>;
-  markMessageAsRead(messageId: number, userId: number): Promise<void>;
-  updateConversationTimestamp(conversationId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -127,11 +108,11 @@ export class DatabaseStorage implements IStorage {
 
   async getPayrollPayments(userId?: number): Promise<PayrollPayment[]> {
     const query = db.select().from(payrollPayments).orderBy(desc(payrollPayments.createdAt));
-
+    
     if (userId) {
       return await query.where(eq(payrollPayments.userId, userId));
     }
-
+    
     return await query;
   }
 
@@ -163,11 +144,11 @@ export class DatabaseStorage implements IStorage {
 
   async getExpenseReimbursements(userId?: number): Promise<ExpenseReimbursement[]> {
     const query = db.select().from(expenseReimbursements).orderBy(desc(expenseReimbursements.createdAt));
-
+    
     if (userId) {
       return await query.where(eq(expenseReimbursements.userId, userId));
     }
-
+    
     return await query;
   }
 
@@ -218,138 +199,10 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(desc(btcRateHistory.timestamp));
     }
-
+    
     return await db.select()
       .from(btcRateHistory)
       .orderBy(desc(btcRateHistory.timestamp));
-  }
-
-  // Chat methods
-  async createConversation(conversation: InsertConversation): Promise<Conversation> {
-    const [result] = await db.insert(conversations).values(conversation).returning();
-    return result;
-  }
-
-  async getConversations(userId: number): Promise<any[]> {
-    const result = await db
-      .select({
-        id: conversations.id,
-        title: conversations.title,
-        type: conversations.type,
-        createdAt: conversations.createdAt,
-        updatedAt: conversations.updatedAt,
-        lastMessage: messages.content,
-        lastMessageTime: messages.createdAt,
-        otherUser: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          role: users.role,
-          profilePhoto: users.profilePhoto,
-        },
-        unreadCount: sql<number>`count(case when ${messages.readAt} is null and ${messages.senderId} != ${userId} then 1 end)`,
-      })
-      .from(conversations)
-      .innerJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
-      .leftJoin(
-        conversationParticipants.as('otherParticipant'),
-        and(
-          eq(conversations.id, sql`${'otherParticipant'}.conversation_id`),
-          ne(sql`${'otherParticipant'}.user_id`, userId)
-        )
-      )
-      .leftJoin(users, eq(sql`${'otherParticipant'}.user_id`, users.id))
-      .leftJoin(messages, eq(conversations.id, messages.conversationId))
-      .where(eq(conversationParticipants.userId, userId))
-      .groupBy(
-        conversations.id,
-        conversations.title,
-        conversations.type,
-        conversations.createdAt,
-        conversations.updatedAt,
-        messages.content,
-        messages.createdAt,
-        users.id,
-        users.firstName,
-        users.lastName,
-        users.role,
-        users.profilePhoto
-      )
-      .orderBy(desc(conversations.updatedAt));
-
-    return result;
-  }
-
-  async getConversationById(id: number): Promise<any> {
-    const [result] = await db
-      .select({
-        id: conversations.id,
-        title: conversations.title,
-        type: conversations.type,
-        createdAt: conversations.createdAt,
-        participants: sql<any[]>`json_agg(json_build_object('id', ${users.id}, 'firstName', ${users.firstName}, 'lastName', ${users.lastName}, 'role', ${users.role}, 'profilePhoto', ${users.profilePhoto}))`,
-      })
-      .from(conversations)
-      .innerJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
-      .innerJoin(users, eq(conversationParticipants.userId, users.id))
-      .where(eq(conversations.id, id))
-      .groupBy(conversations.id, conversations.title, conversations.type, conversations.createdAt);
-
-    return result;
-  }
-
-  async addConversationParticipant(participant: InsertConversationParticipant): Promise<ConversationParticipant> {
-    const [result] = await db.insert(conversationParticipants).values(participant).returning();
-    return result;
-  }
-
-  async createMessage(message: InsertMessage): Promise<Message> {
-    const [result] = await db.insert(messages).values(message).returning();
-
-    // Update conversation timestamp
-    await this.updateConversationTimestamp(message.conversationId);
-
-    return result;
-  }
-
-  async getMessages(conversationId: number): Promise<any[]> {
-    const result = await db
-      .select({
-        id: messages.id,
-        conversationId: messages.conversationId,
-        senderId: messages.senderId,
-        content: messages.content,
-        messageType: messages.messageType,
-        createdAt: messages.createdAt,
-        readAt: messages.readAt,
-        sender: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          role: users.role,
-          profilePhoto: users.profilePhoto,
-        },
-      })
-      .from(messages)
-      .innerJoin(users, eq(messages.senderId, users.id))
-      .where(eq(messages.conversationId, conversationId))
-      .orderBy(messages.createdAt);
-
-    return result;
-  }
-
-  async markMessageAsRead(messageId: number, userId: number): Promise<void> {
-    await db
-      .update(messages)
-      .set({ readAt: new Date() })
-      .where(and(eq(messages.id, messageId), ne(messages.senderId, userId)));
-  }
-
-  async updateConversationTimestamp(conversationId: number): Promise<void> {
-    await db
-      .update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, conversationId));
   }
 }
 

@@ -89,9 +89,9 @@ export default function MessagesPage() {
         />
         
         <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)] max-h-[calc(100vh-300px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
             {/* Conversations List */}
-            <Card className="lg:col-span-1">
+            <Card className="lg:col-span-1 flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export default function MessagesPage() {
             <Card className="lg:col-span-2 flex flex-col">
               {selectedConv ? (
                 <>
-                  <CardHeader className="flex-shrink-0">
+                  <CardHeader className="flex-shrink-0 border-b">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback>
@@ -202,7 +202,7 @@ export default function MessagesPage() {
                   </CardHeader>
 
                   {/* Messages */}
-                  <CardContent className="flex-1 overflow-y-auto space-y-4">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -252,10 +252,10 @@ export default function MessagesPage() {
                         <p className="text-sm">No messages in this conversation</p>
                       </div>
                     )}
-                  </CardContent>
+                  </div>
 
                   {/* Message Input */}
-                  <div className="p-4 border-t">
+                  <div className="flex-shrink-0 p-4 border-t bg-white">
                     <div className="flex gap-2">
                       <Textarea
                         placeholder="Type your message..."

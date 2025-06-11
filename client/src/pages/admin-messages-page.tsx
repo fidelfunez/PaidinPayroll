@@ -114,9 +114,9 @@ export default function AdminMessagesPage() {
         />
         
         <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)] max-h-[calc(100vh-300px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
             {/* Conversations List */}
-            <Card className="lg:col-span-1">
+            <Card className="lg:col-span-1 flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-3">

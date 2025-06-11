@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -12,13 +12,63 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Bitcoin, CreditCard, Building2, AlertCircle, CheckCircle, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { User } from "@shared/schema";
 
 export default function WithdrawalMethodPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
-  const [selectedMethod, setSelectedMethod] = useState("bitcoin");
-  const [bitcoinAddress, setBitcoinAddress] = useState("");
-  const [addressType, setAddressType] = useState("segwit");
+  const { toast } = useToast();
+  const [selectedMethod, setSelectedMethod] = useState<"bitcoin" | "bank_transfer" | "not_set">(user?.withdrawalMethod || "not_set");
+  const [bitcoinAddress, setBitcoinAddress] = useState(user?.btcAddress || "");
+  const [addressType, setAddressType] = useState("lightning");
+
+  // Load user's current withdrawal method
+  useEffect(() => {
+    if (user) {
+      setSelectedMethod(user.withdrawalMethod || "not_set");
+      setBitcoinAddress(user.btcAddress || "");
+    }
+  }, [user]);
+
+  // Mutation to update withdrawal method
+  const updateWithdrawalMethodMutation = useMutation({
+    mutationFn: async (data: { withdrawalMethod: string; btcAddress?: string }) => {
+      return await apiRequest('PATCH', `/api/user/profile`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: "Withdrawal method updated",
+        description: "Your withdrawal method has been successfully updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update withdrawal method. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSave = () => {
+    if (selectedMethod === 'bitcoin' && !bitcoinAddress.trim()) {
+      toast({
+        title: "Bitcoin address required",
+        description: "Please enter a valid Bitcoin or Lightning address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateWithdrawalMethodMutation.mutate({
+      withdrawalMethod: selectedMethod,
+      btcAddress: selectedMethod === 'bitcoin' ? bitcoinAddress.trim() : undefined
+    });
+  };
 
   const withdrawalMethods = [
     {
@@ -104,7 +154,7 @@ export default function WithdrawalMethodPage() {
               <CardTitle>Choose Withdrawal Method</CardTitle>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="space-y-4">
+              <RadioGroup value={selectedMethod} onValueChange={(value) => setSelectedMethod(value as "bitcoin" | "bank_transfer" | "not_set")} className="space-y-4">
                 {withdrawalMethods.map((method) => (
                   <div key={method.id} className="flex items-start space-x-3">
                     <RadioGroupItem 
@@ -259,8 +309,11 @@ export default function WithdrawalMethodPage() {
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline">Cancel</Button>
-                  <Button disabled>
-                    Save Changes
+                  <Button 
+                    onClick={handleSave}
+                    disabled={updateWithdrawalMethodMutation.isPending}
+                  >
+                    {updateWithdrawalMethodMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </div>

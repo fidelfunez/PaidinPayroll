@@ -6,8 +6,11 @@ import { z } from "zod";
 import { 
   insertPayrollPaymentSchema, 
   insertExpenseReimbursementSchema,
-  insertBtcRateHistorySchema
+  insertBtcRateHistorySchema,
+  insertConversationSchema,
+  insertMessageSchema
 } from "@shared/schema";
+import { initializeMessagingWebSocket, messagingWS } from "./websocket";
 
 // Bitcoin API utility
 async function fetchBtcRate(): Promise<number> {

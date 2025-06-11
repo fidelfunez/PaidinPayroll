@@ -19,7 +19,7 @@ import {
   type InsertMessage
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, arrayContains } from "drizzle-orm";
 import session from "express-session";
 import * as expressSession from "express-session";
 import connectPg from "connect-pg-simple";
@@ -220,6 +220,101 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(btcRateHistory)
       .orderBy(desc(btcRateHistory.timestamp));
+  }
+
+  // Messaging management
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [newConversation] = await db
+      .insert(conversations)
+      .values(conversation)
+      .returning();
+    return newConversation;
+  }
+
+  async getConversation(id: number): Promise<Conversation | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id));
+    return conversation || undefined;
+  }
+
+  async getUserConversations(userId: number): Promise<Conversation[]> {
+    return await db
+      .select()
+      .from(conversations)
+      .where(arrayContains(conversations.participantIds, [userId]))
+      .orderBy(desc(conversations.updatedAt));
+  }
+
+  async updateConversation(id: number, updates: Partial<Conversation>): Promise<Conversation | undefined> {
+    const [conversation] = await db
+      .update(conversations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(conversations.id, id))
+      .returning();
+    return conversation || undefined;
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+
+    // Update conversation's last message and timestamp
+    await db
+      .update(conversations)
+      .set({ 
+        lastMessageId: newMessage.id,
+        updatedAt: new Date()
+      })
+      .where(eq(conversations.id, message.conversationId));
+
+    return newMessage;
+  }
+
+  async getConversationMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(desc(messages.timestamp))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async markMessageAsRead(messageId: number, userId: number): Promise<void> {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, messageId));
+
+    if (message && !message.readBy.includes(userId)) {
+      await db
+        .update(messages)
+        .set({ readBy: [...message.readBy, userId] })
+        .where(eq(messages.id, messageId));
+    }
+  }
+
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    const userConversations = await this.getUserConversations(userId);
+    let unreadCount = 0;
+
+    for (const conversation of userConversations) {
+      const conversationMessages = await db
+        .select()
+        .from(messages)
+        .where(eq(messages.conversationId, conversation.id));
+
+      const unreadMessages = conversationMessages.filter(
+        msg => !msg.readBy.includes(userId) && msg.senderId !== userId
+      );
+      unreadCount += unreadMessages.length;
+    }
+
+    return unreadCount;
   }
 }
 

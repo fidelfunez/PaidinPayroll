@@ -121,8 +121,8 @@ export default function AdminMessagesPage() {
           subtitle="Communicate with employees and manage conversations"
         />
         
-        <main className="flex-1 p-4 lg:p-6 pb-4 min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+        <main className="flex-1 p-4 lg:p-6 pb-4 min-h-0 h-[calc(100vh-12rem)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
             {/* Conversations List */}
             <Card className="lg:col-span-1 flex flex-col h-full">
               <CardHeader>

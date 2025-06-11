@@ -73,7 +73,7 @@ class LNbitsService {
 
   // Create a payment (send money)
   async createPayment(paymentRequest: PaymentRequest): Promise<PaymentResponse> {
-    return this.makeRequest('/api/v1/payments', {
+    return this.makeRequestWithAdminKey('/api/v1/payments', {
       method: 'POST',
       body: JSON.stringify({
         out: true,
@@ -85,7 +85,7 @@ class LNbitsService {
 
   // Pay a Lightning invoice
   async payInvoice(bolt11: string, memo: string): Promise<PaymentResponse> {
-    return this.makeRequest('/api/v1/payments', {
+    return this.makeRequestWithAdminKey('/api/v1/payments', {
       method: 'POST',
       body: JSON.stringify({
         out: true,
@@ -93,6 +93,27 @@ class LNbitsService {
         memo: memo
       })
     });
+  }
+
+  private async makeRequestWithAdminKey(endpoint: string, options: any = {}) {
+    this.checkConfiguration();
+    const url = `${this.config.baseUrl}${endpoint}`;
+    const headers = {
+      'X-Api-Key': this.config.adminKey,
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`LNbits API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   // Create an invoice (receive money)

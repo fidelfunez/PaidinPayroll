@@ -179,10 +179,10 @@ export default function MessagesPage() {
             </Card>
 
             {/* Message Thread */}
-            <Card className="lg:col-span-2 flex flex-col h-full max-h-full">
+            <Card className="lg:col-span-2 flex flex-col h-full">
               {selectedConv ? (
                 <>
-                  <CardHeader className="flex-shrink-0 border-b p-4">
+                  <CardHeader className="flex-shrink-0 border-b">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback>
@@ -210,7 +210,7 @@ export default function MessagesPage() {
                   </CardHeader>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{maxHeight: 'calc(100% - 140px)'}}>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -264,7 +264,7 @@ export default function MessagesPage() {
                   </div>
 
                   {/* Message Input */}
-                  <div className="flex-shrink-0 p-4 border-t bg-white">
+                  <div className="flex-shrink-0 p-4 border-t">
                     <div className="flex gap-2">
                       <Textarea
                         placeholder="Type your message..."

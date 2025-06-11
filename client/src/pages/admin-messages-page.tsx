@@ -244,7 +244,7 @@ export default function AdminMessagesPage() {
             </Card>
 
             {/* Message Thread */}
-            <Card className="lg:col-span-2 flex flex-col">
+            <Card className="lg:col-span-2 flex flex-col h-full">
               {selectedConv ? (
                 <>
                   <CardHeader className="flex-shrink-0 border-b">
@@ -275,7 +275,7 @@ export default function AdminMessagesPage() {
                   </CardHeader>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{maxHeight: 'calc(100% - 140px)'}}>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -330,7 +330,7 @@ export default function AdminMessagesPage() {
                   </div>
 
                   {/* Message Input */}
-                  <div className="flex-shrink-0 p-4 border-t bg-white">
+                  <div className="flex-shrink-0 p-4 border-t">
                     <div className="flex gap-2">
                       <Textarea
                         placeholder="Type your message..."

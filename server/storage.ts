@@ -3,6 +3,8 @@ import {
   payrollPayments, 
   expenseReimbursements, 
   btcRateHistory,
+  conversations,
+  messages,
   type User, 
   type InsertUser,
   type PayrollPayment,
@@ -10,7 +12,11 @@ import {
   type ExpenseReimbursement,
   type InsertExpenseReimbursement,
   type BtcRateHistory,
-  type InsertBtcRateHistory
+  type InsertBtcRateHistory,
+  type Conversation,
+  type InsertConversation,
+  type Message,
+  type InsertMessage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -46,6 +52,17 @@ export interface IStorage {
   saveBtcRate(rate: InsertBtcRateHistory): Promise<BtcRateHistory>;
   getLatestBtcRate(): Promise<BtcRateHistory | undefined>;
   getBtcRateHistory(startDate?: Date, endDate?: Date): Promise<BtcRateHistory[]>;
+
+  // Messaging management
+  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  getConversation(id: number): Promise<Conversation | undefined>;
+  getUserConversations(userId: number): Promise<Conversation[]>;
+  updateConversation(id: number, updates: Partial<Conversation>): Promise<Conversation | undefined>;
+  
+  createMessage(message: InsertMessage): Promise<Message>;
+  getConversationMessages(conversationId: number, limit?: number, offset?: number): Promise<Message[]>;
+  markMessageAsRead(messageId: number, userId: number): Promise<void>;
+  getUnreadMessageCount(userId: number): Promise<number>;
 
   sessionStore: expressSession.Store;
 }

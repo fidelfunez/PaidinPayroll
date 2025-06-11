@@ -42,7 +42,7 @@ export class MessagingWebSocketServer {
 
     console.log(`User ${userId} connected to messaging WebSocket`);
 
-    ws.on('message', (data) => this.handleMessage(ws, Buffer.from(data.toString())));
+    ws.on('message', (data) => this.handleMessage(ws, data));
     ws.on('close', () => this.handleDisconnection(ws));
     ws.on('pong', () => { ws.isAlive = true; });
 

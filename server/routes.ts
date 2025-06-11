@@ -390,6 +390,205 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Messaging API routes
+  app.get('/api/conversations', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const conversations = await storage.getUserConversations(user.id);
+      
+      // Get conversation details with participants and last message
+      const conversationsWithDetails = await Promise.all(
+        conversations.map(async (conv) => {
+          const participants = await Promise.all(
+            conv.participantIds.map(id => storage.getUser(id))
+          );
+          
+          const lastMessage = conv.lastMessageId 
+            ? await storage.getConversationMessages(conv.id, 1, 0)
+            : [];
+          
+          const unreadCount = await getUnreadCount(conv.id, user.id);
+          
+          return {
+            ...conv,
+            participants: participants.filter(p => p !== undefined),
+            lastMessage: lastMessage[0] || null,
+            unreadCount
+          };
+        })
+      );
+      
+      res.json(conversationsWithDetails);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  app.post('/api/conversations', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { participantIds } = req.body;
+      
+      if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
+        return res.status(400).json({ message: 'Participant IDs are required' });
+      }
+      
+      // Include current user in participants
+      const allParticipants = Array.from(new Set([user.id, ...participantIds]));
+      
+      // Check if conversation already exists
+      const existingConversations = await storage.getUserConversations(user.id);
+      const existingConv = existingConversations.find(conv => 
+        conv.participantIds.length === allParticipants.length &&
+        allParticipants.every(id => conv.participantIds.includes(id))
+      );
+      
+      if (existingConv) {
+        return res.json(existingConv);
+      }
+      
+      const conversation = await storage.createConversation({
+        participantIds: allParticipants
+      });
+      
+      res.json(conversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      res.status(500).json({ message: 'Failed to create conversation' });
+    }
+  });
+
+  app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const conversationId = parseInt(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Verify user has access to this conversation
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation || !conversation.participantIds.includes(user.id)) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId, limit, offset);
+      
+      // Get sender details for each message
+      const messagesWithSenders = await Promise.all(
+        messages.map(async (message) => {
+          const sender = await storage.getUser(message.senderId);
+          return {
+            ...message,
+            sender: sender ? {
+              id: sender.id,
+              username: sender.username,
+              firstName: sender.firstName,
+              lastName: sender.lastName
+            } : null
+          };
+        })
+      );
+      
+      res.json(messagesWithSenders.reverse()); // Return in chronological order
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const conversationId = parseInt(req.params.id);
+      const { content } = req.body;
+      
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Message content is required' });
+      }
+      
+      // Verify user has access to this conversation
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation || !conversation.participantIds.includes(user.id)) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const message = await storage.createMessage({
+        conversationId,
+        senderId: user.id,
+        content: content.trim()
+      });
+      
+      // Get sender details
+      const sender = await storage.getUser(message.senderId);
+      const messageWithSender = {
+        ...message,
+        sender: sender ? {
+          id: sender.id,
+          username: sender.username,
+          firstName: sender.firstName,
+          lastName: sender.lastName
+        } : null
+      };
+      
+      // Notify via WebSocket if available
+      if (messagingWS) {
+        messagingWS.notifyConversation(conversation.participantIds, {
+          type: 'new_message',
+          payload: { message: messageWithSender, conversationId }
+        });
+      }
+      
+      res.json(messageWithSender);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  app.patch('/api/messages/:id/read', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const messageId = parseInt(req.params.id);
+      
+      await storage.markMessageAsRead(messageId, user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      res.status(500).json({ message: 'Failed to mark message as read' });
+    }
+  });
+
+  app.get('/api/employees', requireAuth, async (req, res) => {
+    try {
+      const employees = await storage.getEmployees();
+      const employeeList = employees.map(emp => ({
+        id: emp.id,
+        username: emp.username,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        email: emp.email,
+        role: emp.role
+      }));
+      res.json(employeeList);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      res.status(500).json({ message: 'Failed to fetch employees' });
+    }
+  });
+
+  // Helper function to calculate unread messages
+  async function getUnreadCount(conversationId: number, userId: number): Promise<number> {
+    const messages = await storage.getConversationMessages(conversationId);
+    return messages.filter(msg => 
+      !msg.readBy.includes(userId) && msg.senderId !== userId
+    ).length;
+  }
+
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket server
+  initializeMessagingWebSocket(httpServer);
+  
   return httpServer;
 }

@@ -2,6 +2,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { parse } from 'url';
 import { storage } from './storage';
+import session from 'express-session';
+import { IncomingMessage } from 'http';
 
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: number;

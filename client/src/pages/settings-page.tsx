@@ -108,7 +108,7 @@ export default function SettingsPage() {
                       />
                     </div>
 
-                    <Button className="w-full">Save Notification Settings</Button>
+                    <Button className="w-full" disabled>Save Notification Settings</Button>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -120,16 +120,16 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-4">
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" disabled>
                         Change Password
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" disabled>
                         Enable Two-Factor Authentication
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" disabled>
                         View Login Activity
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" disabled>
                         Download Account Data
                       </Button>
                     </div>
@@ -178,10 +178,10 @@ export default function SettingsPage() {
                       <div>
                         <h4 className="font-medium mb-2">Default Currency Display</h4>
                         <div className="grid grid-cols-2 gap-4">
-                          <Button variant="outline" className="justify-start">
+                          <Button variant="outline" className="justify-start" disabled>
                             USD Primary
                           </Button>
-                          <Button variant="outline" className="justify-start">
+                          <Button variant="outline" className="justify-start" disabled>
                             BTC Primary
                           </Button>
                         </div>
@@ -190,10 +190,10 @@ export default function SettingsPage() {
                       <div>
                         <h4 className="font-medium mb-2">Date Format</h4>
                         <div className="grid grid-cols-2 gap-4">
-                          <Button variant="outline" className="justify-start">
+                          <Button variant="outline" className="justify-start" disabled>
                             MM/DD/YYYY
                           </Button>
-                          <Button variant="outline" className="justify-start">
+                          <Button variant="outline" className="justify-start" disabled>
                             DD/MM/YYYY
                           </Button>
                         </div>
@@ -201,13 +201,13 @@ export default function SettingsPage() {
 
                       <div>
                         <h4 className="font-medium mb-2">Time Zone</h4>
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button variant="outline" className="w-full justify-start" disabled>
                           UTC (Coordinated Universal Time)
                         </Button>
                       </div>
                     </div>
 
-                    <Button className="w-full">Save Preferences</Button>
+                    <Button className="w-full" disabled>Save Preferences</Button>
                   </CardContent>
                 </Card>
               </TabsContent>

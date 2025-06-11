@@ -259,7 +259,7 @@ export default function WithdrawalMethodPage() {
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline">Cancel</Button>
-                  <Button disabled={selectedMethod === 'bitcoin' && !validateBitcoinAddress(bitcoinAddress)}>
+                  <Button disabled>
                     Save Changes
                   </Button>
                 </div>

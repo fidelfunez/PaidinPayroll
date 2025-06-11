@@ -310,15 +310,15 @@ export default function TaxCompliancePage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button className="h-auto p-4 flex flex-col gap-2">
+                <Button className="h-auto p-4 flex flex-col gap-2" disabled>
                   <Calculator className="w-6 h-6" />
                   <span>Calculate Taxes</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2">
+                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2" disabled>
                   <FileText className="w-6 h-6" />
                   <span>Generate Report</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2">
+                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2" disabled>
                   <Download className="w-6 h-6" />
                   <span>Export Data</span>
                 </Button>

@@ -261,7 +261,7 @@ export default function WithdrawalMethodPage() {
             </Card>
           )}
 
-          {selectedMethod === 'bank' && (
+          {selectedMethod === 'bank_transfer' && (
             <Card>
               <CardHeader>
                 <CardTitle>Bank Account Information</CardTitle>

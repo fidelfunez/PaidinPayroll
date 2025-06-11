@@ -24,32 +24,44 @@ export class MessagingWebSocketServer {
     this.setupHeartbeat();
   }
 
-  private handleConnection(ws: AuthenticatedWebSocket, request: any) {
-    const { query } = parse(request.url, true);
-    const userId = parseInt(query.userId as string);
+  private async handleConnection(ws: AuthenticatedWebSocket, request: IncomingMessage) {
+    try {
+      const { query } = parse(request.url!, true);
+      const userId = parseInt(query.userId as string);
 
-    if (!userId || isNaN(userId)) {
-      ws.close(1008, 'Authentication required');
-      return;
+      if (!userId || isNaN(userId)) {
+        ws.close(1008, 'Invalid user ID');
+        return;
+      }
+
+      // Validate user exists in database
+      const user = await storage.getUser(userId);
+      if (!user) {
+        ws.close(1008, 'User not found');
+        return;
+      }
+
+      ws.userId = userId;
+      ws.isAlive = true;
+
+      // Add client to user's connections
+      if (!this.clients.has(userId)) {
+        this.clients.set(userId, []);
+      }
+      this.clients.get(userId)!.push(ws);
+
+      console.log(`User ${userId} (${user.username}) connected to messaging WebSocket`);
+
+      ws.on('message', (data) => this.handleMessage(ws, data));
+      ws.on('close', () => this.handleDisconnection(ws));
+      ws.on('pong', () => { ws.isAlive = true; });
+
+      // Send initial data
+      this.sendUserConversations(userId);
+    } catch (error) {
+      console.error('WebSocket connection error:', error);
+      ws.close(1011, 'Internal server error');
     }
-
-    ws.userId = userId;
-    ws.isAlive = true;
-
-    // Add client to user's connections
-    if (!this.clients.has(userId)) {
-      this.clients.set(userId, []);
-    }
-    this.clients.get(userId)!.push(ws);
-
-    console.log(`User ${userId} connected to messaging WebSocket`);
-
-    ws.on('message', (data) => this.handleMessage(ws, data));
-    ws.on('close', () => this.handleDisconnection(ws));
-    ws.on('pong', () => { ws.isAlive = true; });
-
-    // Send initial data
-    this.sendUserConversations(userId);
   }
 
   private async handleMessage(ws: AuthenticatedWebSocket, data: any) {

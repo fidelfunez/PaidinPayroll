@@ -164,7 +164,7 @@ export default function TaxCompliancePage() {
                             {doc.status}
                           </Badge>
                           {doc.status === 'ready' && (
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" disabled>
                               <Download className="w-4 h-4 mr-2" />
                               Download
                             </Button>
@@ -187,7 +187,7 @@ export default function TaxCompliancePage() {
                     <p className="text-sm text-slate-600 mb-4">
                       Upload receipts, forms, or other tax-related documents
                     </p>
-                    <Button>Choose Files</Button>
+                    <Button disabled>Choose Files</Button>
                   </div>
                 </CardContent>
               </Card>

@@ -14,58 +14,7 @@ export default function NotificationsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
 
-  const notifications = [
-    {
-      id: 1,
-      type: "payment",
-      title: "Bitcoin Payment Received",
-      message: "Your salary payment of 0.045 BTC has been processed successfully",
-      timestamp: "2 hours ago",
-      read: false,
-      icon: Bitcoin,
-      iconColor: "text-orange-500"
-    },
-    {
-      id: 2,
-      type: "expense",
-      title: "Expense Approved",
-      message: "Your travel expense of $250 has been approved and will be paid in Bitcoin",
-      timestamp: "1 day ago",
-      read: false,
-      icon: CheckCircle,
-      iconColor: "text-green-500"
-    },
-    {
-      id: 3,
-      type: "security",
-      title: "Security Alert",
-      message: "New login detected from San Francisco, CA",
-      timestamp: "2 days ago",
-      read: true,
-      icon: AlertTriangle,
-      iconColor: "text-red-500"
-    },
-    {
-      id: 4,
-      type: "system",
-      title: "Bitcoin Rate Alert",
-      message: "Bitcoin price reached your target of $65,000",
-      timestamp: "3 days ago",
-      read: true,
-      icon: Bitcoin,
-      iconColor: "text-orange-500"
-    },
-    {
-      id: 5,
-      type: "payment",
-      title: "Payment Schedule Updated",
-      message: "Your next payroll payment is scheduled for December 15th",
-      timestamp: "1 week ago",
-      read: true,
-      icon: CreditCard,
-      iconColor: "text-blue-500"
-    }
-  ];
+  const notifications: any[] = [];
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailPayments: true,
@@ -110,54 +59,66 @@ export default function NotificationsPage() {
                   Recent Notifications
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Mark All Read</Button>
-                  <Button variant="outline" size="sm">Clear All</Button>
+                  <Button variant="outline" size="sm" disabled>Mark All Read</Button>
+                  <Button variant="outline" size="sm" disabled>Clear All</Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <div 
-                    key={notification.id}
-                    className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
-                      notification.read ? 'bg-white' : 'bg-blue-50 border-blue-200'
-                    }`}
-                  >
-                    <notification.icon className={`w-6 h-6 ${notification.iconColor} mt-1`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium truncate">{notification.title}</h3>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {!notification.read && (
-                            <Badge variant="default" className="text-xs">New</Badge>
-                          )}
-                          <span className="text-xs text-slate-500">{notification.timestamp}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-600 mt-1">{notification.message}</p>
-                      <div className="flex items-center gap-2 mt-3">
-                        {!notification.read && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => markAsRead(notification.id)}
-                          >
-                            Mark as Read
-                          </Button>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => deleteNotification(notification.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {notifications.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Bell className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-600 mb-2">No notifications yet</h3>
+                    <p className="text-slate-500 mb-6">You'll receive notifications about payments, expenses, and important updates here.</p>
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+                      <p className="text-orange-800 font-medium">System Active</p>
+                      <p className="text-orange-700 text-sm mt-1">Notification system is ready to receive real-time updates.</p>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  notifications.map((notification) => (
+                    <div 
+                      key={notification.id}
+                      className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                        notification.read ? 'bg-white' : 'bg-blue-50 border-blue-200'
+                      }`}
+                    >
+                      <notification.icon className={`w-6 h-6 ${notification.iconColor} mt-1`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-medium truncate">{notification.title}</h3>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {!notification.read && (
+                              <Badge variant="default" className="text-xs">New</Badge>
+                            )}
+                            <span className="text-xs text-slate-500">{notification.timestamp}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-600 mt-1">{notification.message}</p>
+                        <div className="flex items-center gap-2 mt-3">
+                          {!notification.read && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => markAsRead(notification.id)}
+                            >
+                              Mark as Read
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => deleteNotification(notification.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

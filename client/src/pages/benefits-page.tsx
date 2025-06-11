@@ -181,7 +181,7 @@ export default function BenefitsPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" disabled>
                     View Details
                   </Button>
                 </CardContent>
@@ -225,15 +225,15 @@ export default function BenefitsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button className="h-auto p-4 flex flex-col gap-2">
+                <Button className="h-auto p-4 flex flex-col gap-2" disabled>
                   <Heart className="w-6 h-6" />
                   <span>Update Healthcare</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2">
+                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2" disabled>
                   <GraduationCap className="w-6 h-6" />
                   <span>Education Credits</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2">
+                <Button variant="outline" className="h-auto p-4 flex flex-col gap-2" disabled>
                   <Gift className="w-6 h-6" />
                   <span>Benefits Support</span>
                 </Button>

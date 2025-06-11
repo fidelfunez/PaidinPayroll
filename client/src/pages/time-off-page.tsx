@@ -74,7 +74,7 @@ export default function TimeOffPage() {
                     <Label htmlFor="reason">Reason</Label>
                     <Textarea id="reason" placeholder="Brief reason for time off" />
                   </div>
-                  <Button className="w-full">
+                  <Button className="w-full" disabled>
                     <Plus className="h-4 w-4 mr-2" />
                     Submit Request
                   </Button>
@@ -115,16 +115,28 @@ export default function TimeOffPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {timeOffRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell>{request.type}</TableCell>
-                        <TableCell>{request.startDate}</TableCell>
-                        <TableCell>{request.endDate}</TableCell>
-                        <TableCell>{request.days}</TableCell>
-                        <TableCell>{getStatusBadge(request.status)}</TableCell>
-                        <TableCell>{request.reason}</TableCell>
+                    {timeOffRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <CalendarIcon className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-sm mx-auto">
+                            <p className="text-orange-800 font-medium">Coming Soon</p>
+                            <p className="text-orange-700 text-sm mt-1">Time off request functionality will be available in the next release.</p>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      timeOffRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell>{request.type}</TableCell>
+                          <TableCell>{request.startDate}</TableCell>
+                          <TableCell>{request.endDate}</TableCell>
+                          <TableCell>{request.days}</TableCell>
+                          <TableCell>{getStatusBadge(request.status)}</TableCell>
+                          <TableCell>{request.reason}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

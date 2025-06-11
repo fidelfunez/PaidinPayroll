@@ -18,11 +18,7 @@ export default function TimeOffPage() {
   const { isCollapsed } = useSidebar();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const timeOffRequests = [
-    { id: 1, type: "Vacation", startDate: "2024-12-20", endDate: "2024-12-22", days: 3, status: "approved", reason: "Holiday vacation" },
-    { id: 2, type: "Sick Leave", startDate: "2024-11-15", endDate: "2024-11-15", days: 1, status: "approved", reason: "Doctor appointment" },
-    { id: 3, type: "Personal", startDate: "2024-12-30", endDate: "2024-12-31", days: 2, status: "pending", reason: "Family event" },
-  ];
+  const timeOffRequests: any[] = [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

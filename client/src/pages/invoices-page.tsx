@@ -81,13 +81,9 @@ export default function InvoicesPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" disabled>
                                 <Download className="h-4 w-4 mr-1" />
-                                Payslip
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <FileText className="h-4 w-4 mr-1" />
-                                Invoice
+                                Download
                               </Button>
                             </div>
                           </TableCell>

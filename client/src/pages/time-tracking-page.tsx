@@ -15,11 +15,7 @@ export default function TimeTrackingPage() {
   const [isTracking, setIsTracking] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00:00");
 
-  const timeEntries = [
-    { id: 1, date: "2024-12-08", project: "Bitcoin Platform", hours: 8.5, description: "Frontend development" },
-    { id: 2, date: "2024-12-07", project: "Bitcoin Platform", hours: 7.75, description: "API integration" },
-    { id: 3, date: "2024-12-06", project: "Bitcoin Platform", hours: 8.0, description: "Database optimization" },
-  ];
+  const timeEntries: any[] = [];
 
   const toggleTracking = () => {
     setIsTracking(!isTracking);
@@ -52,19 +48,11 @@ export default function TimeTrackingPage() {
                   <Button
                     onClick={toggleTracking}
                     size="lg"
-                    className={isTracking ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                    disabled
+                    className="bg-slate-400 hover:bg-slate-400 cursor-not-allowed"
                   >
-                    {isTracking ? (
-                      <>
-                        <Square className="h-5 w-5 mr-2" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-5 w-5 mr-2" />
-                        Start
-                      </>
-                    )}
+                    <Clock className="h-5 w-5 mr-2" />
+                    Coming Soon
                   </Button>
                 </div>
               </CardContent>
@@ -90,7 +78,7 @@ export default function TimeTrackingPage() {
                     <Input id="project" placeholder="Project name" />
                   </div>
                   <div className="flex items-end">
-                    <Button className="w-full">
+                    <Button className="w-full" disabled>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Entry
                     </Button>
@@ -120,20 +108,32 @@ export default function TimeTrackingPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {timeEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>{entry.date}</TableCell>
-                        <TableCell>{entry.project}</TableCell>
-                        <TableCell>{entry.hours}h</TableCell>
-                        <TableCell>{entry.description}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">Edit</Button>
-                            <Button variant="outline" size="sm">Delete</Button>
+                    {timeEntries.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-12">
+                          <Clock className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-sm mx-auto">
+                            <p className="text-orange-800 font-medium">Coming Soon</p>
+                            <p className="text-orange-700 text-sm mt-1">Time tracking functionality will be available in the next release.</p>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      timeEntries.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell>{entry.date}</TableCell>
+                          <TableCell>{entry.project}</TableCell>
+                          <TableCell>{entry.hours}h</TableCell>
+                          <TableCell>{entry.description}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" disabled>Edit</Button>
+                              <Button variant="outline" size="sm" disabled>Delete</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

@@ -1,8 +1,8 @@
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useAuth } from "@/hooks/use-auth";
-import Sidebar from "@/components/ui/sidebar";
-import Header from "@/components/ui/header";
-import Footer from "@/components/ui/footer";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Construction } from "lucide-react";
 

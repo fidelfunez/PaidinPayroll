@@ -21,7 +21,6 @@ import ProfilePage from "@/pages/profile-page";
 import TimeTrackingPage from "@/pages/time-tracking-page";
 import TimeOffPage from "@/pages/time-off-page";
 import EmployeesPage from "@/pages/employees-page";
-import PlaceholderPage from "@/pages/placeholder-page";
 import HelpCenterPage from "@/pages/help-center-page";
 import ApiDocumentationPage from "@/pages/api-documentation-page";
 import SecurityPage from "@/pages/security-page";
@@ -39,8 +38,8 @@ import AdminApprovalsPage from "@/pages/admin-approvals-page";
 import AdminMessagesPage from "@/pages/admin-messages-page";
 import PayslipsPage from "@/pages/payslips-page";
 import AuditLogsPage from "@/pages/audit-logs-page";
-const AdminTaxCompliancePage = () => <PlaceholderPage title="Tax & Compliance" subtitle="Review employee tax documents" />;
-const BulkPayrollPage = () => <PlaceholderPage title="Bulk Payroll" subtitle="Process multiple payments" />;
+import AdminTaxCompliancePage from "@/pages/admin-tax-compliance-page";
+import BulkPayrollPage from "@/pages/bulk-payroll-page";
 
 function Router() {
   return (

@@ -23,6 +23,7 @@ export default function AdminMessagesPage() {
   const [newMessage, setNewMessage] = useState("");
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Real-time messaging hooks
   const { data: conversations, isLoading: conversationsLoading } = useConversations();
@@ -49,6 +50,13 @@ export default function AdminMessagesPage() {
       setSelectedConversation(conversations[0].id);
     }
   }, [conversations, selectedConversation]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   const selectedConv = conversations?.find(c => c.id === selectedConversation);
 
@@ -113,8 +121,8 @@ export default function AdminMessagesPage() {
           subtitle="Communicate with employees and manage conversations"
         />
         
-        <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+        <main className="flex-1 p-4 lg:p-6 pb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
             {/* Conversations List */}
             <Card className="lg:col-span-1 flex flex-col">
               <CardHeader>
@@ -267,7 +275,7 @@ export default function AdminMessagesPage() {
                   </CardHeader>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{maxHeight: 'calc(100% - 140px)'}}>
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -318,6 +326,7 @@ export default function AdminMessagesPage() {
                         <p className="text-xs text-slate-400 mt-1">Send the first message to get started</p>
                       </div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Message Input */}

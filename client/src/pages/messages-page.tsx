@@ -116,7 +116,7 @@ export default function MessagesPage() {
           title="Messages" 
           subtitle="Communicate with your team and support"
         />
-        
+
         <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)] max-h-[calc(100vh-300px)]">
             {/* Conversations List */}
@@ -137,37 +137,53 @@ export default function MessagesPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto">
-                  {conversations.map((conversation) => (
-                    <div
-                      key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation.id)}
-                      className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors ${
-                        selectedConversation === conversation.id ? 'bg-orange-50 border-r-2 border-orange-500' : ''
-                      }`}
-                    >
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.avatar || undefined} />
-                        <AvatarFallback>
-                          {conversation.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium truncate">{conversation.name}</h3>
-                          {conversation.unread > 0 && (
-                            <Badge variant="default" className="text-xs">
-                              {conversation.unread}
-                            </Badge>
-                          )}
+                
+                  
+                    {conversations.map((conversation: any) => (
+                      <div
+                        key={conversation.id}
+                        onClick={() => setSelectedConversation(conversation.id)}
+                        className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors ${
+                          selectedConversation === conversation.id ? 'bg-orange-50 border-r-2 border-orange-500' : ''
+                        }`}
+                      >
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={conversation.otherUser?.profilePhoto || undefined} />
+                          <AvatarFallback>
+                            {conversation.otherUser ? 
+                              `${conversation.otherUser.firstName[0]}${conversation.otherUser.lastName[0]}` : 
+                              conversation.title?.[0] || 'C'
+                            }
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium truncate">
+                              {conversation.type === 'broadcast' ? 
+                                conversation.title : 
+                                `${conversation.otherUser?.firstName} ${conversation.otherUser?.lastName}`
+                              }
+                            </h3>
+                            {conversation.unreadCount > 0 && (
+                              <Badge variant="default" className="text-xs">
+                                {conversation.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {conversation.type === 'broadcast' ? 'Company Announcement' : conversation.otherUser?.role}
+                          </p>
+                          <p className="text-sm text-slate-600 truncate">
+                            {conversation.lastMessage || 'No messages yet'}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {conversation.lastMessageTime ? formatLastMessageTime(conversation.lastMessageTime) : ''}
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-500">{conversation.role}</p>
-                        <p className="text-sm text-slate-600 truncate">{conversation.lastMessage}</p>
-                        <p className="text-xs text-slate-400 mt-1">{conversation.timestamp}</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  
+                
               </CardContent>
             </Card>
 
@@ -249,9 +265,31 @@ export default function MessagesPage() {
             </Card>
           </div>
         </main>
-        
+
         <Footer />
       </div>
     </div>
   );
+}
+
+function formatLastMessageTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 7) {
+      return date.toLocaleDateString();
+  } else if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+  } else if (hours > 0) {
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  } else if (minutes > 0) {
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  } else {
+      return 'Just now';
+  }
 }

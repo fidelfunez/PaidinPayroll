@@ -387,6 +387,161 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Chat endpoints
+  app.get('/api/conversations', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const conversations = await storage.getConversations(user.id);
+      res.json(conversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  app.post('/api/conversations', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { participantId, title } = req.body;
+
+      // Create conversation
+      const conversation = await storage.createConversation({
+        title: title || null,
+        type: 'individual',
+        createdBy: user.id
+      });
+
+      // Add participants
+      await storage.addConversationParticipant({
+        conversationId: conversation.id,
+        userId: user.id
+      });
+
+      if (participantId && participantId !== user.id) {
+        await storage.addConversationParticipant({
+          conversationId: conversation.id,
+          userId: participantId
+        });
+      }
+
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      res.status(500).json({ message: 'Failed to create conversation' });
+    }
+  });
+
+  app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+      const conversationId = parseInt(req.params.id);
+      const messages = await storage.getMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const conversationId = parseInt(req.params.id);
+      const { content, messageType = 'text' } = req.body;
+
+      const message = await storage.createMessage({
+        conversationId,
+        senderId: user.id,
+        content,
+        messageType
+      });
+
+      // Get message with sender info
+      const messages = await storage.getMessages(conversationId);
+      const newMessage = messages[messages.length - 1];
+
+      // Emit to WebSocket
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`conversation_${conversationId}`).emit('new_message', newMessage);
+      }
+
+      res.status(201).json(newMessage);
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  app.post('/api/conversations/broadcast', requireAdmin, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { subject, content } = req.body;
+
+      // Get all employees
+      const employees = await storage.getEmployees();
+
+      // Create broadcast conversation
+      const conversation = await storage.createConversation({
+        title: subject,
+        type: 'broadcast',
+        createdBy: user.id
+      });
+
+      // Add admin as participant
+      await storage.addConversationParticipant({
+        conversationId: conversation.id,
+        userId: user.id
+      });
+
+      // Add all employees as participants
+      for (const employee of employees) {
+        if (employee.id !== user.id) {
+          await storage.addConversationParticipant({
+            conversationId: conversation.id,
+            userId: employee.id
+          });
+        }
+      }
+
+      // Send broadcast message
+      const message = await storage.createMessage({
+        conversationId: conversation.id,
+        senderId: user.id,
+        content,
+        messageType: 'broadcast'
+      });
+
+      // Emit to all employees via WebSocket
+      const io = req.app.get('io');
+      if (io) {
+        employees.forEach((employee) => {
+          io.to(`user_${employee.id}`).emit('broadcast_message', {
+            conversation,
+            message: { ...message, sender: user }
+          });
+        });
+      }
+
+      res.status(201).json({ conversation, message });
+    } catch (error) {
+      console.error('Error sending broadcast:', error);
+      res.status(500).json({ message: 'Failed to send broadcast message' });
+    }
+  });
+
+  app.patch('/api/messages/:id/read', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const messageId = parseInt(req.params.id);
+
+      await storage.markMessageAsRead(messageId, user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      res.status(500).json({ message: 'Failed to mark message as read' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

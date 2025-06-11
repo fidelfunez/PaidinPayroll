@@ -121,10 +121,10 @@ export default function AdminMessagesPage() {
           subtitle="Communicate with employees and manage conversations"
         />
         
-        <main className="flex-1 p-4 lg:p-6 pb-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+        <main className="flex-1 p-4 lg:p-6 pb-4 min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
             {/* Conversations List */}
-            <Card className="lg:col-span-1 flex flex-col">
+            <Card className="lg:col-span-1 flex flex-col h-full">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export default function AdminMessagesPage() {
                   <Input placeholder="Search conversations..." className="pl-9" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto">
+              <CardContent className="flex-1 overflow-y-auto min-h-0">
                 {conversationsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-orange-500" />

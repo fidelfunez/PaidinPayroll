@@ -70,9 +70,7 @@ export default function AdminMessagesPage() {
     if (!selectedEmployee) return;
     
     try {
-      const newConv = await createConversationMutation.mutateAsync({
-        participantIds: [parseInt(selectedEmployee)]
-      });
+      const newConv = await createConversationMutation.mutateAsync([parseInt(selectedEmployee)]);
       setSelectedConversation(newConv.id);
       setShowNewConversation(false);
       setSelectedEmployee("");
@@ -99,11 +97,12 @@ export default function AdminMessagesPage() {
   };
 
   // Filter employees who don't already have conversations
-  const availableEmployees = employees?.filter((employee: any) => 
+  const employeesList = employees as any[] || [];
+  const availableEmployees = employeesList.filter((employee: any) => 
     !conversations?.some(conv => 
       conv.participants?.some((p: any) => p.id === employee.id)
     )
-  ) || [];
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

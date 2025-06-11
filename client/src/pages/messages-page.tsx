@@ -97,7 +97,7 @@ export default function MessagesPage() {
         />
         
         <main className="flex-1 p-4 lg:p-6 pb-4 min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
             {/* Conversations List */}
             <Card className="lg:col-span-1 flex flex-col h-full">
               <CardHeader>

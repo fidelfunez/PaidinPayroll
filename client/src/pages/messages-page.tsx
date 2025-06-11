@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -19,6 +19,7 @@ export default function MessagesPage() {
   const { isCollapsed } = useSidebar();
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Real-time messaging hooks
   const { data: conversations, isLoading: conversationsLoading } = useConversations();
@@ -45,6 +46,13 @@ export default function MessagesPage() {
       setSelectedConversation(conversations[0].id);
     }
   }, [conversations, selectedConversation]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   const selectedConv = conversations?.find(c => c.id === selectedConversation);
 
@@ -88,8 +96,8 @@ export default function MessagesPage() {
           subtitle="Communicate with your team and support"
         />
         
-        <main className="flex-1 p-4 lg:p-6 pb-4 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+        <main className="flex-1 p-4 lg:p-6 pb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
             {/* Conversations List */}
             <Card className="lg:col-span-1 flex flex-col">
               <CardHeader>
@@ -171,10 +179,10 @@ export default function MessagesPage() {
             </Card>
 
             {/* Message Thread */}
-            <Card className="lg:col-span-2 flex flex-col">
+            <Card className="lg:col-span-2 flex flex-col h-full max-h-full">
               {selectedConv ? (
                 <>
-                  <CardHeader className="flex-shrink-0 border-b">
+                  <CardHeader className="flex-shrink-0 border-b p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback>
@@ -202,7 +210,7 @@ export default function MessagesPage() {
                   </CardHeader>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{maxHeight: 'calc(100% - 140px)'}}>
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -252,6 +260,7 @@ export default function MessagesPage() {
                         <p className="text-sm">No messages in this conversation</p>
                       </div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Message Input */}

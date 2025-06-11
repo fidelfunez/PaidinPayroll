@@ -37,13 +37,16 @@ class LNbitsService {
       apiKey: process.env.LNBITS_API_KEY || '',
       adminKey: process.env.LNBITS_ADMIN_KEY || ''
     };
+  }
 
+  private checkConfiguration() {
     if (!this.config.baseUrl || !this.config.apiKey) {
       throw new Error('LNbits configuration is missing. Please set LNBITS_BASE_URL and LNBITS_API_KEY environment variables.');
     }
   }
 
   private async makeRequest(endpoint: string, options: any = {}) {
+    this.checkConfiguration();
     const url = `${this.config.baseUrl}${endpoint}`;
     const headers = {
       'X-Api-Key': this.config.apiKey,

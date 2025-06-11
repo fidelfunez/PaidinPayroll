@@ -112,7 +112,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployees(): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.isActive, true));
+    return await db.select().from(users).where(eq(users.role, 'employee'));
+  }
+
+  async getEmployeesWithWithdrawalMethods(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'employee'))
+      .orderBy(users.firstName, users.lastName);
   }
 
   // Payroll management

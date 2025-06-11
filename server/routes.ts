@@ -11,6 +11,7 @@ import {
   insertMessageSchema
 } from "@shared/schema";
 import { initializeMessagingWebSocket, messagingWS } from "./websocket";
+import { lnbitsService } from "./lnbits";
 
 // Bitcoin API utility
 async function fetchBtcRate(): Promise<number> {
@@ -163,6 +164,16 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get employees with withdrawal methods for payroll
+  app.get('/api/employees/withdrawal-methods', requireAdmin, async (req, res) => {
+    try {
+      const employees = await storage.getEmployeesWithWithdrawalMethods();
+      res.json(employees);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch employee withdrawal methods' });
+    }
+  });
+
   // Payroll endpoints
   app.get('/api/payroll', requireAuth, async (req, res) => {
     try {
@@ -219,6 +230,134 @@ export function registerRoutes(app: Express): Server {
       res.json(payment);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update payment' });
+    }
+  });
+
+  // Process Bitcoin payment via LNbits
+  app.post('/api/payroll/:id/process-bitcoin', requireAdmin, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      
+      // Get payment details
+      const payments = await storage.getPayrollPayments();
+      const payment = payments.find(p => p.id === paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      if (payment.status !== 'pending') {
+        return res.status(400).json({ message: 'Payment is not in pending status' });
+      }
+
+      // Get employee details
+      const employee = await storage.getUser(payment.userId);
+      if (!employee) {
+        return res.status(404).json({ message: 'Employee not found' });
+      }
+
+      if (!employee.btcAddress) {
+        return res.status(400).json({ 
+          message: 'Employee has not set up Bitcoin withdrawal method' 
+        });
+      }
+
+      // Convert amount to satoshis
+      const currentBtcRate = await fetchBtcRate();
+      const amountUsd = parseFloat(payment.amountUsd);
+      const amountSats = lnbitsService.usdToSatoshis(amountUsd, currentBtcRate);
+
+      let lnbitsResult;
+      let processingNotes = '';
+
+      try {
+        // Check if it's a Lightning address or Bitcoin address
+        if (lnbitsService.isValidLightningAddress(employee.btcAddress)) {
+          // Pay to Lightning address
+          const memo = `Salary payment for ${employee.firstName} ${employee.lastName} - $${amountUsd}`;
+          lnbitsResult = await lnbitsService.payToLightningAddress(
+            employee.btcAddress,
+            amountSats,
+            memo
+          );
+          processingNotes = `Lightning payment sent to ${employee.btcAddress}`;
+        } else if (lnbitsService.isValidBitcoinAddress(employee.btcAddress)) {
+          // Handle Bitcoin address payment
+          return res.status(400).json({ 
+            message: 'On-chain Bitcoin payments not yet supported. Please ask employee to provide Lightning address.' 
+          });
+        } else {
+          return res.status(400).json({ 
+            message: 'Invalid Bitcoin address or Lightning address format' 
+          });
+        }
+
+        // Update payment with LNbits details
+        const updatedPayment = await storage.updatePayrollPayment(paymentId, {
+          status: 'processing',
+          lnbitsPaymentHash: lnbitsResult.payment_hash,
+          lnbitsInvoiceId: lnbitsResult.checking_id,
+          processingNotes: processingNotes
+        });
+
+        res.json({
+          success: true,
+          payment: updatedPayment,
+          lnbitsPaymentHash: lnbitsResult.payment_hash
+        });
+
+      } catch (lnbitsError: any) {
+        // Update payment with error details
+        await storage.updatePayrollPayment(paymentId, {
+          status: 'failed',
+          processingNotes: `Payment failed: ${lnbitsError.message}`
+        });
+
+        res.status(400).json({ 
+          message: `Bitcoin payment failed: ${lnbitsError.message}` 
+        });
+      }
+
+    } catch (error) {
+      console.error('Bitcoin payment error:', error);
+      res.status(500).json({ message: 'Failed to process Bitcoin payment' });
+    }
+  });
+
+  // Check LNbits payment status
+  app.get('/api/payroll/:id/bitcoin-status', requireAdmin, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      
+      const payments = await storage.getPayrollPayments();
+      const payment = payments.find(p => p.id === paymentId);
+      
+      if (!payment || !payment.lnbitsInvoiceId) {
+        return res.status(404).json({ message: 'Payment or LNbits transaction not found' });
+      }
+
+      const status = await lnbitsService.getPaymentStatus(payment.lnbitsInvoiceId);
+      
+      // Update payment status if completed
+      if (status.paid && payment.status === 'processing') {
+        await storage.updatePayrollPayment(paymentId, {
+          status: 'completed',
+          paidDate: new Date(),
+          transactionHash: payment.lnbitsPaymentHash,
+          processingNotes: `Lightning payment completed. Fee: ${status.fee} sats`
+        });
+      }
+
+      res.json({
+        paid: status.paid,
+        amount: status.amount,
+        fee: status.fee,
+        time: status.time
+      });
+
+    } catch (error) {
+      console.error('Status check error:', error);
+      res.status(500).json({ message: 'Failed to check payment status' });
     }
   });
 

@@ -30,6 +30,11 @@ export default function PayrollPage() {
     enabled: user?.role === 'admin',
   });
 
+  const { data: employeesWithWithdrawal } = useQuery<User[]>({
+    queryKey: ['/api/employees/withdrawal-methods'],
+    enabled: user?.role === 'admin',
+  });
+
   const { data: btcRate } = useQuery<{ rate: number }>({
     queryKey: ['/api/btc-rate'],
   });
@@ -51,6 +56,27 @@ export default function PayrollPage() {
       toast({
         title: "Payment failed",
         description: "Failed to process the payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const processBitcoinPaymentMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const response = await apiRequest('POST', `/api/payroll/${paymentId}/process-bitcoin`, {});
+      return response;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payroll'] });
+      toast({
+        title: "Bitcoin payment initiated",
+        description: `Lightning payment sent. Payment hash: ${data.lnbitsPaymentHash?.substring(0, 16)}...`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Bitcoin payment failed",
+        description: error.message || "Failed to process Bitcoin payment. Please try again.",
         variant: "destructive",
       });
     },
@@ -172,44 +198,109 @@ export default function PayrollPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee ID</TableHead>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Withdrawal Method</TableHead>
                       <TableHead>USD Amount</TableHead>
                       <TableHead>BTC Amount</TableHead>
-                      <TableHead>BTC Rate</TableHead>
                       <TableHead>Scheduled Date</TableHead>
                       <TableHead>Status</TableHead>
                       {user?.role === 'admin' && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="font-medium">#{payment.userId}</TableCell>
-                        <TableCell>{formatUsd(payment.amountUsd)}</TableCell>
-                        <TableCell>{formatBtc(payment.amountBtc)}</TableCell>
-                        <TableCell>{formatUsd(payment.btcRate)}</TableCell>
-                        <TableCell>{new Date(payment.scheduledDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                        {user?.role === 'admin' && (
-                          <TableCell>
-                            {payment.status === 'pending' && (
-                              <Button
-                                size="sm"
-                                onClick={() => processPaymentMutation.mutate(payment.id)}
-                                disabled={processPaymentMutation.isPending}
-                                className="mr-2"
-                              >
-                                {processPaymentMutation.isPending ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  'Pay Now'
-                                )}
-                              </Button>
-                            )}
+                    {payments.map((payment) => {
+                      const employee = employeesWithWithdrawal?.find(emp => emp.id === payment.userId);
+                      const hasWithdrawalMethod = employee?.btcAddress || employee?.withdrawalMethod === 'bank_transfer';
+                      
+                      return (
+                        <TableRow key={payment.id}>
+                          <TableCell className="font-medium">
+                            <div>
+                              <div>{employee ? `${employee.firstName} ${employee.lastName}` : `Employee #${payment.userId}`}</div>
+                              <div className="text-xs text-muted-foreground">{employee?.email}</div>
+                            </div>
                           </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {employee?.btcAddress ? (
+                                <>
+                                  <Bitcoin className="w-4 h-4 text-orange-500" />
+                                  <div>
+                                    <div className="text-xs font-medium">Lightning Address</div>
+                                    <div className="text-xs text-muted-foreground truncate max-w-32">
+                                      {employee.btcAddress}
+                                    </div>
+                                  </div>
+                                </>
+                              ) : employee?.withdrawalMethod === 'bank_transfer' ? (
+                                <>
+                                  <DollarSign className="w-4 h-4 text-blue-500" />
+                                  <div className="text-xs">Bank Transfer</div>
+                                </>
+                              ) : (
+                                <div className="text-xs text-red-500">Not set</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatUsd(payment.amountUsd)}</TableCell>
+                          <TableCell>{formatBtc(payment.amountBtc)}</TableCell>
+                          <TableCell>{new Date(payment.scheduledDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                          {user?.role === 'admin' && (
+                            <TableCell>
+                              <div className="flex gap-2">
+                                {payment.status === 'pending' && employee?.btcAddress && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => processBitcoinPaymentMutation.mutate(payment.id)}
+                                    disabled={processBitcoinPaymentMutation.isPending}
+                                    className="bg-orange-500 hover:bg-orange-600"
+                                  >
+                                    {processBitcoinPaymentMutation.isPending ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <Bitcoin className="w-3 h-3 mr-1" />
+                                        Pay Bitcoin
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                                {payment.status === 'pending' && !hasWithdrawalMethod && (
+                                  <div className="text-xs text-red-500 py-1">
+                                    Employee needs to set withdrawal method
+                                  </div>
+                                )}
+                                {payment.status === 'pending' && employee?.withdrawalMethod === 'bank_transfer' && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => processPaymentMutation.mutate(payment.id)}
+                                    disabled={processPaymentMutation.isPending}
+                                    variant="outline"
+                                  >
+                                    {processPaymentMutation.isPending ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      'Mark Paid'
+                                    )}
+                                  </Button>
+                                )}
+                                {payment.status === 'processing' && (
+                                  <div className="text-xs text-blue-500 py-1">
+                                    Processing Bitcoin payment...
+                                  </div>
+                                )}
+                                {payment.processingNotes && (
+                                  <div className="text-xs text-muted-foreground max-w-32 truncate" title={payment.processingNotes}>
+                                    {payment.processingNotes}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               ) : (

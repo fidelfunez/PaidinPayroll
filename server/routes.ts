@@ -47,6 +47,16 @@ export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
 
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Root endpoint for Railway health checks
+  app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'PaidIn API is running' });
+  });
+
   // BTC rate endpoints
   app.get('/api/btc-rate', requireAuth, async (req, res) => {
     try {

@@ -11,6 +11,12 @@ const app = express();
 // Trust proxy for Railway
 app.set('trust proxy', 1);
 
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -18,16 +24,14 @@ app.use(express.urlencoded({ extended: false }));
 // Register all API routes FIRST
 registerRoutes(app);
 
-// Static files SECOND
-const distPath = path.resolve(__dirname, "..", "dist", "public");
-console.log('Static files path:', distPath);
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Serve static files
+const distPath = path.resolve(__dirname, "..", "dist", "public");
+console.log('Static files path:', distPath);
 app.use(express.static(distPath));
 
 // Catch-all for React app (but NOT for /api/*)
@@ -41,6 +45,12 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
       res.status(500).json({ error: 'Failed to serve application' });
     }
   });
+});
+
+// Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
 const port = parseInt(process.env.PORT || '3000', 10);

@@ -3,6 +3,8 @@ import {
   payrollPayments, 
   expenseReimbursements, 
   btcRateHistory,
+  btcpayInvoices,
+  btcpayTransactions,
   conversations,
   messages,
   type User, 
@@ -13,6 +15,10 @@ import {
   type InsertExpenseReimbursement,
   type BtcRateHistory,
   type InsertBtcRateHistory,
+  type BtcpayInvoice,
+  type InsertBtcpayInvoice,
+  type BtcpayTransaction,
+  type InsertBtcpayTransaction,
   type Conversation,
   type InsertConversation,
   type Message,
@@ -53,6 +59,19 @@ export interface IStorage {
   saveBtcRate(rate: InsertBtcRateHistory): Promise<BtcRateHistory>;
   getLatestBtcRate(): Promise<BtcRateHistory | undefined>;
   getBtcRateHistory(startDate?: Date, endDate?: Date): Promise<BtcRateHistory[]>;
+
+  // BTCPay invoice management
+  createBtcpayInvoice(invoice: InsertBtcpayInvoice): Promise<BtcpayInvoice>;
+  getBtcpayInvoice(id: number): Promise<BtcpayInvoice | undefined>;
+  getBtcpayInvoiceByBtcpayId(btcpayInvoiceId: string): Promise<BtcpayInvoice | undefined>;
+  updateBtcpayInvoice(id: number, updates: Partial<BtcpayInvoice>): Promise<BtcpayInvoice | undefined>;
+  getBtcpayInvoices(): Promise<BtcpayInvoice[]>;
+  getPendingBtcpayInvoices(): Promise<BtcpayInvoice[]>;
+  
+  // BTCPay transaction management
+  createBtcpayTransaction(transaction: InsertBtcpayTransaction): Promise<BtcpayTransaction>;
+  getBtcpayTransactions(invoiceId: number): Promise<BtcpayTransaction[]>;
+  updateBtcpayTransaction(id: number, updates: Partial<BtcpayTransaction>): Promise<BtcpayTransaction | undefined>;
 
   // Messaging management
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -229,6 +248,78 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(btcRateHistory)
       .orderBy(desc(btcRateHistory.timestamp));
+  }
+
+  // BTCPay invoice management
+  async createBtcpayInvoice(invoice: InsertBtcpayInvoice): Promise<BtcpayInvoice> {
+    const [newInvoice] = await db
+      .insert(btcpayInvoices)
+      .values(invoice)
+      .returning();
+    return newInvoice;
+  }
+
+  async getBtcpayInvoice(id: number): Promise<BtcpayInvoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(btcpayInvoices)
+      .where(eq(btcpayInvoices.id, id));
+    return invoice || undefined;
+  }
+
+  async getBtcpayInvoiceByBtcpayId(btcpayInvoiceId: string): Promise<BtcpayInvoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(btcpayInvoices)
+      .where(eq(btcpayInvoices.btcpayInvoiceId, btcpayInvoiceId));
+    return invoice || undefined;
+  }
+
+  async updateBtcpayInvoice(id: number, updates: Partial<BtcpayInvoice>): Promise<BtcpayInvoice | undefined> {
+    const [invoice] = await db
+      .update(btcpayInvoices)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(btcpayInvoices.id, id))
+      .returning();
+    return invoice || undefined;
+  }
+
+  async getBtcpayInvoices(): Promise<BtcpayInvoice[]> {
+    return await db.select().from(btcpayInvoices).orderBy(desc(btcpayInvoices.createdAt));
+  }
+
+  async getPendingBtcpayInvoices(): Promise<BtcpayInvoice[]> {
+    return await db
+      .select()
+      .from(btcpayInvoices)
+      .where(eq(btcpayInvoices.status, 'new'))
+      .orderBy(desc(btcpayInvoices.createdAt));
+  }
+  
+  // BTCPay transaction management
+  async createBtcpayTransaction(transaction: InsertBtcpayTransaction): Promise<BtcpayTransaction> {
+    const [newTransaction] = await db
+      .insert(btcpayTransactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+
+  async getBtcpayTransactions(invoiceId: number): Promise<BtcpayTransaction[]> {
+    return await db
+      .select()
+      .from(btcpayTransactions)
+      .where(eq(btcpayTransactions.invoiceId, invoiceId))
+      .orderBy(desc(btcpayTransactions.timestamp));
+  }
+
+  async updateBtcpayTransaction(id: number, updates: Partial<BtcpayTransaction>): Promise<BtcpayTransaction | undefined> {
+    const [transaction] = await db
+      .update(btcpayTransactions)
+      .set(updates)
+      .where(eq(btcpayTransactions.id, id))
+      .returning();
+    return transaction || undefined;
   }
 
   // Messaging management

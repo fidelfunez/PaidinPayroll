@@ -7,11 +7,13 @@ import {
   insertPayrollPaymentSchema, 
   insertExpenseReimbursementSchema,
   insertBtcRateHistorySchema,
+  insertBtcpayInvoiceSchema,
   insertConversationSchema,
   insertMessageSchema
 } from "@shared/schema";
 import { initializeMessagingWebSocket, messagingWS } from "./websocket";
 import { lnbitsService } from "./lnbits";
+import { btcpayService } from "./btcpay";
 
 // Bitcoin API utility
 async function fetchBtcRate(): Promise<number> {
@@ -713,6 +715,164 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching employees:', error);
       res.status(500).json({ message: 'Failed to fetch employees' });
+    }
+  });
+
+  // BTCPay Invoice endpoints
+  app.post('/api/invoice', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const validation = insertBtcpayInvoiceSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: 'Invalid invoice data', 
+          errors: validation.error.errors 
+        });
+      }
+
+      const { amountUsd, description, customerEmail, customerName } = validation.data;
+      
+      // Create BTCPay invoice
+      const btcpayInvoice = await btcpayService.createInvoice({
+        amount: parseFloat(amountUsd),
+        currency: 'USD',
+        description,
+        customerEmail,
+        customerName,
+        orderId: validation.data.orderId,
+        redirectUrl: `${req.protocol}://${req.get('host')}/invoice/success`,
+        webhookUrl: `${req.protocol}://${req.get('host')}/api/invoice/webhook`
+      });
+
+      // Save to database
+      const invoiceData = {
+        btcpayInvoiceId: btcpayInvoice.id,
+        orderId: btcpayInvoice.orderId,
+        amountUsd: amountUsd,
+        currency: 'USD',
+        description,
+        status: btcpayInvoice.status.toLowerCase() as 'new' | 'processing' | 'settled' | 'complete' | 'expired' | 'invalid',
+        statusMessage: btcpayInvoice.statusMessage,
+        customerEmail: customerEmail || undefined,
+        customerName: customerName || undefined,
+        paymentUrl: btcpayInvoice.paymentUrls.BIP21,
+        lightningPaymentUrl: btcpayInvoice.paymentUrls.LIGHTNING,
+        onChainPaymentUrl: btcpayInvoice.paymentUrls.BIP21,
+        expiresAt: new Date(btcpayInvoice.expirationTime * 1000)
+      };
+
+      const savedInvoice = await storage.createBtcpayInvoice(invoiceData);
+
+      res.status(201).json({
+        ...savedInvoice,
+        btcpayInvoice,
+        paymentUrls: {
+          bip21: btcpayInvoice.paymentUrls.BIP21,
+          lightning: btcpayInvoice.paymentUrls.LIGHTNING,
+          onchain: btcpayInvoice.paymentUrls.BIP21
+        }
+      });
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      res.status(500).json({ message: 'Failed to create invoice' });
+    }
+  });
+
+  app.get('/api/invoice/:id', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const invoiceId = parseInt(req.params.id);
+      
+      const invoice = await storage.getBtcpayInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      // Get latest status from BTCPay
+      try {
+        const btcpayStatus = await btcpayService.getInvoiceStatus(invoice.btcpayInvoiceId);
+        
+        // Update local status if different
+        if (btcpayStatus.status.toLowerCase() !== invoice.status) {
+          await storage.updateBtcpayInvoice(invoice.id, {
+            status: btcpayStatus.status.toLowerCase() as 'new' | 'processing' | 'settled' | 'complete' | 'expired' | 'invalid',
+            statusMessage: btcpayStatus.statusMessage,
+            totalPaid: btcpayService.getTotalPaid(btcpayStatus).toString(),
+            paidDate: btcpayService.isInvoicePaid(btcpayStatus) ? new Date() : null
+          });
+        }
+
+        // Get transactions
+        const transactions = await storage.getBtcpayTransactions(invoice.id);
+        
+        res.json({
+          ...invoice,
+          btcpayStatus,
+          transactions,
+          isPaid: btcpayService.isInvoicePaid(btcpayStatus),
+          isExpired: btcpayService.isInvoiceExpired(btcpayStatus),
+          isPending: btcpayService.isInvoicePending(btcpayStatus),
+          paymentUrls: {
+            bip21: btcpayStatus.paymentUrls.BIP21,
+            lightning: btcpayStatus.paymentUrls.LIGHTNING,
+            onchain: btcpayStatus.paymentUrls.BIP21
+          }
+        });
+      } catch (btcpayError) {
+        console.error('Error fetching BTCPay status:', btcpayError);
+        // Return local data if BTCPay is unavailable
+        res.json({
+          ...invoice,
+          btcpayError: 'Unable to fetch latest status from BTCPay'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      res.status(500).json({ message: 'Failed to fetch invoice' });
+    }
+  });
+
+  app.get('/api/invoices', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const invoices = await storage.getBtcpayInvoices();
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      res.status(500).json({ message: 'Failed to fetch invoices' });
+    }
+  });
+
+  // BTCPay webhook endpoint (no auth required)
+  app.post('/api/invoice/webhook', async (req, res) => {
+    try {
+      const { invoiceId, status, statusMessage } = req.body;
+      
+      if (!invoiceId) {
+        return res.status(400).json({ message: 'Invoice ID is required' });
+      }
+
+      // Find invoice by BTCPay ID
+      const invoice = await storage.getBtcpayInvoiceByBtcpayId(invoiceId);
+      if (!invoice) {
+        console.warn(`Webhook received for unknown invoice: ${invoiceId}`);
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      // Update invoice status
+      await storage.updateBtcpayInvoice(invoice.id, {
+        status: status.toLowerCase(),
+        statusMessage,
+        paidDate: status.toLowerCase() === 'settled' || status.toLowerCase() === 'complete' ? new Date() : null
+      });
+
+      console.log(`Invoice ${invoiceId} status updated to: ${status}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      res.status(500).json({ message: 'Failed to process webhook' });
     }
   });
 

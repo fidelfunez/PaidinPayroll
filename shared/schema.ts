@@ -9,6 +9,7 @@ export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processin
 export const withdrawalMethodEnum = pgEnum('withdrawal_method', ['bitcoin', 'bank_transfer', 'not_set']);
 export const expenseStatusEnum = pgEnum('expense_status', ['pending', 'approved', 'rejected', 'paid']);
 export const transactionTypeEnum = pgEnum('transaction_type', ['salary', 'reimbursement', 'bonus']);
+export const btcpayInvoiceStatusEnum = pgEnum('btcpay_invoice_status', ['new', 'processing', 'settled', 'complete', 'expired', 'invalid']);
 
 // Users table
 export const users = pgTable("users", {
@@ -72,6 +73,48 @@ export const btcRateHistory = pgTable("btc_rate_history", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
+// BTCPay invoices table
+export const btcpayInvoices = pgTable("btcpay_invoices", {
+  id: serial("id").primaryKey(),
+  btcpayInvoiceId: text("btcpay_invoice_id").notNull().unique(), // BTCPay's invoice ID
+  orderId: text("order_id").notNull(),
+  amountUsd: decimal("amount_usd", { precision: 10, scale: 2 }).notNull(),
+  amountBtc: decimal("amount_btc", { precision: 18, scale: 8 }),
+  currency: text("currency").notNull().default('USD'),
+  description: text("description").notNull(),
+  status: btcpayInvoiceStatusEnum("status").notNull().default('new'),
+  statusMessage: text("status_message"),
+  customerEmail: text("customer_email"),
+  customerName: text("customer_name"),
+  paymentUrl: text("payment_url"),
+  lightningPaymentUrl: text("lightning_payment_url"),
+  onChainPaymentUrl: text("onchain_payment_url"),
+  totalPaid: decimal("total_paid", { precision: 18, scale: 8 }).default('0'),
+  paymentMethod: text("payment_method"), // 'lightning' or 'onchain'
+  transactionHash: text("transaction_hash"),
+  paidDate: timestamp("paid_date"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// BTCPay invoice transactions table for tracking individual payments
+export const btcpayTransactions = pgTable("btcpay_transactions", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").notNull().references(() => btcpayInvoices.id, { onDelete: "cascade" }),
+  btcpayTransactionId: text("btcpay_transaction_id").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  currency: text("currency").notNull(),
+  confirmations: integer("confirmations").default(0),
+  blockHeight: integer("block_height"),
+  blockHash: text("block_hash"),
+  txid: text("txid"),
+  timestamp: timestamp("timestamp"),
+  status: text("status").notNull(),
+  paymentType: text("payment_type"), // 'lightning' or 'onchain'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Session table for express-session storage
 export const session = pgTable("session", {
   sid: text("sid").primaryKey().notNull(),
@@ -122,6 +165,17 @@ export const expenseReimbursementsRelations = relations(expenseReimbursements, (
     fields: [expenseReimbursements.approvedBy],
     references: [users.id],
     relationName: "approver",
+  }),
+}));
+
+export const btcpayInvoicesRelations = relations(btcpayInvoices, ({ many }) => ({
+  transactions: many(btcpayTransactions),
+}));
+
+export const btcpayTransactionsRelations = relations(btcpayTransactions, ({ one }) => ({
+  invoice: one(btcpayInvoices, {
+    fields: [btcpayTransactions.invoiceId],
+    references: [btcpayInvoices.id],
   }),
 }));
 
@@ -179,6 +233,20 @@ export const insertBtcRateHistorySchema = createInsertSchema(btcRateHistory).omi
   timestamp: true,
 });
 
+export const insertBtcpayInvoiceSchema = createInsertSchema(btcpayInvoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  paidDate: true,
+  totalPaid: true,
+  transactionHash: true,
+});
+
+export const insertBtcpayTransactionSchema = createInsertSchema(btcpayTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
   createdAt: true,
@@ -201,6 +269,10 @@ export type ExpenseReimbursement = typeof expenseReimbursements.$inferSelect;
 export type InsertExpenseReimbursement = z.infer<typeof insertExpenseReimbursementSchema>;
 export type BtcRateHistory = typeof btcRateHistory.$inferSelect;
 export type InsertBtcRateHistory = z.infer<typeof insertBtcRateHistorySchema>;
+export type BtcpayInvoice = typeof btcpayInvoices.$inferSelect;
+export type InsertBtcpayInvoice = z.infer<typeof insertBtcpayInvoiceSchema>;
+export type BtcpayTransaction = typeof btcpayTransactions.$inferSelect;
+export type InsertBtcpayTransaction = z.infer<typeof insertBtcpayTransactionSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Message = typeof messages.$inferSelect;

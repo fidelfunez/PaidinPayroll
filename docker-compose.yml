@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://paidin_user:paidin_password@db:5432/paidin_db
+      - SESSION_SECRET=your-super-secret-session-key-change-this-in-production
+      - LNBITS_BASE_URL=https://your-lnbits-instance.com
+      - LNBITS_API_KEY=your-lnbits-api-key
+      - LNBITS_ADMIN_KEY=your-lnbits-admin-key
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=paidin_db
+      - POSTGRES_USER=paidin_user
+      - POSTGRES_PASSWORD=paidin_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 

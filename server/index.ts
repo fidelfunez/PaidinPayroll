@@ -16,10 +16,11 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Run database migrations on startup
+// Run database migrations on startup with absolute path
 try {
-  console.log('Running database migrations...');
-  migrate(db, { migrationsFolder: './migrations' });
+  const migrationsPath = path.join(__dirname, '../migrations');
+  console.log('Running database migrations from:', migrationsPath);
+  migrate(db, { migrationsFolder: migrationsPath });
   console.log('Database migrations completed successfully');
 } catch (error) {
   console.error('Migration error:', error);

@@ -34,6 +34,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 
+# Ensure static files are owned by nextjs user
+RUN chown -R nextjs:nodejs /app/dist
+
 # Prune devDependencies
 RUN npm prune --omit=dev
 
@@ -42,10 +45,9 @@ RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 8080
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV PORT=8080
 
 # Start the application
 CMD ["npm", "start"] 

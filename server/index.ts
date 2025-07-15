@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import { registerRoutes } from "./routes";
+import os from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +64,7 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
     res.status(500).json({ error: 'Timeout serving application' });
   }, 10000); // 10 second timeout
   
+  console.log('About to call res.sendFile');
   res.sendFile(indexPath, (err) => {
     clearTimeout(timeout);
     if (err) {
@@ -71,6 +73,7 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
     } else {
       console.log('Successfully served index.html');
     }
+    console.log('res.sendFile callback called');
   });
 });
 
@@ -82,6 +85,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
+
+console.log(`[express] running as user: ${process.getuid?.()} (${os.userInfo().username})`);
 
 app.listen(port, host, () => {
   console.log(`[express] serving on port ${port} on ${host}`);

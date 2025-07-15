@@ -1,144 +1,144 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, pgEnum } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real, blob } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Enums
-export const roleEnum = pgEnum('role', ['admin', 'employee']);
-export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processing', 'completed', 'failed']);
-export const withdrawalMethodEnum = pgEnum('withdrawal_method', ['bitcoin', 'bank_transfer', 'not_set']);
-export const expenseStatusEnum = pgEnum('expense_status', ['pending', 'approved', 'rejected', 'paid']);
-export const transactionTypeEnum = pgEnum('transaction_type', ['salary', 'reimbursement', 'bonus']);
-export const btcpayInvoiceStatusEnum = pgEnum('btcpay_invoice_status', ['new', 'processing', 'settled', 'complete', 'expired', 'invalid']);
+// Enums (SQLite doesn't have native enums, so we use text)
+export const roleEnum = ['admin', 'employee'] as const;
+export const paymentStatusEnum = ['pending', 'processing', 'completed', 'failed'] as const;
+export const withdrawalMethodEnum = ['bitcoin', 'bank_transfer', 'not_set'] as const;
+export const expenseStatusEnum = ['pending', 'approved', 'rejected', 'paid'] as const;
+export const transactionTypeEnum = ['salary', 'reimbursement', 'bonus'] as const;
+export const btcpayInvoiceStatusEnum = ['new', 'processing', 'settled', 'complete', 'expired', 'invalid'] as const;
 
 // Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  role: roleEnum("role").notNull().default('employee'),
+  role: text("role", { enum: roleEnum }).notNull().default('employee'),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   bio: text("bio"),
   btcAddress: text("btc_address"),
-  withdrawalMethod: withdrawalMethodEnum("withdrawal_method").notNull().default('not_set'),
+  withdrawalMethod: text("withdrawal_method", { enum: withdrawalMethodEnum }).notNull().default('not_set'),
   bankAccountDetails: text("bank_account_details"), // JSON string for bank details
-  monthlySalary: decimal("monthly_salary", { precision: 10, scale: 2 }),
+  monthlySalary: real("monthly_salary"),
   profilePhoto: text("profile_photo"), // Base64 encoded image data
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // Payroll payments table
-export const payrollPayments = pgTable("payroll_payments", {
-  id: serial("id").primaryKey(),
+export const payrollPayments = sqliteTable("payroll_payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
-  amountUsd: decimal("amount_usd", { precision: 10, scale: 2 }).notNull(),
-  amountBtc: decimal("amount_btc", { precision: 18, scale: 8 }).notNull(),
-  btcRate: decimal("btc_rate", { precision: 10, scale: 2 }).notNull(),
-  status: paymentStatusEnum("status").notNull().default('pending'),
-  scheduledDate: timestamp("scheduled_date").notNull(),
-  paidDate: timestamp("paid_date"),
+  amountUsd: real("amount_usd").notNull(),
+  amountBtc: real("amount_btc").notNull(),
+  btcRate: real("btc_rate").notNull(),
+  status: text("status", { enum: paymentStatusEnum }).notNull().default('pending'),
+  scheduledDate: integer("scheduled_date", { mode: 'timestamp' }).notNull(),
+  paidDate: integer("paid_date", { mode: 'timestamp' }),
   transactionHash: text("transaction_hash"),
   lnbitsPaymentHash: text("lnbits_payment_hash"),
   lnbitsInvoiceId: text("lnbits_invoice_id"),
   processingNotes: text("processing_notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // Expense reimbursements table
-export const expenseReimbursements = pgTable("expense_reimbursements", {
-  id: serial("id").primaryKey(),
+export const expenseReimbursements = sqliteTable("expense_reimbursements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
   description: text("description").notNull(),
   category: text("category").notNull(),
-  amountUsd: decimal("amount_usd", { precision: 10, scale: 2 }).notNull(),
-  amountBtc: decimal("amount_btc", { precision: 18, scale: 8 }),
-  btcRate: decimal("btc_rate", { precision: 10, scale: 2 }),
-  status: expenseStatusEnum("status").notNull().default('pending'),
+  amountUsd: real("amount_usd").notNull(),
+  amountBtc: real("amount_btc"),
+  btcRate: real("btc_rate"),
+  status: text("status", { enum: expenseStatusEnum }).notNull().default('pending'),
   receiptUrl: text("receipt_url"),
   approvedBy: integer("approved_by").references(() => users.id),
-  approvedDate: timestamp("approved_date"),
-  paidDate: timestamp("paid_date"),
+  approvedDate: integer("approved_date", { mode: 'timestamp' }),
+  paidDate: integer("paid_date", { mode: 'timestamp' }),
   transactionHash: text("transaction_hash"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // BTC rate history for tracking exchange rates
-export const btcRateHistory = pgTable("btc_rate_history", {
-  id: serial("id").primaryKey(),
-  rate: decimal("rate", { precision: 10, scale: 2 }).notNull(),
+export const btcRateHistory = sqliteTable("btc_rate_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  rate: real("rate").notNull(),
   source: text("source").notNull().default('coingecko'),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  timestamp: integer("timestamp", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // BTCPay invoices table
-export const btcpayInvoices = pgTable("btcpay_invoices", {
-  id: serial("id").primaryKey(),
+export const btcpayInvoices = sqliteTable("btcpay_invoices", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   btcpayInvoiceId: text("btcpay_invoice_id").notNull().unique(), // BTCPay's invoice ID
   orderId: text("order_id").notNull(),
-  amountUsd: decimal("amount_usd", { precision: 10, scale: 2 }).notNull(),
-  amountBtc: decimal("amount_btc", { precision: 18, scale: 8 }),
+  amountUsd: real("amount_usd").notNull(),
+  amountBtc: real("amount_btc"),
   currency: text("currency").notNull().default('USD'),
   description: text("description").notNull(),
-  status: btcpayInvoiceStatusEnum("status").notNull().default('new'),
+  status: text("status", { enum: btcpayInvoiceStatusEnum }).notNull().default('new'),
   statusMessage: text("status_message"),
   customerEmail: text("customer_email"),
   customerName: text("customer_name"),
   paymentUrl: text("payment_url"),
   lightningPaymentUrl: text("lightning_payment_url"),
   onChainPaymentUrl: text("onchain_payment_url"),
-  totalPaid: decimal("total_paid", { precision: 18, scale: 8 }).default('0'),
+  totalPaid: real("total_paid").default(0),
   paymentMethod: text("payment_method"), // 'lightning' or 'onchain'
   transactionHash: text("transaction_hash"),
-  paidDate: timestamp("paid_date"),
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  paidDate: integer("paid_date", { mode: 'timestamp' }),
+  expiresAt: integer("expires_at", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // BTCPay invoice transactions table for tracking individual payments
-export const btcpayTransactions = pgTable("btcpay_transactions", {
-  id: serial("id").primaryKey(),
+export const btcpayTransactions = sqliteTable("btcpay_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   invoiceId: integer("invoice_id").notNull().references(() => btcpayInvoices.id, { onDelete: "cascade" }),
   btcpayTransactionId: text("btcpay_transaction_id").notNull(),
-  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  amount: real("amount").notNull(),
   currency: text("currency").notNull(),
   confirmations: integer("confirmations").default(0),
   blockHeight: integer("block_height"),
   blockHash: text("block_hash"),
   txid: text("txid"),
-  timestamp: timestamp("timestamp"),
+  timestamp: integer("timestamp", { mode: 'timestamp' }),
   status: text("status").notNull(),
   paymentType: text("payment_type"), // 'lightning' or 'onchain'
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // Session table for express-session storage
-export const session = pgTable("session", {
+export const session = sqliteTable("session", {
   sid: text("sid").primaryKey().notNull(),
   sess: text("sess").notNull(), // JSON as text
-  expire: timestamp("expire").notNull(),
+  expire: integer("expire", { mode: 'timestamp' }).notNull(),
 });
 
 // Conversations table for messaging
-export const conversations = pgTable("conversations", {
-  id: serial("id").primaryKey(),
-  participantIds: integer("participant_ids").array().notNull(),
+export const conversations = sqliteTable("conversations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  participantIds: text("participant_ids").notNull(), // JSON array as text
   lastMessageId: integer("last_message_id"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
 // Messages table for individual messages
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
   senderId: integer("sender_id").notNull().references(() => users.id),
   content: text("content").notNull(),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-  readBy: integer("read_by").array().default([]).notNull(),
+  timestamp: integer("timestamp", { mode: 'timestamp' }).notNull().default(Date.now),
+  readBy: text("read_by").notNull().default('[]'), // JSON array as text
 });
 
 // Relations
@@ -208,6 +208,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 }).extend({
   password: z.string().min(8, "Password must be at least 8 characters")
     .regex(strongPasswordRegex, "Password must contain at least 1 uppercase letter, 1 number, and 1 special character"),
+  monthlySalary: z.string().optional().transform((val) => val === "" ? null : parseFloat(val || "0")),
 });
 
 export const insertPayrollPaymentSchema = createInsertSchema(payrollPayments).omit({

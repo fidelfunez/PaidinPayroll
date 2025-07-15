@@ -69,6 +69,7 @@ export function setupAuth(app: Express) {
       ...req.body,
       password: await hashPassword(req.body.password),
       monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
+      createdAt: new Date(),
     };
 
     try {

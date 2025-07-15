@@ -28,10 +28,10 @@ import { db } from "./db";
 import { eq, desc, and, gte, lte, or, arrayContains } from "drizzle-orm";
 import session from "express-session";
 import * as expressSession from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import connectSqlite3 from "connect-sqlite3";
+import { sqlite } from "./db";
 
-const PostgresSessionStore = connectPg(session);
+const SQLiteSessionStore = connectSqlite3(session);
 
 export interface IStorage {
   // User management
@@ -91,9 +91,9 @@ export class DatabaseStorage implements IStorage {
   sessionStore: expressSession.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
+    this.sessionStore = new SQLiteSessionStore({ 
+      db: 'paidin.db',
+      table: 'sessions'
     });
   }
 

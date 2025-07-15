@@ -92,12 +92,8 @@ export class DatabaseStorage implements IStorage {
   sessionStore: expressSession.Store;
 
   constructor() {
-    // Use the shared utility for the database path
-    const dbPath = getDatabasePath();
-    this.sessionStore = new SQLiteSessionStore({ 
-      db: dbPath,
-      table: 'sessions'
-    });
+    // Temporarily use memory store to avoid SQLite conflicts
+    this.sessionStore = new (expressSession as any).MemoryStore();
   }
 
   // User management

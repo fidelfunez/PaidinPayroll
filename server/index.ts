@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import { registerRoutes } from "./routes";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,6 +33,16 @@ app.get('/health', (req, res) => {
 // Serve static files
 const distPath = path.resolve(__dirname, "..", "dist", "public");
 console.log('Static files path:', distPath);
+
+// Check if static files directory exists
+if (!fs.existsSync(distPath)) {
+  console.error('ERROR: Static files directory does not exist:', distPath);
+} else {
+  console.log('Static files directory exists');
+  const files = fs.readdirSync(distPath);
+  console.log('Files in dist/public:', files);
+}
+
 app.use(express.static(distPath));
 
 // Catch-all for React app (but NOT for /api/*)
@@ -39,10 +50,19 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
   console.log('Serving index.html for path:', req.path);
   const indexPath = path.resolve(distPath, "index.html");
   console.log('Index file path:', indexPath);
+  
+  // Check if index.html exists
+  if (!fs.existsSync(indexPath)) {
+    console.error('ERROR: index.html does not exist at:', indexPath);
+    return res.status(500).json({ error: 'index.html not found' });
+  }
+  
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error serving index.html:', err);
-      res.status(500).json({ error: 'Failed to serve application' });
+      res.status(500).json({ error: 'Failed to serve application', details: err.message });
+    } else {
+      console.log('Successfully served index.html');
     }
   });
 });

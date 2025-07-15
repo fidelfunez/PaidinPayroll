@@ -5,17 +5,25 @@ import fs from 'fs';
 import path from 'path';
 
 // Create SQLite database
-const dbPath = process.env.NODE_ENV === 'production' ? './paidin.db' : 'paidin.db';
+let dbPath = process.env.NODE_ENV === 'production' ? '/app/data/paidin.db' : 'paidin.db';
 
 // Ensure directory exists in production
 if (process.env.NODE_ENV === 'production') {
   const dbDir = path.dirname(dbPath);
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+  try {
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+  } catch (error) {
+    console.error(`Failed to create directory ${dbDir}:`, error);
+    // Fallback to current directory if /app/data doesn't exist
+    dbPath = './paidin.db';
+    console.log(`Falling back to: ${dbPath}`);
   }
 }
 
 const sqlite = new Database(dbPath);
+console.log(`Database initialized successfully at: ${dbPath}`);
 
 // Create drizzle instance
 export const db = drizzle(sqlite, { schema });

@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import os from "os";
 
@@ -12,6 +13,18 @@ const app = express();
 
 // Trust proxy for Railway
 app.set('trust proxy', 1);
+
+// CORS configuration
+app.use(cors({
+  origin: [
+    'https://paidin-app.netlify.app',
+    'http://localhost:5173', // For local development
+    'http://localhost:3000'  // For local development
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Log all incoming requests
 app.use((req, res, next) => {

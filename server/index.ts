@@ -57,7 +57,14 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
     return res.status(500).json({ error: 'index.html not found' });
   }
   
+  // Set a timeout to prevent hanging
+  const timeout = setTimeout(() => {
+    console.error('Timeout serving index.html');
+    res.status(500).json({ error: 'Timeout serving application' });
+  }, 10000); // 10 second timeout
+  
   res.sendFile(indexPath, (err) => {
+    clearTimeout(timeout);
     if (err) {
       console.error('Error serving index.html:', err);
       res.status(500).json({ error: 'Failed to serve application', details: err.message });

@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { WebSocketServer } from "ws";
+import { createServer } from "http";
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
@@ -47,17 +49,16 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  // Development vs Production setup
+  if (process.env.NODE_ENV === "development") {
+    // Import and setup Vite only in development
+    const { setupVite } = await import("./vite.js");
     await setupVite(app, server);
   } else {
+    // Serve static files in production
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 3000
-  // this serves both the API and the client.
   const port = process.env.PORT || 3000;
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
   server.listen({

@@ -19,7 +19,7 @@ export async function setupVite(app: Express, server: Server) {
     throw new Error('setupVite should only be called in development');
   }
 
-  // Only import Vite in development
+  // Only import Vite in development - this should be tree-shaken in production
   const { createServer: createViteServer, createLogger } = await import('vite');
   const viteConfig = await import('../vite.config');
   const { nanoid } = await import('nanoid');

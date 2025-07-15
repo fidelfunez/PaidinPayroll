@@ -7,12 +7,24 @@ import cors from 'cors';
 import { setupAuth } from './auth.js';
 import { registerRoutes } from './routes.js';
 import { getDatabasePath } from './db-path.js';
+import { db } from './db.js';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Run database migrations on startup
+try {
+  console.log('Running database migrations...');
+  migrate(db, { migrationsFolder: './migrations' });
+  console.log('Database migrations completed successfully');
+} catch (error) {
+  console.error('Migration error:', error);
+  // Continue anyway - migrations might already be applied
+}
 
 // CORS configuration
 app.use(cors({

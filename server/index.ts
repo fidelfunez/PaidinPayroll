@@ -1,70 +1,29 @@
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { WebSocketServer } from "ws";
-import { createServer } from "http";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: false, limit: '5mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+// Register all API routes FIRST
+registerRoutes(app);
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
+// Static files SECOND
+const distPath = path.resolve(__dirname, "..", "dist", "public");
+app.use(express.static(distPath));
 
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
+// Catch-all for React app (but NOT for /api/*)
+app.get(/^\/(?!api\/).*/, (_req, res) => {
+  res.sendFile(path.resolve(distPath, "index.html"));
 });
 
-(async () => {
-  const server = await registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // Development vs Production setup
-  if (process.env.NODE_ENV === "development") {
-    // Import and setup Vite only in development
-    const { setupVite } = await import("./vite.js");
-    await setupVite(app, server);
-  } else {
-    // Serve static files in production
-    serveStatic(app);
-  }
-
-  const port = process.env.PORT || 3000;
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
-  server.listen({
-    port,
-    host
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+const port = process.env.PORT || 3000;
+const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
+app.listen(port, () => {
+  console.log(`[express] serving on port ${port}`);
+});

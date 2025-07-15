@@ -30,6 +30,7 @@ import session from "express-session";
 import * as expressSession from "express-session";
 import connectSqlite3 from "connect-sqlite3";
 import { sqlite } from "./db";
+import { getDatabasePath } from './db-path';
 
 const SQLiteSessionStore = connectSqlite3(session);
 
@@ -91,8 +92,10 @@ export class DatabaseStorage implements IStorage {
   sessionStore: expressSession.Store;
 
   constructor() {
+    // Use the shared utility for the database path
+    const dbPath = getDatabasePath();
     this.sessionStore = new SQLiteSessionStore({ 
-      db: 'paidin.db',
+      db: dbPath,
       table: 'sessions'
     });
   }

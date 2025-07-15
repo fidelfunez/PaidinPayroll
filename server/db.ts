@@ -1,26 +1,10 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from "@shared/schema";
-import fs from 'fs';
-import path from 'path';
+import { getDatabasePath } from './db-path';
 
-// Create SQLite database
-let dbPath = process.env.NODE_ENV === 'production' ? '/app/data/paidin.db' : 'paidin.db';
-
-// Ensure directory exists in production
-if (process.env.NODE_ENV === 'production') {
-  const dbDir = path.dirname(dbPath);
-  try {
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-  } catch (error) {
-    console.error(`Failed to create directory ${dbDir}:`, error);
-    // Fallback to current directory if /app/data doesn't exist
-    dbPath = './paidin.db';
-    console.log(`Falling back to: ${dbPath}`);
-  }
-}
+// Use the shared utility for the database path
+const dbPath = getDatabasePath();
 
 const sqlite = new Database(dbPath);
 console.log(`Database initialized successfully at: ${dbPath}`);

@@ -32,6 +32,8 @@ import connectSqlite3 from "connect-sqlite3";
 import { sqlite } from "./db";
 import { getDatabasePath } from './db-path';
 
+
+
 const SQLiteSessionStore = connectSqlite3(session);
 
 export interface IStorage {
@@ -94,8 +96,7 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     // Use SQLite session store for production
     this.sessionStore = new SQLiteSessionStore({
-      db: 'sessions.db',
-      dir: './data',
+      db: getDatabasePath(),
       table: 'sessions'
     });
   }

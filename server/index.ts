@@ -9,6 +9,7 @@ import { registerRoutes } from './routes.js';
 import { getDatabasePath } from './db-path.js';
 import { db } from './db.js';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { storage } from './storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -49,11 +50,13 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret',
   resave: false,
   saveUninitialized: false,
+  store: storage.sessionStore,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    // domain property removed
   }
 }));
 

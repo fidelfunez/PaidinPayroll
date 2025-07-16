@@ -92,8 +92,12 @@ export class DatabaseStorage implements IStorage {
   sessionStore: expressSession.Store;
 
   constructor() {
-    // Temporarily use memory store to avoid SQLite conflicts
-    this.sessionStore = new (expressSession as any).MemoryStore();
+    // Use SQLite session store for production
+    this.sessionStore = new SQLiteSessionStore({
+      db: 'sessions.db',
+      dir: './data',
+      table: 'sessions'
+    });
   }
 
   // User management

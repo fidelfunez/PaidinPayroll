@@ -10,6 +10,11 @@ export const withdrawalMethodEnum = ['bitcoin', 'bank_transfer', 'not_set'] as c
 export const expenseStatusEnum = ['pending', 'approved', 'rejected', 'paid'] as const;
 export const transactionTypeEnum = ['salary', 'reimbursement', 'bonus'] as const;
 export const btcpayInvoiceStatusEnum = ['new', 'processing', 'settled', 'complete', 'expired', 'invalid'] as const;
+export const invoiceStatusEnum = ['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const;
+export const integrationTypeEnum = ['slack', 'quickbooks', 'zapier', 'btcpay', 'lnbits'] as const;
+export const integrationStatusEnum = ['connected', 'disconnected', 'error'] as const;
+export const taskTypeEnum = ['form', 'document', 'video', 'quiz', 'meeting', 'system'] as const;
+export const taskStatusEnum = ['pending', 'in_progress', 'completed'] as const;
 
 // Users table
 export const users = sqliteTable("users", {
@@ -141,6 +146,89 @@ export const messages = sqliteTable("messages", {
   readBy: text("read_by").notNull().default('[]'), // JSON array as text
 });
 
+// Invoices table
+export const invoices = sqliteTable("invoices", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  clientName: text("client_name").notNull(),
+  clientEmail: text("client_email").notNull(),
+  amountUsd: real("amount_usd").notNull(),
+  amountBtc: real("amount_btc"),
+  description: text("description").notNull(),
+  status: text("status", { enum: invoiceStatusEnum }).notNull().default('draft'),
+  dueDate: integer("due_date", { mode: 'timestamp' }),
+  paidDate: integer("paid_date", { mode: 'timestamp' }),
+  btcAddress: text("btc_address"),
+  paymentUrl: text("payment_url"),
+  transactionHash: text("transaction_hash"),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Integrations table
+export const integrations = sqliteTable("integrations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  type: text("type", { enum: integrationTypeEnum }).notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  status: text("status", { enum: integrationStatusEnum }).notNull().default('disconnected'),
+  config: text("config").notNull(), // JSON string for configuration
+  lastSync: integer("last_sync", { mode: 'timestamp' }),
+  lastError: text("last_error"),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Onboarding flows table
+export const onboardingFlows = sqliteTable("onboarding_flows", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  department: text("department").notNull(),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Onboarding tasks table
+export const onboardingTasks = sqliteTable("onboarding_tasks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  flowId: integer("flow_id").notNull().references(() => onboardingFlows.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  type: text("type", { enum: taskTypeEnum }).notNull(),
+  description: text("description").notNull(),
+  required: integer("required", { mode: 'boolean' }).notNull().default(true),
+  order: integer("order").notNull(),
+  estimatedTime: integer("estimated_time"), // in minutes
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Onboarding progress table
+export const onboardingProgress = sqliteTable("onboarding_progress", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  flowId: integer("flow_id").notNull().references(() => onboardingFlows.id),
+  employeeId: integer("employee_id").notNull().references(() => users.id),
+  progress: real("progress").notNull().default(0), // percentage 0-100
+  startDate: integer("start_date", { mode: 'timestamp' }).notNull().default(Date.now),
+  completedDate: integer("completed_date", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Onboarding task progress table
+export const onboardingTaskProgress = sqliteTable("onboarding_task_progress", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  progressId: integer("progress_id").notNull().references(() => onboardingProgress.id, { onDelete: "cascade" }),
+  taskId: integer("task_id").notNull().references(() => onboardingTasks.id),
+  status: text("status", { enum: taskStatusEnum }).notNull().default('pending'),
+  completedAt: integer("completed_at", { mode: 'timestamp' }),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   payrollPayments: many(payrollPayments),
@@ -195,6 +283,61 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   sender: one(users, {
     fields: [messages.senderId],
     references: [users.id],
+  }),
+}));
+
+// Relations for new tables
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  creator: one(users, {
+    fields: [invoices.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const integrationsRelations = relations(integrations, ({ one }) => ({
+  creator: one(users, {
+    fields: [integrations.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const onboardingFlowsRelations = relations(onboardingFlows, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [onboardingFlows.createdBy],
+    references: [users.id],
+  }),
+  tasks: many(onboardingTasks),
+  progress: many(onboardingProgress),
+}));
+
+export const onboardingTasksRelations = relations(onboardingTasks, ({ one, many }) => ({
+  flow: one(onboardingFlows, {
+    fields: [onboardingTasks.flowId],
+    references: [onboardingFlows.id],
+  }),
+  taskProgress: many(onboardingTaskProgress),
+}));
+
+export const onboardingProgressRelations = relations(onboardingProgress, ({ one, many }) => ({
+  flow: one(onboardingFlows, {
+    fields: [onboardingProgress.flowId],
+    references: [onboardingFlows.id],
+  }),
+  employee: one(users, {
+    fields: [onboardingProgress.employeeId],
+    references: [users.id],
+  }),
+  taskProgress: many(onboardingTaskProgress),
+}));
+
+export const onboardingTaskProgressRelations = relations(onboardingTaskProgress, ({ one }) => ({
+  progress: one(onboardingProgress, {
+    fields: [onboardingTaskProgress.progressId],
+    references: [onboardingProgress.id],
+  }),
+  task: one(onboardingTasks, {
+    fields: [onboardingTaskProgress.taskId],
+    references: [onboardingTasks.id],
   }),
 }));
 
@@ -261,6 +404,13 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   readBy: true,
 });
 
+export const insertInvoiceSchema = createInsertSchema(invoices);
+export const insertIntegrationSchema = createInsertSchema(integrations);
+export const insertOnboardingFlowSchema = createInsertSchema(onboardingFlows);
+export const insertOnboardingTaskSchema = createInsertSchema(onboardingTasks);
+export const insertOnboardingProgressSchema = createInsertSchema(onboardingProgress);
+export const insertOnboardingTaskProgressSchema = createInsertSchema(onboardingTaskProgress);
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -278,3 +428,37 @@ export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Integration = typeof integrations.$inferSelect;
+export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
+export type OnboardingFlow = typeof onboardingFlows.$inferSelect;
+export type InsertOnboardingFlow = z.infer<typeof insertOnboardingFlowSchema>;
+export type OnboardingTask = typeof onboardingTasks.$inferSelect;
+export type InsertOnboardingTask = z.infer<typeof insertOnboardingTaskSchema>;
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
+export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
+export type OnboardingTaskProgress = typeof onboardingTaskProgress.$inferSelect;
+export type InsertOnboardingTaskProgress = z.infer<typeof insertOnboardingTaskProgressSchema>;
+
+// BTCPay configuration table
+export const btcpayConfig = sqliteTable("btcpay_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  url: text("url").notNull(),
+  apiKey: text("api_key").notNull(),
+  storeId: text("store_id").notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Insert schemas for new tables
+export const insertBtcpayConfigSchema = createInsertSchema(btcpayConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for new tables
+export type BtcpayConfig = typeof btcpayConfig.$inferSelect;
+export type InsertBtcpayConfig = z.infer<typeof insertBtcpayConfigSchema>;

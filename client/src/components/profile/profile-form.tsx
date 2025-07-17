@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Upload, X, Save } from "lucide-react";
+import { User, Upload, X, Save, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { compressImage, validateImageFile, fileToBase64, formatFileSize } from "@/lib/image-utils";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -33,6 +34,7 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -66,26 +68,56 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
     },
   });
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file
+    const validationError = validateImageFile(file, 10); // Allow up to 10MB for compression
+    if (validationError) {
       toast({
-        title: "File too large",
-        description: "Please select an image under 2MB.",
+        title: "Invalid file",
+        description: validationError,
         variant: "destructive",
       });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setSelectedPhoto(result);
-      form.setValue("profilePhoto", result);
-    };
-    reader.readAsDataURL(file);
+    setIsCompressing(true);
+    
+    try {
+      // Show compression progress
+      toast({
+        title: "Optimizing image...",
+        description: `Original size: ${formatFileSize(file.size)}`,
+      });
+
+      // Compress the image
+      const compressedFile = await compressImage(file);
+      
+      // Convert to base64
+      const base64 = await fileToBase64(compressedFile);
+      
+      setSelectedPhoto(base64);
+      form.setValue("profilePhoto", base64);
+      
+      // Show compression results
+      const compressionRatio = ((file.size - compressedFile.size) / file.size * 100).toFixed(1);
+      toast({
+        title: "Image optimized!",
+        description: `Reduced from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)} (${compressionRatio}% smaller)`,
+      });
+      
+    } catch (error) {
+      console.error('Image processing failed:', error);
+      toast({
+        title: "Image processing failed",
+        description: "Please try again with a different image.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const removePhoto = () => {
@@ -118,10 +150,20 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
             
             <div className="flex space-x-2">
               <Label htmlFor="photo-upload" className="cursor-pointer">
-                <Button type="button" variant="outline" size="sm" asChild>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  asChild
+                  disabled={isCompressing}
+                >
                   <span>
+                    {isCompressing ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload
+                    )}
+                    {isCompressing ? "Optimizing..." : "Upload"}
                   </span>
                 </Button>
               </Label>
@@ -131,6 +173,7 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
                 accept="image/*"
                 onChange={handlePhotoUpload}
                 className="hidden"
+                disabled={isCompressing}
               />
               
               {(selectedPhoto || user?.profilePhoto) && (

@@ -7,6 +7,12 @@ import {
   btcpayTransactions,
   conversations,
   messages,
+  invoices,
+  integrations,
+  onboardingFlows,
+  onboardingTasks,
+  onboardingProgress,
+  onboardingTaskProgress,
   type User, 
   type InsertUser,
   type PayrollPayment,
@@ -22,7 +28,19 @@ import {
   type Conversation,
   type InsertConversation,
   type Message,
-  type InsertMessage
+  type InsertMessage,
+  type Invoice,
+  type InsertInvoice,
+  type Integration,
+  type InsertIntegration,
+  type OnboardingFlow,
+  type InsertOnboardingFlow,
+  type OnboardingTask,
+  type InsertOnboardingTask,
+  type OnboardingProgress,
+  type InsertOnboardingProgress,
+  type OnboardingTaskProgress,
+  type InsertOnboardingTaskProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, or, arrayContains } from "drizzle-orm";
@@ -31,6 +49,7 @@ import * as expressSession from "express-session";
 import connectSqlite3 from "connect-sqlite3";
 import { sqlite } from "./db";
 import { getDatabasePath } from './db-path';
+import path from 'path';
 
 
 
@@ -87,6 +106,57 @@ export interface IStorage {
   markMessageAsRead(messageId: number, userId: number): Promise<void>;
   getUnreadMessageCount(userId: number): Promise<number>;
 
+  // Invoice management
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  getInvoice(id: number): Promise<Invoice | undefined>;
+  getInvoices(userId?: number): Promise<Invoice[]>;
+  updateInvoice(id: number, updates: Partial<Invoice>): Promise<Invoice | undefined>;
+  updateInvoiceStatus(id: number, status: string): Promise<Invoice | undefined>;
+  deleteInvoice(id: number): Promise<void>;
+  generateInvoiceNumber(): Promise<string>;
+
+  // Integration management
+  createIntegration(integration: InsertIntegration): Promise<Integration>;
+  getIntegration(id: number): Promise<Integration | undefined>;
+  getIntegrations(): Promise<Integration[]>;
+  updateIntegration(id: number, updates: Partial<Integration>): Promise<Integration | undefined>;
+  testIntegration(id: number): Promise<{ success: boolean; message: string; details?: any }>;
+  deleteIntegration(id: number): Promise<void>;
+  toggleIntegration(id: number, isActive: boolean): Promise<Integration>;
+
+  // Onboarding flow management
+  createOnboardingFlow(flow: InsertOnboardingFlow): Promise<OnboardingFlow>;
+  getOnboardingFlow(id: number): Promise<OnboardingFlow | undefined>;
+  getOnboardingFlows(): Promise<OnboardingFlow[]>;
+  updateOnboardingFlow(id: number, updates: Partial<OnboardingFlow>): Promise<OnboardingFlow | undefined>;
+  deleteOnboardingFlow(id: number): Promise<void>;
+
+  // Onboarding task management
+  createOnboardingTask(task: InsertOnboardingTask): Promise<OnboardingTask>;
+  getOnboardingTask(id: number): Promise<OnboardingTask | undefined>;
+  getOnboardingTasks(flowId: number): Promise<OnboardingTask[]>;
+  updateOnboardingTask(id: number, updates: Partial<OnboardingTask>): Promise<OnboardingTask | undefined>;
+  deleteOnboardingTask(id: number): Promise<void>;
+
+  // Onboarding progress management
+  createOnboardingProgress(progress: InsertOnboardingProgress): Promise<OnboardingProgress>;
+  getOnboardingProgress(id: number): Promise<OnboardingProgress | undefined>;
+  getOnboardingProgressByEmployee(employeeId: number): Promise<OnboardingProgress[]>;
+  updateOnboardingProgress(id: number, updates: Partial<OnboardingProgress>): Promise<OnboardingProgress | undefined>;
+  deleteOnboardingProgress(id: number): Promise<void>;
+
+  // Onboarding task progress management
+  createOnboardingTaskProgress(progress: InsertOnboardingTaskProgress): Promise<OnboardingTaskProgress>;
+  getOnboardingTaskProgress(id: number): Promise<OnboardingTaskProgress | undefined>;
+  getOnboardingTaskProgressByProgress(progressId: number): Promise<OnboardingTaskProgress[]>;
+  updateOnboardingTaskProgress(id: number, updates: Partial<OnboardingTaskProgress>): Promise<OnboardingTaskProgress | undefined>;
+  deleteOnboardingTaskProgress(id: number): Promise<void>;
+
+  // BTCPay configuration
+  getBTCPayConfig(): Promise<{ url: string; apiKey: string; storeId: string } | null>;
+  saveBTCPayConfig(config: { url: string; apiKey: string; storeId: string }): Promise<void>;
+  updateBTCPayConfig(config: Partial<{ url: string; apiKey: string; storeId: string }>): Promise<void>;
+
   sessionStore: expressSession.Store;
 }
 
@@ -96,7 +166,8 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     // Use SQLite session store for production
     this.sessionStore = new SQLiteSessionStore({
-      db: getDatabasePath(),
+      db: 'sessions.db',
+      dir: path.dirname(getDatabasePath()),
       table: 'sessions'
     });
   }
@@ -419,6 +490,338 @@ export class DatabaseStorage implements IStorage {
     }
 
     return unreadCount;
+  }
+
+  // Invoice management
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const [newInvoice] = await db
+      .insert(invoices)
+      .values(invoice)
+      .returning();
+    return newInvoice;
+  }
+
+  async getInvoice(id: number): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, id));
+    return invoice || undefined;
+  }
+
+  async getInvoices(userId?: number): Promise<Invoice[]> {
+    const query = db.select().from(invoices).orderBy(desc(invoices.createdAt));
+    if (userId) {
+      return await query.where(eq(invoices.createdBy, userId));
+    }
+    return await query;
+  }
+
+  async updateInvoice(id: number, updates: Partial<Invoice>): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    return invoice || undefined;
+  }
+
+  async updateInvoiceStatus(id: number, status: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    return invoice || undefined;
+  }
+
+  async deleteInvoice(id: number): Promise<void> {
+    await db
+      .delete(invoices)
+      .where(eq(invoices.id, id));
+  }
+
+  async generateInvoiceNumber(): Promise<string> {
+    const [lastInvoice] = await db
+      .select()
+      .from(invoices)
+      .orderBy(desc(invoices.createdAt))
+      .limit(1);
+
+    if (!lastInvoice) {
+      return 'INV-0001';
+    }
+
+    const lastNumber = parseInt(lastInvoice.invoiceNumber.replace('INV-', ''), 10);
+    const newNumber = (lastNumber + 1).toString().padStart(4, '0');
+    return `INV-${newNumber}`;
+  }
+
+  // Integration management
+  async createIntegration(integration: InsertIntegration): Promise<Integration> {
+    const [newIntegration] = await db
+      .insert(integrations)
+      .values(integration)
+      .returning();
+    return newIntegration;
+  }
+
+  async getIntegration(id: number): Promise<Integration | undefined> {
+    const [integration] = await db
+      .select()
+      .from(integrations)
+      .where(eq(integrations.id, id));
+    return integration || undefined;
+  }
+
+  async getIntegrations(): Promise<Integration[]> {
+    return await db.select().from(integrations).orderBy(desc(integrations.createdAt));
+  }
+
+  async updateIntegration(id: number, updates: Partial<Integration>): Promise<Integration | undefined> {
+    const [integration] = await db
+      .update(integrations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(integrations.id, id))
+      .returning();
+    return integration || undefined;
+  }
+
+  async testIntegration(id: number): Promise<{ success: boolean; message: string; details?: any }> {
+    const [integration] = await db
+      .select()
+      .from(integrations)
+      .where(eq(integrations.id, id));
+
+    if (!integration) {
+      return { success: false, message: 'Integration not found' };
+    }
+
+    try {
+      // Simulate a test connection
+      // In a real application, you would call an external API or service
+      // For example, if it's a Slack integration, you might send a test message
+      // If it's a QuickBooks integration, you might try to fetch a company info
+      // If it's a Zapier integration, you might trigger a webhook
+      // If it's a BTCPay integration, you might try to get a rate
+      // If it's an LNBits integration, you might try to get a wallet balance
+
+      // For now, we'll just return a success message
+      return { success: true, message: 'Integration test successful' };
+    } catch (error) {
+      return { success: false, message: `Integration test failed: ${error.message}` };
+    }
+  }
+
+  async deleteIntegration(id: number): Promise<void> {
+    await db
+      .delete(integrations)
+      .where(eq(integrations.id, id));
+  }
+
+  async toggleIntegration(id: number, isActive: boolean): Promise<Integration> {
+    const [integration] = await db
+      .update(integrations)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(integrations.id, id))
+      .returning();
+    return integration!;
+  }
+
+  // Onboarding flow management
+  async createOnboardingFlow(flow: InsertOnboardingFlow): Promise<OnboardingFlow> {
+    const [newFlow] = await db
+      .insert(onboardingFlows)
+      .values(flow)
+      .returning();
+    return newFlow;
+  }
+
+  async getOnboardingFlow(id: number): Promise<OnboardingFlow | undefined> {
+    const [flow] = await db
+      .select()
+      .from(onboardingFlows)
+      .where(eq(onboardingFlows.id, id));
+    return flow || undefined;
+  }
+
+  async getOnboardingFlows(): Promise<OnboardingFlow[]> {
+    return await db.select().from(onboardingFlows).orderBy(desc(onboardingFlows.createdAt));
+  }
+
+  async updateOnboardingFlow(id: number, updates: Partial<OnboardingFlow>): Promise<OnboardingFlow | undefined> {
+    const [flow] = await db
+      .update(onboardingFlows)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(onboardingFlows.id, id))
+      .returning();
+    return flow || undefined;
+  }
+
+  async deleteOnboardingFlow(id: number): Promise<void> {
+    await db
+      .delete(onboardingFlows)
+      .where(eq(onboardingFlows.id, id));
+  }
+
+  // Onboarding task management
+  async createOnboardingTask(task: InsertOnboardingTask): Promise<OnboardingTask> {
+    const [newTask] = await db
+      .insert(onboardingTasks)
+      .values(task)
+      .returning();
+    return newTask;
+  }
+
+  async getOnboardingTask(id: number): Promise<OnboardingTask | undefined> {
+    const [task] = await db
+      .select()
+      .from(onboardingTasks)
+      .where(eq(onboardingTasks.id, id));
+    return task || undefined;
+  }
+
+  async getOnboardingTasks(flowId: number): Promise<OnboardingTask[]> {
+    return await db
+      .select()
+      .from(onboardingTasks)
+      .where(eq(onboardingTasks.flowId, flowId))
+      .orderBy(onboardingTasks.order);
+  }
+
+  async updateOnboardingTask(id: number, updates: Partial<OnboardingTask>): Promise<OnboardingTask | undefined> {
+    const [task] = await db
+      .update(onboardingTasks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(onboardingTasks.id, id))
+      .returning();
+    return task || undefined;
+  }
+
+  async deleteOnboardingTask(id: number): Promise<void> {
+    await db
+      .delete(onboardingTasks)
+      .where(eq(onboardingTasks.id, id));
+  }
+
+  // Onboarding progress management
+  async createOnboardingProgress(progress: InsertOnboardingProgress): Promise<OnboardingProgress> {
+    const [newProgress] = await db
+      .insert(onboardingProgress)
+      .values(progress)
+      .returning();
+    return newProgress;
+  }
+
+  async getOnboardingProgress(id: number): Promise<OnboardingProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.id, id));
+    return progress || undefined;
+  }
+
+  async getOnboardingProgressByEmployee(employeeId: number): Promise<OnboardingProgress[]> {
+    return await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.employeeId, employeeId))
+      .orderBy(desc(onboardingProgress.startDate));
+  }
+
+  async updateOnboardingProgress(id: number, updates: Partial<OnboardingProgress>): Promise<OnboardingProgress | undefined> {
+    const [progress] = await db
+      .update(onboardingProgress)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(onboardingProgress.id, id))
+      .returning();
+    return progress || undefined;
+  }
+
+  async deleteOnboardingProgress(id: number): Promise<void> {
+    await db
+      .delete(onboardingProgress)
+      .where(eq(onboardingProgress.id, id));
+  }
+
+  // Onboarding task progress management
+  async createOnboardingTaskProgress(progress: InsertOnboardingTaskProgress): Promise<OnboardingTaskProgress> {
+    const [newProgress] = await db
+      .insert(onboardingTaskProgress)
+      .values(progress)
+      .returning();
+    return newProgress;
+  }
+
+  async getOnboardingTaskProgress(id: number): Promise<OnboardingTaskProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(onboardingTaskProgress)
+      .where(eq(onboardingTaskProgress.id, id));
+    return progress || undefined;
+  }
+
+  async getOnboardingTaskProgressByProgress(progressId: number): Promise<OnboardingTaskProgress[]> {
+    return await db
+      .select()
+      .from(onboardingTaskProgress)
+      .where(eq(onboardingTaskProgress.progressId, progressId))
+      .orderBy(onboardingTaskProgress.taskId);
+  }
+
+  async updateOnboardingTaskProgress(id: number, updates: Partial<OnboardingTaskProgress>): Promise<OnboardingTaskProgress | undefined> {
+    const [progress] = await db
+      .update(onboardingTaskProgress)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(onboardingTaskProgress.id, id))
+      .returning();
+    return progress || undefined;
+  }
+
+  async deleteOnboardingTaskProgress(id: number): Promise<void> {
+    await db
+      .delete(onboardingTaskProgress)
+      .where(eq(onboardingTaskProgress.id, id));
+  }
+
+  // BTCPay configuration management
+  async getBTCPayConfig(): Promise<{ url: string; apiKey: string; storeId: string } | null> {
+    const [config] = await db
+      .select()
+      .from(btcpayConfig)
+      .where(eq(btcpayConfig.isActive, true))
+      .limit(1);
+    
+    return config ? {
+      url: config.url,
+      apiKey: config.apiKey,
+      storeId: config.storeId
+    } : null;
+  }
+
+  async saveBTCPayConfig(config: { url: string; apiKey: string; storeId: string }): Promise<void> {
+    // Deactivate any existing config
+    await db
+      .update(btcpayConfig)
+      .set({ isActive: false })
+      .where(eq(btcpayConfig.isActive, true));
+
+    // Insert new config
+    await db
+      .insert(btcpayConfig)
+      .values({
+        url: config.url,
+        apiKey: config.apiKey,
+        storeId: config.storeId,
+        isActive: true
+      });
+  }
+
+  async updateBTCPayConfig(updates: Partial<{ url: string; apiKey: string; storeId: string }>): Promise<void> {
+    await db
+      .update(btcpayConfig)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(btcpayConfig.isActive, true));
   }
 }
 

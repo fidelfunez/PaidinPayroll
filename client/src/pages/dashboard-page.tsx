@@ -12,6 +12,7 @@ import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useBitcoinQuotes } from "@/hooks/use-bitcoin-quotes";
+import { getQueryFn } from "@/lib/queryClient";
 
 interface DashboardStats {
   totalBtcBalance: number;
@@ -41,6 +42,7 @@ export default function DashboardPage() {
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   if (isLoading) {

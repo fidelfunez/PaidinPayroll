@@ -1,15 +1,14 @@
 import express from 'express';
-import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from 'cors';
-import { setupAuth } from './auth.js';
-import { registerRoutes } from './routes.js';
+import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
 import { db } from './db.js';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { storage } from './storage.js';
+import { paymentPolling } from './payment-polling';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,6 +25,7 @@ try {
 } catch (error) {
   console.error('Migration error:', error);
   // Continue anyway - migrations might already be applied
+  // This is expected if tables already exist
 }
 
 // CORS configuration
@@ -42,37 +42,14 @@ app.use(cors({
 }));
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.static(path.join(__dirname, '../dist/public')));
 
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
-  resave: false,
-  saveUninitialized: false,
-  store: storage.sessionStore,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    // domain property removed
-  }
-}));
-
-// Setup authentication
-setupAuth(app);
-
-// Register API routes
-registerRoutes(app);
+// Register all module routes
+registerAllRoutes(app);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// API health check
-app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -82,12 +59,17 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  
+
   // Serve index.html for all other routes (SPA fallback)
   res.sendFile(path.join(__dirname, '../dist/public/index.html'));
 });
 
+// Start payment polling after server starts
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Database path: ${getDatabasePath()}`);
+  
+  // Start payment polling
+  paymentPolling.startPolling();
+  console.log('Payment polling service started');
 });

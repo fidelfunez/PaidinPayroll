@@ -6,12 +6,55 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, Download, Copy, ExternalLink, Clock } from "lucide-react";
+import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { invoicingApi, type Invoice } from "@/lib/api/invoicing-api";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreateInvoiceModal } from "@/components/modals/create-invoice-modal";
+
+// Mock data for demonstration
+const mockInvoices = [
+  {
+    id: 1,
+    invoiceNumber: "INV-2024-001",
+    clientName: "Acme Corp",
+    amount: 2500.00,
+    amountBtc: 0.085,
+    status: "paid",
+    dueDate: "2024-01-15",
+    createdAt: "2024-01-01",
+    paymentUrl: "https://btcpay.example.com/invoice/abc123",
+    btcpayInvoiceId: "abc123"
+  },
+  {
+    id: 2,
+    invoiceNumber: "INV-2024-002",
+    clientName: "TechStart Inc",
+    amount: 1800.00,
+    amountBtc: 0.061,
+    status: "sent",
+    dueDate: "2024-01-20",
+    createdAt: "2024-01-05",
+    paymentUrl: "https://btcpay.example.com/invoice/def456",
+    btcpayInvoiceId: "def456"
+  },
+  {
+    id: 3,
+    invoiceNumber: "INV-2024-003",
+    clientName: "Global Solutions",
+    amount: 3200.00,
+    amountBtc: 0.108,
+    status: "pending",
+    dueDate: "2024-01-25",
+    createdAt: "2024-01-10",
+    paymentUrl: "https://btcpay.example.com/invoice/ghi789",
+    btcpayInvoiceId: "ghi789"
+  }
+];
 
 const statusColors = {
   paid: "bg-green-100 text-green-800",
@@ -24,253 +67,251 @@ const statusColors = {
 
 export default function InvoicesPage() {
   const { user } = useAuth();
-  const { isSidebarOpen, toggleSidebar } = useSidebar();
+  const { isCollapsed } = useSidebar();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Fetch invoices with React Query
-  const {
-    data: invoices = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
+  // Mock query - replace with real API call
+  const { data: invoices = mockInvoices, isLoading } = useQuery({
     queryKey: ['invoices'],
-    queryFn: invoicingApi.getInvoices,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: () => Promise.resolve(mockInvoices),
   });
 
-  // Delete invoice mutation
-  const deleteInvoiceMutation = useMutation({
-    mutationFn: invoicingApi.deleteInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast({
-        title: "Invoice deleted",
-        description: "The invoice has been successfully deleted.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete invoice. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
-  // Calculate stats
-  const stats = {
-    totalPaid: invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.amountUsd), 0),
-    totalPending: invoices.filter(inv => inv.status === 'sent' || inv.status === 'pending').reduce((sum, inv) => sum + parseFloat(inv.amountUsd), 0),
-    totalOverdue: invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + parseFloat(inv.amountUsd), 0),
-    totalInvoices: invoices.length
+  const copyPaymentUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "Payment URL copied",
+      description: "The payment URL has been copied to your clipboard.",
+    });
   };
 
-  const handleDeleteInvoice = async (invoiceId: string) => {
-    if (!confirm('Are you sure you want to delete this invoice?')) return;
-    
-    deleteInvoiceMutation.mutate(invoiceId);
-  };
+  const formatCurrency = (amount: number) => 
+    `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  if (error) {
+  const formatBtc = (amount: number) => 
+    `${amount.toFixed(8)} BTC`;
+
+  const getStatusBadge = (status: string) => {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header onMenuClick={toggleSidebar} />
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-7xl mx-auto">
-              <Card className="border-red-200 bg-red-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-6 w-6 text-red-600" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-red-800">Error Loading Invoices</h3>
-                      <p className="text-red-600">Failed to load invoices. Please try again.</p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => refetch()} 
-                    className="mt-4"
-                    variant="outline"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Retrying...
-                      </>
-                    ) : (
-                      "Retry"
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </main>
-          <Footer />
-        </div>
+      <Badge className={statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuClick={toggleSidebar} />
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
+        <Header 
+          title="Invoices" 
+          subtitle="Manage Bitcoin invoices and payments"
+        />
         
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-                <p className="text-gray-600">Manage your Bitcoin invoices</p>
-              </div>
-              <Link to="/invoices/create">
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Invoice
-                </Button>
-              </Link>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">
-                    ${stats.totalPaid.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-600">Total Paid</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    ${stats.totalPending.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-600">Pending</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-red-600">
-                    ${stats.totalOverdue.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-600">Overdue</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {stats.totalInvoices}
-                  </div>
-                  <div className="text-sm text-gray-600">Total Invoices</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Invoices Table */}
+        <main className="p-4 lg:p-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>All Invoices</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                    <span className="ml-2 text-gray-600">Loading invoices...</span>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
+                    <p className="text-2xl font-bold">{invoices.length}</p>
                   </div>
-                ) : invoices.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 mb-4">No invoices found</p>
-                    <Link to="/invoices/create">
-                      <Button>Create Your First Invoice</Button>
-                    </Link>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Invoice</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Client</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Amount</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Due Date</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invoices.map((invoice) => (
-                          <tr key={invoice.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">
-                              <div>
-                                <div className="font-medium text-gray-900">#{invoice.id}</div>
-                                <div className="text-sm text-gray-500">
-                                  {new Date(invoice.createdAt).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div>
-                                <div className="font-medium text-gray-900">{invoice.clientName}</div>
-                                <div className="text-sm text-gray-500">{invoice.clientEmail}</div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div>
-                                <div className="font-medium text-gray-900">${parseFloat(invoice.amountUsd).toLocaleString()}</div>
-                                <div className="text-sm text-gray-500">{invoice.amountBtc} BTC</div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <Badge className={statusColors[invoice.status as keyof typeof statusColors]}>
-                                {invoice.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="text-sm text-gray-900">
-                                {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'No due date'}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex gap-2">
-                                <Link to={`/invoices/${invoice.id}`}>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                                <Link to={`/invoices/${invoice.id}/edit`}>
-                                  <Button variant="outline" size="sm">
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleDeleteInvoice(invoice.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Paid</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {invoices.filter(i => i.status === 'paid').length}
+                    </p>
                   </div>
-                )}
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      {invoices.filter(i => i.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(invoices.reduce((sum, inv) => sum + inv.amount, 0))}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-bitcoin-100 rounded-lg flex items-center justify-center">
+                    <span className="text-xl font-bold text-bitcoin-600">₿</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Controls */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col lg:flex-row gap-4 flex-1">
+                  <div className="relative flex-1 max-w-md">
+                    <Input
+                      placeholder="Search invoices..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full lg:w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={() => setShowCreateModal(true)} className="w-full lg:w-auto">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Invoice
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Invoices Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoices</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{invoice.clientName}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{formatCurrency(invoice.amount)}</div>
+                            <div className="text-sm text-muted-foreground">{formatBtc(invoice.amountBtc)}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                        <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyPaymentUrl(invoice.paymentUrl)}
+                              title="Copy payment URL"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(invoice.paymentUrl, '_blank')}
+                              title="View payment page"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="View details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Edit invoice"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
+
+      <CreateInvoiceModal 
+        open={showCreateModal} 
+        onOpenChange={setShowCreateModal} 
+      />
     </div>
   );
 } 

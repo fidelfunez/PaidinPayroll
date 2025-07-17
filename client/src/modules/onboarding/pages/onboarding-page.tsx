@@ -6,253 +6,323 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, Clock, CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Users, Clock, CheckCircle, Loader2, AlertCircle, Play, Pause, Settings, Target } from "lucide-react";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { onboardingApi, type OnboardingFlow, type OnboardingProgress } from "@/lib/api/onboarding-api";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+
+// Mock data for demonstration
+const mockOnboardingFlows = [
+  {
+    id: 1,
+    name: "New Employee Onboarding",
+    description: "Complete onboarding process for new hires",
+    status: "active",
+    totalTasks: 8,
+    completedTasks: 6,
+    participants: 3,
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-15"
+  },
+  {
+    id: 2,
+    name: "Bitcoin Payroll Setup",
+    description: "Configure Bitcoin payroll for employees",
+    status: "completed",
+    totalTasks: 5,
+    completedTasks: 5,
+    participants: 2,
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-12"
+  },
+  {
+    id: 3,
+    name: "BTCPay Integration",
+    description: "Set up BTCPay Server for payments",
+    status: "draft",
+    totalTasks: 4,
+    completedTasks: 1,
+    participants: 1,
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-10"
+  }
+];
+
+const statusColors = {
+  active: "bg-green-100 text-green-800",
+  completed: "bg-blue-100 text-blue-800",
+  draft: "bg-gray-100 text-gray-800",
+  paused: "bg-yellow-100 text-yellow-800"
+};
 
 export default function OnboardingPage() {
   const { user } = useAuth();
-  const { isSidebarOpen, toggleSidebar } = useSidebar();
+  const { isCollapsed } = useSidebar();
+  const { toast } = useToast();
+  const [selectedFlow, setSelectedFlow] = useState<number | null>(null);
 
-  // Fetch onboarding flows
-  const {
-    data: flows = [],
-    isLoading: flowsLoading,
-    error: flowsError
-  } = useQuery({
+  // Mock query - replace with real API call
+  const { data: onboardingFlows = mockOnboardingFlows, isLoading } = useQuery({
     queryKey: ['onboarding-flows'],
-    queryFn: onboardingApi.getOnboardingFlows,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: () => Promise.resolve(mockOnboardingFlows),
   });
 
-  // Fetch onboarding progress
-  const {
-    data: progress = [],
-    isLoading: progressLoading,
-    error: progressError
-  } = useQuery({
-    queryKey: ['onboarding-progress'],
-    queryFn: onboardingApi.getOnboardingProgress,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  const isLoading = flowsLoading || progressLoading;
-  const error = flowsError || progressError;
-
-  // Calculate stats
-  const stats = {
-    totalFlows: flows.length,
-    activeProgress: progress.filter(p => p.progress < 100).length,
-    completedToday: progress.filter(p => 
-      p.progress === 100 && 
-      new Date(p.startDate).toDateString() === new Date().toDateString()
-    ).length,
-    averageProgress: progress.length > 0 
-      ? Math.round(progress.reduce((sum, p) => sum + p.progress, 0) / progress.length)
-      : 0
+  const getStatusBadge = (status: string) => {
+    return (
+      <Badge className={statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
   };
 
-  if (error) {
+  const getProgressPercentage = (completed: number, total: number) => {
+    return total > 0 ? (completed / total) * 100 : 0;
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header onMenuClick={toggleSidebar} />
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-7xl mx-auto">
-              <Card className="border-red-200 bg-red-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-6 w-6 text-red-600" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-red-800">Error Loading Onboarding Data</h3>
-                      <p className="text-red-600">Failed to load onboarding information. Please try again.</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </main>
-          <Footer />
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuClick={toggleSidebar} />
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
+        <Header 
+          title="Onboarding" 
+          subtitle="Manage employee onboarding flows and progress"
+        />
         
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Onboarding</h1>
-                <p className="text-gray-600">Manage employee onboarding flows and progress</p>
-              </div>
-              <Link to="/onboarding/create">
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
+        <main className="p-4 lg:p-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Flows</p>
+                    <p className="text-2xl font-bold">{onboardingFlows.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Target className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Active</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {onboardingFlows.filter(f => f.status === 'active').length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Play className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {onboardingFlows.filter(f => f.status === 'completed').length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Participants</p>
+                    <p className="text-2xl font-bold">
+                      {onboardingFlows.reduce((sum, flow) => sum + flow.participants, 0)}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-bitcoin-100 rounded-lg flex items-center justify-center">
+                    <Plus className="w-6 h-6 text-bitcoin-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Create New Flow</h3>
+                    <p className="text-sm text-muted-foreground">Set up a new onboarding process</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Add Participants</h3>
+                    <p className="text-sm text-muted-foreground">Invite employees to flows</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Settings className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Templates</h3>
+                    <p className="text-sm text-muted-foreground">Use pre-built onboarding templates</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Onboarding Flows */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Onboarding Flows</CardTitle>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
                   Create Flow
                 </Button>
-              </Link>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalFlows}</div>
-                  <div className="text-sm text-gray-600">Total Flows</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-yellow-600">{stats.activeProgress}</div>
-                  <div className="text-sm text-gray-600">Active Onboarding</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">{stats.completedToday}</div>
-                  <div className="text-sm text-gray-600">Completed Today</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-purple-600">{stats.averageProgress}%</div>
-                  <div className="text-sm text-gray-600">Avg Progress</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Loading onboarding data...</span>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Onboarding Flows */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Onboarding Flows</CardTitle>
-                      <Link to="/onboarding/create">
-                        <Button size="sm">Create New</Button>
-                      </Link>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {onboardingFlows.map((flow) => (
+                  <div key={flow.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-semibold text-lg">{flow.name}</h3>
+                          {getStatusBadge(flow.status)}
+                        </div>
+                        <p className="text-muted-foreground">{flow.description}</p>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Progress</p>
+                          <p className="font-semibold">
+                            {flow.completedTasks}/{flow.totalTasks} tasks
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Participants</p>
+                          <p className="font-semibold">{flow.participants}</p>
+                        </div>
+                      </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {flows.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 mb-4">No onboarding flows created yet</p>
-                        <Link to="/onboarding/create">
-                          <Button>Create Your First Flow</Button>
-                        </Link>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Task Completion</span>
+                        <span>{Math.round(getProgressPercentage(flow.completedTasks, flow.totalTasks))}%</span>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {flows.map((flow) => (
-                          <div key={flow.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="font-medium text-gray-900">{flow.name}</h3>
-                                <p className="text-sm text-gray-500">{flow.description}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <Badge variant="outline">{flow.department}</Badge>
-                                  <span className="text-sm text-gray-500">
-                                    {flow.tasks.length} tasks
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Link to={`/onboarding/${flow.id}/edit`}>
-                                  <Button variant="outline" size="sm">
-                                    Edit
-                                  </Button>
-                                </Link>
-                                <Link to={`/onboarding/progress?flowId=${flow.id}`}>
-                                  <Button variant="outline" size="sm">
-                                    View Progress
-                                  </Button>
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                      <Progress value={getProgressPercentage(flow.completedTasks, flow.totalTasks)} className="h-2" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <span>Created: {new Date(flow.createdAt).toLocaleDateString()}</span>
+                        <span>Updated: {new Date(flow.updatedAt).toLocaleDateString()}</span>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Active Progress */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Active Onboarding</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {progress.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500">No active onboarding progress</p>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Users className="w-4 h-4 mr-2" />
+                          View Participants
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button size="sm">
+                          <Play className="w-4 h-4 mr-2" />
+                          Continue
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {progress.slice(0, 5).map((item) => (
-                          <div key={item.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="font-medium text-gray-900">{item.employeeName}</h3>
-                                <p className="text-sm text-gray-500">
-                                  Started {new Date(item.startDate).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-semibold text-blue-600">
-                                  {item.progress}%
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {item.tasks.filter(t => t.status === 'completed').length} / {item.tasks.length} tasks
-                                </div>
-                              </div>
-                            </div>
-                            <div className="mt-3">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${item.progress}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                            <div className="mt-3">
-                              <Link to={`/onboarding/progress/${item.id}`}>
-                                <Button variant="outline" size="sm">
-                                  View Details
-                                </Button>
-                              </Link>
-                            </div>
-                          </div>
-                        ))}
-                        {progress.length > 5 && (
-                          <div className="text-center">
-                            <Link to="/onboarding/progress">
-                              <Button variant="outline" size="sm">
-                                View All ({progress.length})
-                              </Button>
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4 p-3 bg-green-50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Bitcoin Payroll Setup completed</p>
+                    <p className="text-sm text-muted-foreground">All tasks finished • 2 participants</p>
+                  </div>
+                  <span className="text-sm text-muted-foreground">2 hours ago</span>
+                </div>
+                
+                <div className="flex items-center space-x-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">New participant added to New Employee Onboarding</p>
+                    <p className="text-sm text-muted-foreground">John Doe joined the flow</p>
+                  </div>
+                  <span className="text-sm text-muted-foreground">1 day ago</span>
+                </div>
+                
+                <div className="flex items-center space-x-4 p-3 bg-yellow-50 rounded-lg">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">BTCPay Integration paused</p>
+                    <p className="text-sm text-muted-foreground">Waiting for server configuration</p>
+                  </div>
+                  <span className="text-sm text-muted-foreground">3 days ago</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>

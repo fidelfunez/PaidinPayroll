@@ -1,42 +1,51 @@
-// Move the existing auth-page.tsx content here
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PasswordStrength } from "@/components/ui/password-strength";
+import { Eye, EyeOff, AlertTriangle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
+// Login schema
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
-const registerSchema = insertUserSchema.extend({
-  confirmPassword: z.string().min(1, "Please confirm your password"),
+// Register schema
+const registerSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["employee", "admin"]),
+  monthlySalary: z.string().optional(),
+  btcAddress: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [capsLockOn, setCapsLockOn] = useState(false);
+  const { loginMutation, registerMutation } = useAuth();
+  const { toast } = useToast();
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
-  const loginForm = useForm({
+  // Login form
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
@@ -44,61 +53,79 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm({
+  // Register form
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
       firstName: "",
       lastName: "",
-      role: "employee" as const,
+      username: "",
+      email: "",
+      role: "employee",
       monthlySalary: "",
       btcAddress: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
   // Caps lock detection
-  const handleKeyEvent = (event: KeyboardEvent) => {
-    if (event.getModifierState && event.getModifierState('CapsLock')) {
-      setCapsLockOn(true);
-    } else {
-      setCapsLockOn(false);
-    }
-  };
-
-  // Add caps lock detection on password fields
   useEffect(() => {
+    const handleKeyEvent = (event: KeyboardEvent) => {
+      setCapsLockOn(event.getModifierState("CapsLock"));
+    };
+
     const handleKeyUp = (event: KeyboardEvent) => handleKeyEvent(event);
     const handleKeyDown = (event: KeyboardEvent) => handleKeyEvent(event);
-    
-    document.addEventListener('keyup', handleKeyUp);
-    document.addEventListener('keydown', handleKeyDown);
-    
+
+    document.addEventListener("keyup", handleKeyUp);
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      document.removeEventListener('keyup', handleKeyUp);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (user) {
-      setLocation("/");
-    }
-  }, [user, setLocation]);
-
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     loginMutation.mutate(data, {
-      onSuccess: () => setLocation("/"),
+      onSuccess: () => {
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully signed in.",
+        });
+        setLocation("/");
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Sign in failed",
+          description: error.message || "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
   const onRegister = (data: z.infer<typeof registerSchema>) => {
-    const { confirmPassword, ...registerData } = data;
+    const registerData = {
+      ...data,
+      monthlySalary: data.monthlySalary ? parseFloat(data.monthlySalary) : null,
+    };
     registerMutation.mutate(registerData, {
-      onSuccess: () => setLocation("/"),
+      onSuccess: () => {
+        toast({
+          title: "Account created!",
+          description: "Your account has been successfully created.",
+        });
+        setLocation("/");
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Registration failed",
+          description: error.message || "Please check your information and try again.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
@@ -354,7 +381,6 @@ export default function AuthPage() {
                                 Caps Lock is on
                               </p>
                             )}
-                            <PasswordStrength password={field.value} />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -455,4 +481,7 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
    

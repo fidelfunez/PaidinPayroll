@@ -9,7 +9,7 @@ import {
   Users, CreditCard, CheckSquare, Download, Shield, MessageSquare, 
   Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart, ChevronDown, ChevronRight,
   TrendingUp, Building2, Layers, Target, Search, Archive, Award, Banknote, 
-  ScrollText, PieChart, Mail, Zap
+  ScrollText, PieChart, Mail, Zap, Globe, Settings2, FileSpreadsheet
 } from "lucide-react";
 
 export function Sidebar() {
@@ -23,7 +23,7 @@ export function Sidebar() {
       id: 'overview',
       title: 'Overview',
       items: [
-        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
         { name: 'My Expenses', href: '/my-expenses', icon: Receipt },
         { name: 'Invoices', href: '/invoices', icon: ScrollText },
       ]
@@ -75,7 +75,7 @@ export function Sidebar() {
       id: 'overview',
       title: 'Overview',
       items: [
-        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
         { name: 'Employees', href: '/employees', icon: Users },
       ]
     },
@@ -87,6 +87,15 @@ export function Sidebar() {
         { name: 'Bulk Payroll', href: '/bulk-payroll', icon: Zap },
         { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
         { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
+      ]
+    },
+    {
+      id: 'business',
+      title: 'Business Operations',
+      items: [
+        { name: 'Invoicing', href: '/invoicing', icon: FileSpreadsheet },
+        { name: 'Onboarding', href: '/onboarding', icon: Target },
+        { name: 'Integrations', href: '/integrations', icon: Globe },
       ]
     },
     {
@@ -136,203 +145,198 @@ export function Sidebar() {
 
   const mobileNavigation = getMobileNavigation();
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const isActive = (href: string) => {
+    if (href === '/dashboard') {
+      return location === '/' || location === '/dashboard';
+    }
+    return location === href;
   };
 
-  return (
-    <>
-      {/* Mobile overlay */}
+  const renderNavigationItem = (item: any) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive(item.href)
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+      }`}
+    >
+      <item.icon className="w-4 h-4" />
+      {!isCollapsed && <span>{item.name}</span>}
+    </Link>
+  );
+
+  const renderSection = (section: any) => (
+    <div key={section.id} className="space-y-1">
       {!isCollapsed && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 h-screen flex flex-col ${
-        isCollapsed 
-          ? 'w-16' 
-          : 'w-64'
-      } ${
-        // On mobile: collapsed = visible as thin bar, expanded = overlay
-        // On desktop: always visible at proper position
-        isCollapsed 
-          ? 'translate-x-0' 
-          : 'translate-x-0 lg:translate-x-0'
-      }`}>
-      <div className="flex items-center justify-between h-16 px-2 border-b border-slate-200 flex-shrink-0">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {/* Only show logo when sidebar is expanded */}
-          {!isCollapsed && (
-            <>
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center ml-1">
-                <span className="text-sm font-bold text-white">₿</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">Paidin</span>
-            </>
-          )}
-        </div>
-        <div className="flex-shrink-0">
+        <div className="flex items-center justify-between px-3 py-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {section.title}
+          </h3>
           <Button
             variant="ghost"
             size="sm"
-            onClick={toggleSidebar}
-            className="h-10 w-10 p-0 rounded-lg"
+            onClick={() => toggleSection(section.id)}
+            className="h-4 w-4 p-0"
           >
-            {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {expandedSections.has(section.id) ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
           </Button>
         </div>
-      </div>
-      
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <nav className="flex-1 overflow-y-auto px-2 py-4 sidebar-scroll">
-          <div className="space-y-1">
-            {/* Mobile: Show only main navigation icons */}
-            {isMobile && isCollapsed ? (
-              mobileNavigation.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.href;
-                
-                return (
-                  <Link key={item.id} href={item.href}>
-                    <div
-                      className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer px-3 py-3 justify-center ${
-                        isActive
-                          ? 'text-orange-700 bg-orange-50'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      }`}
-                      title={item.title}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </div>
-                  </Link>
-                );
-              })
-            ) : (
-              /* Desktop: Show full navigation with sections */
-              navigation.map((section) => (
-                <div key={section.id}>
-                  {!isCollapsed && (
-                    <button
-                      onClick={() => toggleSection(section.id)}
-                      className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 transition-colors"
-                    >
-                      <span>{section.title}</span>
-                      {expandedSections.has(section.id) ? (
-                        <ChevronDown className="w-3 h-3" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3" />
-                      )}
-                    </button>
-                  )}
-                  
-                  {(isCollapsed || expandedSections.has(section.id)) && (
-                    <div className={`space-y-1 ${!isCollapsed ? 'ml-2' : ''}`}>
-                      {section.items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location === item.href;
-                        
-                        return (
-                          <Link key={item.name} href={item.href}>
-                            <div
-                              className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                                isCollapsed 
-                                  ? 'px-3 py-3 justify-center' 
-                                  : 'px-3 py-2'
-                              } ${
-                                isActive
-                                  ? 'text-orange-700 bg-orange-50'
-                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                              title={isCollapsed ? item.name : undefined}
-                            >
-                              <Icon className={`w-4 h-4 ${isCollapsed ? '' : 'mr-3'}`} />
-                              {!isCollapsed && (
-                                <span className="truncate">{item.name}</span>
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                  
-                  {!isCollapsed && section.id !== 'settings' && (
-                    <div className="h-px bg-slate-200 mx-3 my-2" />
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </nav>
-      </div>
-      
-      <div className={`px-2 pb-4 flex-shrink-0 ${isCollapsed ? '' : 'px-4'}`}>
-        <div className={`bg-slate-50 rounded-lg ${isCollapsed ? 'p-2' : 'p-4'}`}>
-          {isCollapsed ? (
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300 flex items-center justify-center" title={`${user?.firstName} ${user?.lastName}`}>
-                {user?.profilePhoto ? (
-                  <img 
-                    src={user.profilePhoto} 
-                    alt="Profile photo" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-4 h-4 text-slate-600" />
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-8 h-8 p-0 text-muted-foreground hover:text-foreground"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
+      )}
+      {expandedSections.has(section.id) && (
+        <div className="space-y-1">
+          {section.items.map(renderNavigationItem)}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderMobileNavigation = () => (
+    <div className="space-y-2">
+      {mobileNavigation.map((section) => (
+        <Link
+          key={section.href}
+          href={section.href}
+          className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive(section.href)
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          }`}
+        >
+          <section.icon className="w-4 h-4" />
+          <span>{section.title}</span>
+        </Link>
+      ))}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      {isMobile && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />
+          <div className="fixed left-0 top-0 h-full w-80 border-r bg-background p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">PaidIn</h2>
+              <Button variant="ghost" size="sm" onClick={toggleSidebar}>
+                <X className="w-4 h-4" />
               </Button>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-300 flex items-center justify-center">
-                  {user?.profilePhoto ? (
-                    <img 
-                      src={user.profilePhoto} 
-                      alt="Profile photo" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-5 h-5 text-slate-600" />
-                  )}
+            {renderMobileNavigation()}
+            <div className="mt-auto pt-6 border-t">
+              <div className="flex items-center space-x-3 px-3 py-2">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary-foreground">
+                    {user?.firstName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
+                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{user?.role}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => logoutMutation.mutate()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <div
+        className={`fixed left-0 top-0 z-40 h-full border-r bg-background transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        <div className="flex h-full flex-col">
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between border-b px-4">
+            {!isCollapsed && (
+              <h2 className="text-lg font-semibold">PaidIn</h2>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="lg:hidden"
+            >
+              <Menu className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-4 p-4">
+            {isCollapsed ? (
+              // Collapsed view - just icons
+              <div className="space-y-2">
+                {navigation.map((section) => (
+                  <div key={section.id} className="space-y-1">
+                    {section.items.map((item: any) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-medium transition-colors ${
+                          isActive(item.href)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Expanded view - full navigation
+              <div className="space-y-6">
+                {navigation.map(renderSection)}
+              </div>
+            )}
+          </nav>
+
+          {/* User Profile */}
+          {!isCollapsed && (
+            <div className="border-t p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary-foreground">
+                    {user?.firstName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate capitalize">
+                  <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
                   </p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => logoutMutation.mutate()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-3 text-left justify-start text-muted-foreground hover:text-foreground"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
-    </div>
     </>
   );
 }

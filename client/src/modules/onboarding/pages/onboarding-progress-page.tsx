@@ -81,6 +81,5 @@ const statusConfig = {
 };
 
 export default function OnboardingProgressPage() {
-  const { user } = useAuth();
-  const { isSidebarOpen, toggleSidebar } = useSidebar();
-  const [selec 
+  return <div>Onboarding Progress Page (placeholder)</div>;
+} 

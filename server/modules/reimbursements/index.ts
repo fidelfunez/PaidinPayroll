@@ -1,2 +1,2 @@
-// Reimbursements module exports
-export { default as reimbursementRoutes } from "./routes";
+import reimbursementsRoutes from './routes';
+export default reimbursementsRoutes;

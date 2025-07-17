@@ -35,8 +35,12 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const sectionMappings = {
       '/': 'overview',
+      '/dashboard': 'overview',
       '/my-expenses': 'overview',
       '/invoices': 'overview',
+      '/invoicing': 'business',
+      '/onboarding': 'business',
+      '/integrations': 'business',
       '/time-tracking': 'time',
       '/time-off': 'time',
       '/profile': 'personal',
@@ -45,10 +49,10 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       '/withdrawal-method': 'finance',
       '/tax-compliance': 'finance',
       '/settings': 'settings',
-      '/payroll': 'hr',
-      '/employees': 'hr',
+      '/payroll': 'finance',
+      '/employees': 'overview',
       '/reimbursements': 'finance',
-      '/reports': 'finance'
+      '/reports': 'reports'
     };
 
     const sectionId = sectionMappings[location as keyof typeof sectionMappings];

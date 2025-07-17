@@ -36,11 +36,11 @@ export default function payrollRoutes(app: Express) {
         return res.status(400).json({ message: 'Invalid payroll data', errors: validation.error.errors });
       }
       const currentRate = await fetchBtcRate();
-      const amountUsd = parseFloat(validation.data.amountUsd);
+      const amountUsd = parseFloat(validation.data.amountUsd.toString());
       const amountBtc = amountUsd / currentRate;
       const paymentData = {
         ...validation.data,
-        amountBtc: amountBtc,
+        amountBtc,
         btcRate: currentRate,
       };
       const payment = await storage.createPayrollPayment(paymentData);
@@ -71,23 +71,4 @@ export default function payrollRoutes(app: Express) {
       res.status(500).json({ message: 'Failed to update payment' });
     }
   });
-}
-```
-
-```typescript:server/modules/employees/routes.ts
-import type { Express } from "express";
-import { requireAdmin } from "../../auth";
-import { storage } from "../../storage";
-
-export default function employeeRoutes(app: Express) {
-  // Employee endpoints
-  app.get('/api/employees', requireAdmin, async (req, res) => {
-    try {
-      const employees = await storage.getEmployees();
-      res.json(employees);
-    } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch employees' });
-    }
-  });
-
-  // Get employees with withdrawal methods for pay 
+} 

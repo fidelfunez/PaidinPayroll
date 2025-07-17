@@ -26,6 +26,7 @@ export const moduleRoutes = {
   ],
   dashboard: [
     { path: "/", component: DashboardPage, protected: true },
+    { path: "/dashboard", component: DashboardPage, protected: true },
   ],
   payroll: [
     { path: "/payroll", component: PayrollPage, protected: true },
@@ -63,6 +64,7 @@ export const moduleRoutes = {
   ],
   invoicing: [
     { path: "/invoices", component: InvoicesPage, protected: true },
+    { path: "/invoicing", component: InvoicesPage, protected: true },
     { path: "/invoice/:id", component: InvoiceDetailPage, protected: true },
     { path: "/create-invoice", component: CreateInvoicePage, protected: true },
   ],

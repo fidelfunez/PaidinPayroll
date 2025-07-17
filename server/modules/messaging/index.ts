@@ -1,2 +1,2 @@
-// Messaging module exports
-export { default as messagingRoutes } from "./routes"; 
+import messagingRoutes from './routes';
+export default messagingRoutes; 

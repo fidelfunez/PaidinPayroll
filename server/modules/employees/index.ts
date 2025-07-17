@@ -1,2 +1,2 @@
-// Employees module exports
-export { default as employeeRoutes } from "./routes";
+import employeeRoutes from './routes';
+export default employeeRoutes;

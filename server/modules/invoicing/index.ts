@@ -1,1 +1,2 @@
-export { default as invoicingRoutes } from './routes'; 
+import invoicingRoutes from './routes';
+export default invoicingRoutes; 

@@ -1,2 +1,2 @@
-// Admin module exports
-export { default as adminRoutes } from "./routes";
+import adminRoutes from './routes';
+export default adminRoutes;

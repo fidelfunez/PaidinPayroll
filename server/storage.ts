@@ -1,5 +1,6 @@
 import { 
   users, 
+  companies,
   payrollPayments, 
   expenseReimbursements, 
   btcRateHistory,
@@ -14,7 +15,9 @@ import {
   onboardingProgress,
   onboardingTaskProgress,
   type User, 
+  type Company,
   type InsertUser,
+  type InsertCompany,
   type PayrollPayment,
   type InsertPayrollPayment,
   type ExpenseReimbursement,
@@ -151,6 +154,14 @@ export interface IStorage {
   getOnboardingTaskProgressByProgress(progressId: number): Promise<OnboardingTaskProgress[]>;
   updateOnboardingTaskProgress(id: number, updates: Partial<OnboardingTaskProgress>): Promise<OnboardingTaskProgress | undefined>;
   deleteOnboardingTaskProgress(id: number): Promise<void>;
+
+  // Company management
+  createCompany(company: InsertCompany): Promise<Company>;
+  getCompany(id: number): Promise<Company | undefined>;
+  getCompanyByDomain(domain: string): Promise<Company | undefined>;
+  getCompanies(): Promise<Company[]>;
+  updateCompany(id: number, updates: Partial<Company>): Promise<Company | undefined>;
+  deleteCompany(id: number): Promise<void>;
 
   // BTCPay configuration
   getBTCPayConfig(): Promise<{ url: string; apiKey: string; storeId: string } | null>;
@@ -782,6 +793,50 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(onboardingTaskProgress)
       .where(eq(onboardingTaskProgress.id, id));
+  }
+
+  // Company management
+  async createCompany(company: InsertCompany): Promise<Company> {
+    const [newCompany] = await db
+      .insert(companies)
+      .values(company)
+      .returning();
+    return newCompany;
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, id));
+    return company || undefined;
+  }
+
+  async getCompanyByDomain(domain: string): Promise<Company | undefined> {
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.domain, domain));
+    return company || undefined;
+  }
+
+  async getCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(desc(companies.createdAt));
+  }
+
+  async updateCompany(id: number, updates: Partial<Company>): Promise<Company | undefined> {
+    const [company] = await db
+      .update(companies)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(companies.id, id))
+      .returning();
+    return company || undefined;
+  }
+
+  async deleteCompany(id: number): Promise<void> {
+    await db
+      .delete(companies)
+      .where(eq(companies.id, id));
   }
 
   // BTCPay configuration management

@@ -7,7 +7,14 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser {
+      company?: {
+        id: number;
+        name: string;
+        slug: string;
+        primaryColor: string;
+      } | null;
+    }
   }
 }
 
@@ -57,7 +64,17 @@ export function setupAuth(app: Express) {
       if (decoded) {
         const user = await storage.getUser(decoded.id);
         if (user) {
-          req.user = user;
+          // Get user's company
+          const company = await storage.getCompany(user.companyId);
+          req.user = {
+            ...user,
+            company: company ? {
+              id: company.id,
+              name: company.name,
+              slug: company.slug,
+              primaryColor: company.primaryColor || '#f97316',
+            } : null
+          };
         }
       }
     }
@@ -115,12 +132,21 @@ export function setupAuth(app: Express) {
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     
+    // Get user by username
     const user = await storage.getUserByUsername(username);
     if (!user || !(await comparePasswords(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user);
+    // Get user's company
+    const company = await storage.getCompany(user.companyId);
+    if (!company) {
+      return res.status(401).json({ message: "Company not found" });
+    }
+
+    // Generate token with company context
+    const token = generateToken({ ...user, companyId: user.companyId });
+
     res.status(200).json({ 
       user: { 
         id: user.id, 
@@ -132,7 +158,14 @@ export function setupAuth(app: Express) {
         monthlySalary: user.monthlySalary,
         withdrawalMethod: user.withdrawalMethod,
         btcAddress: user.btcAddress,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        companyId: user.companyId,
+        company: {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          primaryColor: company.primaryColor,
+        }
       }, 
       token 
     });
@@ -146,6 +179,37 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.user) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Get company by email domain (for email-based routing)
+  app.post("/api/company-by-email", async (req, res) => {
+    const { email } = req.body;
+    
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
+    // Extract domain from email
+    const domain = email.split('@')[1];
+    
+    // Get company by domain
+    const company = await storage.getCompanyByDomain(domain);
+    
+    if (!company) {
+      return res.status(404).json({ 
+        message: "Company not found for this email domain",
+        domain: domain 
+      });
+    }
+
+    res.json({
+      company: {
+        id: company.id,
+        name: company.name,
+        slug: company.slug,
+        primaryColor: company.primaryColor || '#f97316',
+      }
+    });
   });
 }
 

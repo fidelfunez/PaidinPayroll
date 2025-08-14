@@ -34,4 +34,27 @@ export default function integrationRoutes(app: Express) {
       
       res.json(integration);
     } catch (error) {
-      console.error('Failed to fetch integration: 
+      console.error('Failed to fetch integration:', error);
+      res.status(500).json({ message: 'Failed to fetch integration' });
+    }
+  });
+
+  // Create new integration
+  app.post('/api/integrations', requireAuth, async (req, res) => {
+    try {
+      const validatedData = createIntegrationSchema.parse(req.body);
+      const user = req.user!;
+      
+      const integration = await storage.createIntegration({
+        ...validatedData,
+        config: JSON.stringify(validatedData.config),
+        createdBy: user.id,
+      });
+      
+      res.status(201).json(integration);
+    } catch (error) {
+      console.error('Failed to create integration:', error);
+      res.status(500).json({ message: 'Failed to create integration' });
+    }
+  });
+} 

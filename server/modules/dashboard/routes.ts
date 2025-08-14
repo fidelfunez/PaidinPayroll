@@ -11,4 +11,28 @@ async function fetchBtcRate(): Promise<number> {
   } catch (error) {
     console.error('Failed to fetch BTC rate:', error);
     // Return last known rate or default
-    const last 
+    return 50000; // Default fallback rate
+  }
+}
+
+export default function dashboardRoutes(app: Express) {
+  // Dashboard stats endpoint
+  app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const btcRate = await fetchBtcRate();
+      
+      // Get basic stats
+      const stats = {
+        currentBtcRate: btcRate,
+        userRole: user.role,
+        // Add more stats as needed
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+    }
+  });
+} 

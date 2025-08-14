@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 8080;
 
 // Run database migrations on startup with absolute path
 try {
-  const migrationsPath = path.join(__dirname, 'migrations');
+  const migrationsPath = path.join(__dirname, '../migrations');
   console.log('Running database migrations from:', migrationsPath);
   migrate(db, { migrationsFolder: migrationsPath });
   console.log('Database migrations completed successfully');

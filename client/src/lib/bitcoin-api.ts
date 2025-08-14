@@ -95,12 +95,14 @@ class BitcoinApiService {
   }
 
   // Format BTC amount to standard 8 decimal places
-  formatBtc(amount: number): string {
+  formatBtc(amount: number | undefined): string {
+    if (amount === undefined || amount === null) return '0.00000000';
     return amount.toFixed(8);
   }
 
   // Format USD amount to 2 decimal places with currency symbol
-  formatUsd(amount: number): string {
+  formatUsd(amount: number | undefined): string {
+    if (amount === undefined || amount === null) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

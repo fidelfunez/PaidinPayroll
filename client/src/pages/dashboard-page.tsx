@@ -53,8 +53,14 @@ export default function DashboardPage() {
     );
   }
 
-  const formatBtc = (amount: number) => `${amount.toFixed(8)} BTC`;
-  const formatUsd = (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatBtc = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return '0.00000000 BTC';
+    return `${amount.toFixed(8)} BTC`;
+  };
+  const formatUsd = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return '$0.00';
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

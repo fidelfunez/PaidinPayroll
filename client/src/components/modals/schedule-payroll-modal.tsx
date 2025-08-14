@@ -115,11 +115,15 @@ export function SchedulePayrollModal({ open, onOpenChange }: SchedulePayrollModa
 
   const totalBtc = btcRate ? totalUsd / btcRate.rate : 0;
 
-  const formatUsd = (amount: number) => 
-    `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatUsd = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return '$0.00';
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
-  const formatBtc = (amount: number) => 
-    `${amount.toFixed(8)} BTC`;
+  const formatBtc = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return '0.00000000 BTC';
+    return `${amount.toFixed(8)} BTC`;
+  };
 
   const onSubmit = (data: z.infer<typeof payrollSchema>) => {
     schedulePayrollMutation.mutate(data);

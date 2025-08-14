@@ -5,8 +5,10 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, btcRate }: HeaderProps) {
-  const formatUsd = (amount: number) => 
-    `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatUsd = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return '$0.00';
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-slate-200 px-6 py-4">

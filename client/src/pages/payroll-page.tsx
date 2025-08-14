@@ -90,11 +90,15 @@ export default function PayrollPage() {
     );
   }
 
-  const formatUsd = (amount: string | number) => 
-    `$${parseFloat(amount.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatUsd = (amount: string | number | undefined) => {
+    if (amount === undefined || amount === null) return '$0.00';
+    return `$${parseFloat(amount.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
-  const formatBtc = (amount: string | number) => 
-    `${parseFloat(amount.toString()).toFixed(8)} BTC`;
+  const formatBtc = (amount: string | number | undefined) => {
+    if (amount === undefined || amount === null) return '0.00000000 BTC';
+    return `${parseFloat(amount.toString()).toFixed(8)} BTC`;
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {

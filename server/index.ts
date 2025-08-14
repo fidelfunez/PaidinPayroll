@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from 'cors';
+import session from 'express-session';
 import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
 import { db } from './db.js';
@@ -17,16 +18,16 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Run database migrations on startup with absolute path
-try {
-  const migrationsPath = path.join(__dirname, '../migrations');
-  console.log('Running database migrations from:', migrationsPath);
-  migrate(db, { migrationsFolder: migrationsPath });
-  console.log('Database migrations completed successfully');
-} catch (error) {
-  console.error('Migration error:', error);
-  // Continue anyway - migrations might already be applied
-  // This is expected if tables already exist
-}
+// try {
+//   const migrationsPath = path.join(__dirname, '../migrations');
+//   console.log('Running database migrations from:', migrationsPath);
+//   migrate(db, { migrationsFolder: migrationsPath });
+//   console.log('Database migrations completed successfully');
+// } catch (error) {
+//   console.error('Migration error:', error);
+//   // Continue anyway - migrations might already be applied
+//   // This is expected if tables already exist
+// }
 
 // CORS configuration
 app.use(cors({
@@ -34,11 +35,24 @@ app.use(cors({
     'https://paidin-app.netlify.app',
     'http://localhost:5173',
     'http://localhost:3000',
-    'http://localhost:4173'
+    'http://localhost:4173',
+    'http://localhost:8080'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
 // Middleware

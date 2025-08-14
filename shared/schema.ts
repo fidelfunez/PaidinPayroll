@@ -4,7 +4,7 @@ import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Enums (SQLite doesn't have native enums, so we use text)
-export const roleEnum = ['admin', 'employee'] as const;
+export const roleEnum = ['admin', 'employee', 'super_admin'] as const;
 export const paymentStatusEnum = ['pending', 'processing', 'completed', 'failed'] as const;
 export const withdrawalMethodEnum = ['bitcoin', 'bank_transfer', 'not_set'] as const;
 export const expenseStatusEnum = ['pending', 'approved', 'rejected', 'paid'] as const;
@@ -16,9 +16,23 @@ export const integrationStatusEnum = ['connected', 'disconnected', 'error'] as c
 export const taskTypeEnum = ['form', 'document', 'video', 'quiz', 'meeting', 'system'] as const;
 export const taskStatusEnum = ['pending', 'in_progress', 'completed'] as const;
 
+// Companies table for multi-tenancy
+export const companies = sqliteTable("companies", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  domain: text("domain"), // Optional custom domain
+  logo: text("logo"), // Base64 encoded logo
+  primaryColor: text("primary_color").default('#f97316'), // Orange default
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
 // Users table
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
@@ -38,6 +52,7 @@ export const users = sqliteTable("users", {
 // Payroll payments table
 export const payrollPayments = sqliteTable("payroll_payments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   userId: integer("user_id").notNull().references(() => users.id),
   amountUsd: real("amount_usd").notNull(),
   amountBtc: real("amount_btc").notNull(),
@@ -55,6 +70,7 @@ export const payrollPayments = sqliteTable("payroll_payments", {
 // Expense reimbursements table
 export const expenseReimbursements = sqliteTable("expense_reimbursements", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   userId: integer("user_id").notNull().references(() => users.id),
   description: text("description").notNull(),
   category: text("category").notNull(),
@@ -70,7 +86,7 @@ export const expenseReimbursements = sqliteTable("expense_reimbursements", {
   createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
-// BTC rate history for tracking exchange rates
+// BTC rate history for tracking exchange rates (SHARED - no company_id)
 export const btcRateHistory = sqliteTable("btc_rate_history", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   rate: real("rate").notNull(),
@@ -81,6 +97,7 @@ export const btcRateHistory = sqliteTable("btc_rate_history", {
 // BTCPay invoices table
 export const btcpayInvoices = sqliteTable("btcpay_invoices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   btcpayInvoiceId: text("btcpay_invoice_id").notNull().unique(), // BTCPay's invoice ID
   orderId: text("order_id").notNull(),
   amountUsd: real("amount_usd").notNull(),
@@ -120,7 +137,7 @@ export const btcpayTransactions = sqliteTable("btcpay_transactions", {
   createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
-// Session table for express-session storage
+// Session table for express-session storage (SHARED - no company_id)
 export const session = sqliteTable("session", {
   sid: text("sid").primaryKey().notNull(),
   sess: text("sess").notNull(), // JSON as text
@@ -130,6 +147,7 @@ export const session = sqliteTable("session", {
 // Conversations table for messaging
 export const conversations = sqliteTable("conversations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   participantIds: text("participant_ids").notNull(), // JSON array as text
   lastMessageId: integer("last_message_id"),
   createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
@@ -149,6 +167,7 @@ export const messages = sqliteTable("messages", {
 // Invoices table
 export const invoices = sqliteTable("invoices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   invoiceNumber: text("invoice_number").notNull().unique(),
   clientName: text("client_name").notNull(),
   clientEmail: text("client_email").notNull(),
@@ -169,6 +188,7 @@ export const invoices = sqliteTable("invoices", {
 // Integrations table
 export const integrations = sqliteTable("integrations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   name: text("name").notNull(),
   type: text("type", { enum: integrationTypeEnum }).notNull(),
   isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
@@ -184,6 +204,7 @@ export const integrations = sqliteTable("integrations", {
 // Onboarding flows table
 export const onboardingFlows = sqliteTable("onboarding_flows", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
   name: text("name").notNull(),
   description: text("description").notNull(),
   department: text("department").notNull(),
@@ -229,8 +250,36 @@ export const onboardingTaskProgress = sqliteTable("onboarding_task_progress", {
   updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
+// BTCPay configuration table
+export const btcpayConfig = sqliteTable("btcpay_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  url: text("url").notNull(),
+  apiKey: text("api_key").notNull(),
+  storeId: text("store_id").notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const companiesRelations = relations(companies, ({ many }) => ({
+  users: many(users),
+  payrollPayments: many(payrollPayments),
+  expenseReimbursements: many(expenseReimbursements),
+  btcpayInvoices: many(btcpayInvoices),
+  conversations: many(conversations),
+  invoices: many(invoices),
+  integrations: many(integrations),
+  onboardingFlows: many(onboardingFlows),
+  btcpayConfig: many(btcpayConfig),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [users.companyId],
+    references: [companies.id],
+  }),
   payrollPayments: many(payrollPayments),
   expenseReimbursements: many(expenseReimbursements),
   approvedExpenses: many(expenseReimbursements, { relationName: "approver" }),
@@ -238,6 +287,10 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const payrollPaymentsRelations = relations(payrollPayments, ({ one }) => ({
+  company: one(companies, {
+    fields: [payrollPayments.companyId],
+    references: [companies.id],
+  }),
   user: one(users, {
     fields: [payrollPayments.userId],
     references: [users.id],
@@ -245,6 +298,10 @@ export const payrollPaymentsRelations = relations(payrollPayments, ({ one }) => 
 }));
 
 export const expenseReimbursementsRelations = relations(expenseReimbursements, ({ one }) => ({
+  company: one(companies, {
+    fields: [expenseReimbursements.companyId],
+    references: [companies.id],
+  }),
   user: one(users, {
     fields: [expenseReimbursements.userId],
     references: [users.id],
@@ -256,7 +313,11 @@ export const expenseReimbursementsRelations = relations(expenseReimbursements, (
   }),
 }));
 
-export const btcpayInvoicesRelations = relations(btcpayInvoices, ({ many }) => ({
+export const btcpayInvoicesRelations = relations(btcpayInvoices, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [btcpayInvoices.companyId],
+    references: [companies.id],
+  }),
   transactions: many(btcpayTransactions),
 }));
 
@@ -267,7 +328,11 @@ export const btcpayTransactionsRelations = relations(btcpayTransactions, ({ one 
   }),
 }));
 
-export const conversationsRelations = relations(conversations, ({ many, one }) => ({
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [conversations.companyId],
+    references: [companies.id],
+  }),
   messages: many(messages),
   lastMessage: one(messages, {
     fields: [conversations.lastMessageId],
@@ -288,6 +353,10 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 
 // Relations for new tables
 export const invoicesRelations = relations(invoices, ({ one }) => ({
+  company: one(companies, {
+    fields: [invoices.companyId],
+    references: [companies.id],
+  }),
   creator: one(users, {
     fields: [invoices.createdBy],
     references: [users.id],
@@ -295,6 +364,10 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
 }));
 
 export const integrationsRelations = relations(integrations, ({ one }) => ({
+  company: one(companies, {
+    fields: [integrations.companyId],
+    references: [companies.id],
+  }),
   creator: one(users, {
     fields: [integrations.createdBy],
     references: [users.id],
@@ -302,6 +375,10 @@ export const integrationsRelations = relations(integrations, ({ one }) => ({
 }));
 
 export const onboardingFlowsRelations = relations(onboardingFlows, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [onboardingFlows.companyId],
+    references: [companies.id],
+  }),
   creator: one(users, {
     fields: [onboardingFlows.createdBy],
     references: [users.id],
@@ -341,10 +418,23 @@ export const onboardingTaskProgressRelations = relations(onboardingTaskProgress,
   }),
 }));
 
+export const btcpayConfigRelations = relations(btcpayConfig, ({ one }) => ({
+  company: one(companies, {
+    fields: [btcpayConfig.companyId],
+    references: [companies.id],
+  }),
+}));
+
 // Password validation regex
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 // Insert schemas
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -411,7 +501,16 @@ export const insertOnboardingTaskSchema = createInsertSchema(onboardingTasks);
 export const insertOnboardingProgressSchema = createInsertSchema(onboardingProgress);
 export const insertOnboardingTaskProgressSchema = createInsertSchema(onboardingTaskProgress);
 
+// Insert schemas for new tables
+export const insertBtcpayConfigSchema = createInsertSchema(btcpayConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type PayrollPayment = typeof payrollPayments.$inferSelect;
@@ -440,24 +539,6 @@ export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
 export type OnboardingTaskProgress = typeof onboardingTaskProgress.$inferSelect;
 export type InsertOnboardingTaskProgress = z.infer<typeof insertOnboardingTaskProgressSchema>;
-
-// BTCPay configuration table
-export const btcpayConfig = sqliteTable("btcpay_config", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  url: text("url").notNull(),
-  apiKey: text("api_key").notNull(),
-  storeId: text("store_id").notNull(),
-  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
-  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
-  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
-});
-
-// Insert schemas for new tables
-export const insertBtcpayConfigSchema = createInsertSchema(btcpayConfig).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
 
 // Types for new tables
 export type BtcpayConfig = typeof btcpayConfig.$inferSelect;

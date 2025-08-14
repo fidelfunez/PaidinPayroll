@@ -72,7 +72,3 @@ export default function payrollRoutes(app: Express) {
     }
   });
 }
-
-```
-
-```

@@ -9,13 +9,24 @@ import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema
 import { getQueryFn, apiRequest, queryClient, setAuthToken, removeAuthToken } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Extended user type with company information
+type UserWithCompany = SelectUser & {
+  companyId: number;
+  company?: {
+    id: number;
+    name: string;
+    slug: string;
+    primaryColor: string;
+  } | null;
+};
+
 type AuthContextType = {
-  user: SelectUser | null;
+  user: UserWithCompany | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<{ user: SelectUser; token: string }, Error, LoginData>;
+  loginMutation: UseMutationResult<{ user: UserWithCompany; token: string }, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<{ user: SelectUser; token: string }, Error, InsertUser>;
+  registerMutation: UseMutationResult<{ user: UserWithCompany; token: string }, Error, InsertUser>;
   refreshUser: () => void;
 };
 
@@ -30,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<UserWithCompany | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
@@ -46,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(data.token);
       return data;
     },
-    onSuccess: (data: { user: SelectUser; token: string }) => {
+    onSuccess: (data: { user: UserWithCompany; token: string }) => {
       queryClient.setQueryData(["/api/user"], data.user);
     },
     onError: (error: Error) => {
@@ -65,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(data.token);
       return data;
     },
-    onSuccess: (data: { user: SelectUser; token: string }) => {
+    onSuccess: (data: { user: UserWithCompany; token: string }) => {
       queryClient.setQueryData(["/api/user"], data.user);
     },
     onError: (error: Error) => {

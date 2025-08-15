@@ -62,6 +62,10 @@ export default function DashboardPage() {
     return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Use company's primary color or default to orange
+  const primaryColor = user?.company?.primaryColor || '#f97316';
+  const primaryColorLight = user?.company?.primaryColor ? `${user.company.primaryColor}20` : '#f9731620';
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
@@ -74,7 +78,12 @@ export default function DashboardPage() {
         
         <main className="p-4 lg:p-6 space-y-6">
           {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+          <div 
+            className="rounded-xl p-4 lg:p-6 text-white shadow-lg"
+            style={{ 
+              background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
+            }}
+          >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -85,8 +94,13 @@ export default function DashboardPage() {
                     <h2 className="text-xl lg:text-2xl font-bold">
                       Welcome back, {user?.firstName || 'User'}!
                     </h2>
-                    <p className="text-orange-100 text-sm lg:text-base">
+                    <p className="text-white/80 text-sm lg:text-base">
                       Ready to revolutionize payroll with Bitcoin
+                      {user?.company && (
+                        <span className="block text-white/60 text-xs">
+                          {user.company.name}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -95,7 +109,7 @@ export default function DashboardPage() {
                   <p className="text-base lg:text-lg font-medium mb-2 leading-relaxed">
                     "{currentQuote.quote}"
                   </p>
-                  <p className="text-orange-100 text-xs lg:text-sm">
+                  <p className="text-white/80 text-xs lg:text-sm">
                     — {currentQuote.author} • {currentQuote.tagline}
                   </p>
                 </div>

@@ -63,7 +63,7 @@ export default function PayrollPage() {
 
   const processBitcoinPaymentMutation = useMutation({
     mutationFn: async (paymentId: number) => {
-      const response = await apiRequest('POST', `/api/payroll/${paymentId}/process-bitcoin`, {});
+      const response = await apiRequest('POST', `/api/payroll/${paymentId.toString()}/process-bitcoin`, {});
       return response;
     },
     onSuccess: (data: any) => {
@@ -77,6 +77,50 @@ export default function PayrollPage() {
       toast({
         title: "Bitcoin payment failed",
         description: error.message || "Failed to process Bitcoin payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createLightningInvoiceMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const response = await apiRequest('POST', `/api/payroll/${paymentId.toString()}/create-lightning-invoice`, {});
+      return response;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payroll'] });
+      toast({
+        title: "Lightning invoice created",
+        description: `Invoice created for ${data.lightningInvoice.amountUsd} USD (${data.lightningInvoice.amountSats} sats)`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Lightning invoice failed",
+        description: error.message || "Failed to create Lightning invoice. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const processLightningPaymentMutation = useMutation({
+    mutationFn: async ({ paymentId, lightningAddress }: { paymentId: number; lightningAddress: string }) => {
+      const response = await apiRequest('POST', `/api/payroll/${paymentId}/process-lightning-payment`, {
+        lightningAddress
+      });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payroll'] });
+      toast({
+        title: "Lightning payment sent",
+        description: `Payment of ${data.lightningPayment.amountUsd} USD sent to ${data.lightningPayment.lightningAddress}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Lightning payment failed",
+        description: error.message || "Failed to send Lightning payment. Please try again.",
         variant: "destructive",
       });
     },
@@ -254,21 +298,46 @@ export default function PayrollPage() {
                             <TableCell>
                               <div className="flex gap-2">
                                 {payment.status === 'pending' && employee?.btcAddress && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => processBitcoinPaymentMutation.mutate(payment.id)}
-                                    disabled={processBitcoinPaymentMutation.isPending}
-                                    className="bg-orange-500 hover:bg-orange-600"
-                                  >
-                                    {processBitcoinPaymentMutation.isPending ? (
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      <>
-                                        <Bitcoin className="w-3 h-3 mr-1" />
-                                        Pay Bitcoin
-                                      </>
-                                    )}
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => createLightningInvoiceMutation.mutate(payment.id)}
+                                      disabled={createLightningInvoiceMutation.isPending}
+                                      className="bg-orange-500 hover:bg-orange-600"
+                                    >
+                                      {createLightningInvoiceMutation.isPending ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Bitcoin className="w-3 h-3 mr-1" />
+                                          Create Invoice
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        const lightningAddress = prompt('Enter Lightning address (user@domain.com):');
+                                        if (lightningAddress) {
+                                          processLightningPaymentMutation.mutate({
+                                            paymentId: payment.id,
+                                            lightningAddress
+                                          });
+                                        }
+                                      }}
+                                      disabled={processLightningPaymentMutation.isPending}
+                                      className="bg-green-500 hover:bg-green-600"
+                                    >
+                                      {processLightningPaymentMutation.isPending ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Bitcoin className="w-3 h-3 mr-1" />
+                                          Send Payment
+                                        </>
+                                      )}
+                                    </Button>
+                                  </>
                                 )}
                                 {payment.status === 'pending' && !hasWithdrawalMethod && (
                                   <div className="text-xs text-red-500 py-1">
@@ -291,7 +360,12 @@ export default function PayrollPage() {
                                 )}
                                 {payment.status === 'processing' && (
                                   <div className="text-xs text-blue-500 py-1">
-                                    Processing Bitcoin payment...
+                                    Processing Lightning payment...
+                                  </div>
+                                )}
+                                {payment.status === 'completed' && payment.transactionHash && (
+                                  <div className="text-xs text-green-500 py-1">
+                                    ✅ Paid via Lightning
                                   </div>
                                 )}
                                 {payment.processingNotes && (

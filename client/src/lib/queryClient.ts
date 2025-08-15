@@ -33,8 +33,25 @@ export const removeAuthToken = () => {
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const text = await res.text();
+    let errorMessage = res.statusText;
+    
+    // Try to parse JSON response to get user-friendly message
+    if (text) {
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = text;
+        }
+      } catch {
+        // If not JSON, use the text as is
+        errorMessage = text;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 

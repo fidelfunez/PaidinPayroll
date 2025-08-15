@@ -1,27 +1,14 @@
 import type { Express } from "express";
-import { requireAuth, requireAdmin } from "../../auth";
+import { requireAuth } from "../../auth";
 import { storage } from "../../storage";
+import { lnbitsService } from "../../lnbits";
 import { insertPayrollPaymentSchema } from "@shared/schema";
 
-// Bitcoin API utility
-async function fetchBtcRate(): Promise<number> {
-  try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-    const data = await response.json();
-    return data.bitcoin.usd;
-  } catch (error) {
-    console.error('Failed to fetch BTC rate:', error);
-    const lastRate = await storage.getLatestBtcRate();
-    return lastRate ? parseFloat(lastRate.rate) : 43250;
-  }
-}
-
 export default function payrollRoutes(app: Express) {
-  // Payroll endpoints
+  // Get all payroll payments (filtered by user if not admin)
   app.get('/api/payroll', requireAuth, async (req, res) => {
     try {
-      const user = req.user!;
-      const userId = user.role === 'admin' ? undefined : user.id;
+      const userId = req.user?.role === 'admin' ? undefined : req.user?.id;
       const payments = await storage.getPayrollPayments(userId);
       res.json(payments);
     } catch (error) {
@@ -29,39 +16,42 @@ export default function payrollRoutes(app: Express) {
     }
   });
 
-  app.post('/api/payroll', requireAdmin, async (req, res) => {
+  // Create new payroll payment
+  app.post('/api/payroll', requireAuth, async (req, res) => {
     try {
       const validation = insertPayrollPaymentSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: 'Invalid payroll data', errors: validation.error.errors });
+        return res.status(400).json({ message: 'Invalid payment data' });
       }
-      const currentRate = await fetchBtcRate();
-      const amountUsd = parseFloat(validation.data.amountUsd);
-      const amountBtc = amountUsd / currentRate;
+
+      // Ensure user has companyId
+      if (!req.user?.companyId) {
+        return res.status(400).json({ message: 'User must be associated with a company' });
+      }
+
       const paymentData = {
         ...validation.data,
-        amountBtc: amountBtc,
-        btcRate: currentRate,
+        companyId: req.user.companyId,
+        createdBy: req.user.id,
+        createdAt: new Date()
       };
+
       const payment = await storage.createPayrollPayment(paymentData);
       res.status(201).json(payment);
     } catch (error) {
-      console.error('Payroll creation error:', error);
       res.status(500).json({ message: 'Failed to create payroll payment' });
     }
   });
 
-  app.patch('/api/payroll/:id', requireAdmin, async (req, res) => {
+  // Update payroll payment
+  app.patch('/api/payroll/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: 'Invalid payment ID' });
       }
+
       const updates = req.body;
-      if (updates.status === 'completed') {
-        updates.paidDate = new Date();
-        updates.transactionHash = `mock_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      }
       const payment = await storage.updatePayrollPayment(id, updates);
       if (!payment) {
         return res.status(404).json({ message: 'Payment not found' });
@@ -69,6 +59,195 @@ export default function payrollRoutes(app: Express) {
       res.json(payment);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update payment' });
+    }
+  });
+
+  // Create Lightning invoice for payroll payment
+  app.post('/api/payroll/:id/create-lightning-invoice', requireAuth, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ message: 'Invalid payment ID' });
+      }
+
+      // Get the payment
+      const payment = await storage.getPayrollPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      // Check if user has permission (admin or payment owner)
+      if (req.user?.role !== 'admin' && payment.userId !== req.user?.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Convert USD amount to satoshis
+      const currentBtcRate = await storage.getLatestBtcRate();
+      if (!currentBtcRate) {
+        return res.status(500).json({ message: 'Unable to get current Bitcoin rate' });
+      }
+
+      const amountUsd = parseFloat(payment.amountUsd?.toString() || '0');
+      const amountSats = lnbitsService.usdToSatoshis(amountUsd, parseFloat(currentBtcRate.rate));
+
+      // Create Lightning invoice
+      const memo = `Payroll payment for ${payment.userId} - ${new Date().toISOString()}`;
+      const lightningInvoice = await lnbitsService.createInvoice(amountSats, memo);
+
+      // Update payment with Lightning invoice details
+      const updatedPayment = await storage.updatePayrollPayment(paymentId, {
+        status: 'processing',
+        transactionHash: lightningInvoice.payment_hash,
+        paidDate: new Date()
+      });
+
+      res.json({
+        payment: updatedPayment,
+        lightningInvoice: {
+          paymentRequest: lightningInvoice.payment_request,
+          paymentHash: lightningInvoice.payment_hash,
+          amountSats: amountSats,
+          amountUsd: amountUsd,
+          memo: memo
+        }
+      });
+
+    } catch (error) {
+      console.error('Lightning invoice creation error:', error);
+      res.status(500).json({ 
+        message: 'Failed to create Lightning invoice. Please try again.' 
+      });
+    }
+  });
+
+  // Process Lightning payment (send payment to employee)
+  app.post('/api/payroll/:id/process-lightning-payment', requireAuth, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ message: 'Invalid payment ID' });
+      }
+
+      // Only admins can process payments
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Only administrators can process payments' });
+      }
+
+      // Get the payment
+      const payment = await storage.getPayrollPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      const { lightningAddress } = req.body;
+      if (!lightningAddress) {
+        return res.status(400).json({ message: 'Lightning address is required' });
+      }
+
+      // Validate Lightning address
+      if (!lnbitsService.isValidLightningAddress(lightningAddress)) {
+        return res.status(400).json({ message: 'Invalid Lightning address format' });
+      }
+
+      // Convert USD amount to satoshis
+      const currentBtcRate = await storage.getLatestBtcRate();
+      if (!currentBtcRate) {
+        return res.status(500).json({ message: 'Unable to get current Bitcoin rate' });
+      }
+
+      const amountUsd = parseFloat(payment.amountUsd?.toString() || '0');
+      const amountSats = lnbitsService.usdToSatoshis(amountUsd, parseFloat(currentBtcRate.rate));
+
+      // Send Lightning payment
+      const memo = `Payroll payment - ${new Date().toISOString()}`;
+      const paymentResult = await lnbitsService.payToLightningAddress(lightningAddress, amountSats, memo);
+
+      // Update payment status
+      const updatedPayment = await storage.updatePayrollPayment(paymentId, {
+        status: 'completed',
+        transactionHash: paymentResult.payment_hash,
+        paidDate: new Date()
+      });
+
+      res.json({
+        payment: updatedPayment,
+        lightningPayment: {
+          paymentHash: paymentResult.payment_hash,
+          amountSats: amountSats,
+          amountUsd: amountUsd,
+          lightningAddress: lightningAddress,
+          memo: memo
+        }
+      });
+
+    } catch (error) {
+      console.error('Lightning payment error:', error);
+      res.status(500).json({ 
+        message: 'Failed to process Lightning payment. Please try again.' 
+      });
+    }
+  });
+
+  // Get Lightning payment status
+  app.get('/api/payroll/:id/lightning-status', requireAuth, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ message: 'Invalid payment ID' });
+      }
+
+      const payment = await storage.getPayrollPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      if (!payment.transactionHash) {
+        return res.status(400).json({ message: 'No Lightning transaction found for this payment' });
+      }
+
+      // Get payment status from LNbits
+      const paymentStatus = await lnbitsService.getPaymentStatus(payment.transactionHash?.toString() || '');
+
+      res.json({
+        payment: payment,
+        lightningStatus: paymentStatus
+      });
+
+    } catch (error) {
+      console.error('Lightning status check error:', error);
+      res.status(500).json({ 
+        message: 'Failed to check Lightning payment status' 
+      });
+    }
+  });
+
+  // Get Lightning wallet balance
+  app.get('/api/lightning/balance', requireAuth, async (req, res) => {
+    try {
+      // Only admins can check wallet balance
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Only administrators can check wallet balance' });
+      }
+
+      const balance = await lnbitsService.getWalletBalance();
+      const currentBtcRate = await storage.getLatestBtcRate();
+      
+      let balanceUsd = 0;
+      if (currentBtcRate) {
+        balanceUsd = lnbitsService.satoshisToUsd(balance.balance, parseFloat(currentBtcRate.rate));
+      }
+
+      res.json({
+        balanceSats: balance.balance,
+        balanceUsd: balanceUsd,
+        btcRate: currentBtcRate?.rate
+      });
+
+    } catch (error) {
+      console.error('Wallet balance error:', error);
+      res.status(500).json({ 
+        message: 'Failed to get wallet balance' 
+      });
     }
   });
 }

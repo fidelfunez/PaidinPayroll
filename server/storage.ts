@@ -70,6 +70,7 @@ export interface IStorage {
 
   // Payroll management
   createPayrollPayment(payment: InsertPayrollPayment): Promise<PayrollPayment>;
+  getPayrollPayment(id: number): Promise<PayrollPayment | undefined>;
   getPayrollPayments(userId?: number): Promise<PayrollPayment[]>;
   updatePayrollPayment(id: number, updates: Partial<PayrollPayment>): Promise<PayrollPayment | undefined>;
   getPendingPayrollPayments(): Promise<PayrollPayment[]>;
@@ -237,6 +238,14 @@ export class DatabaseStorage implements IStorage {
       .values(payment)
       .returning();
     return payroll;
+  }
+
+  async getPayrollPayment(id: number): Promise<PayrollPayment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payrollPayments)
+      .where(eq(payrollPayments.id, id));
+    return payment || undefined;
   }
 
   async getPayrollPayments(userId?: number): Promise<PayrollPayment[]> {

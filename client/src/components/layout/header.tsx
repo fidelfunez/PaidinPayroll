@@ -1,5 +1,4 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
   title: string;
@@ -28,13 +27,9 @@ export function Header({ title, subtitle, btcRate }: HeaderProps) {
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-muted-foreground">{subtitle}</p>
                 {user?.company && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs px-2 py-0.5"
-                    style={{ borderColor: '#f97316', color: '#f97316' }}
-                  >
+                  <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-200">
                     {user.company.name}
-                  </Badge>
+                  </span>
                 )}
               </div>
             )}

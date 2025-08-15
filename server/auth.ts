@@ -82,14 +82,20 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res) => {
-    const existingUser = await storage.getUserByUsername(req.body.username);
+    // Normalize username to lowercase for consistency
+    const normalizedUsername = req.body.username.toLowerCase();
+    
+    const existingUser = await storage.getUserByUsername(normalizedUsername);
     if (existingUser) {
-      return res.status(400).json({ message: "Username already exists" });
+      return res.status(400).json({ 
+        message: "This username is already taken. Please try a different username." 
+      });
     }
 
     // Transform numeric fields to handle empty strings
     const userData = {
       ...req.body,
+      username: normalizedUsername, // Store username in lowercase
       password: await hashPassword(req.body.password),
       monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
       createdAt: new Date(),
@@ -98,50 +104,35 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.createUser(userData);
       const token = generateToken(user);
-      
-      res.status(201).json({ 
-        user: { 
-          id: user.id, 
-          username: user.username, 
-          role: user.role,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          monthlySalary: user.monthlySalary,
-          withdrawalMethod: user.withdrawalMethod,
-          btcAddress: user.btcAddress,
-          createdAt: user.createdAt
-        }, 
-        token 
-      });
-    } catch (error: any) {
-      // Handle unique constraint violations
-      if (error.code === '23505') {
-        if (error.constraint === 'users_email_unique') {
-          return res.status(400).json({ message: 'Oops! This email address is already in use. Please try another one.' });
-        }
-        if (error.constraint === 'users_username_unique') {
-          return res.status(400).json({ message: 'Oops! This username is already taken. Please try another one.' });
-        }
-      }
+      res.status(201).json({ user, token });
+    } catch (error) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: 'Failed to create account' });
+      res.status(500).json({ 
+        message: "Unable to create account. Please try again or contact support." 
+      });
     }
   });
 
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     
-    // Get user by username
-    const user = await storage.getUserByUsername(username);
+    // Normalize username to lowercase for case-insensitive login
+    const normalizedUsername = username.toLowerCase();
+    
+    // Get user by username (now case-insensitive)
+    const user = await storage.getUserByUsername(normalizedUsername);
     if (!user || !(await comparePasswords(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ 
+        message: "Username or password is incorrect. Please check your credentials and try again." 
+      });
     }
 
     // Get user's company
     const company = await storage.getCompany(user.companyId);
     if (!company) {
-      return res.status(401).json({ message: "Company not found" });
+      return res.status(401).json({ 
+        message: "Your account is not associated with a company. Please contact your administrator." 
+      });
     }
 
     // Generate token with company context
@@ -186,7 +177,9 @@ export function setupAuth(app: Express) {
     const { email } = req.body;
     
     if (!email || !email.includes('@')) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ 
+        message: "Please enter a valid email address (e.g., john@company.com)" 
+      });
     }
 
     // Extract domain from email
@@ -197,7 +190,7 @@ export function setupAuth(app: Express) {
     
     if (!company) {
       return res.status(404).json({ 
-        message: "Company not found for this email domain",
+        message: "We couldn't find a company associated with this email domain. Please check your email address or contact your administrator.",
         domain: domain 
       });
     }
@@ -216,7 +209,9 @@ export function setupAuth(app: Express) {
 // Middleware to require authentication
 export function requireAuth(req: any, res: any, next: any) {
   if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({ 
+      message: 'Please log in to access this page.' 
+    });
   }
   next();
 }
@@ -224,7 +219,9 @@ export function requireAuth(req: any, res: any, next: any) {
 // Middleware to require admin role
 export function requireAdmin(req: any, res: any, next: any) {
   if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Admin access required' });
+    return res.status(403).json({ 
+      message: 'You need administrator privileges to access this page. Please contact your administrator.' 
+    });
   }
   next();
 }

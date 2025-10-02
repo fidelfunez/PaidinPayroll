@@ -52,8 +52,6 @@ export default function AuthPage() {
       confirmPassword: "",
       firstName: "",
       lastName: "",
-      role: "employee" as const,
-      monthlySalary: "",
       btcAddress: "",
     },
   });
@@ -108,12 +106,16 @@ export default function AuthPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-3xl font-bold text-white">₿</span>
-              </div>
+              <img 
+                src="/paidin - logos/Logo Designs (Transparent)/paidin-icon-logo.png" 
+                alt="PaidIn Logo" 
+                className="w-16 h-16"
+              />
             </div>
-            <h2 className="text-3xl font-bold text-foreground">Welcome to Paidin</h2>
-            <p className="mt-2 text-muted-foreground">Bitcoin-native payroll for remote teams</p>
+            <h2 className="text-3xl font-bold text-foreground">
+              Welcome to Paid<span className="text-orange-500">In</span>
+            </h2>
+            <p className="mt-2 text-muted-foreground">Bitcoin-native business platform for modern teams</p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
@@ -269,41 +271,6 @@ export default function AuthPage() {
                         )}
                       />
 
-                      <FormField
-                        control={registerForm.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Role</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="employee">Employee</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={registerForm.control}
-                        name="monthlySalary"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Monthly Salary (USD)</FormLabel>
-                            <FormControl>
-                              <Input type="number" step="0.01" placeholder="2500.00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       <FormField
                         control={registerForm.control}
@@ -418,44 +385,50 @@ export default function AuthPage() {
         </div>
         
         <div className="max-w-lg text-center space-y-8 relative z-10">
-          {/* Main Bitcoin icon with glow effect */}
+          {/* Main Bitcoin logo with glow effect */}
           <div className="relative">
-            <div className="w-40 h-40 mx-auto bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border border-white/30">
-              <span className="text-7xl font-bold text-white drop-shadow-lg">₿</span>
+            <div className="w-36 h-36 mx-auto bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border border-white/30">
+              <img 
+                src="/app - graphic designs/Bitcoin - logo.png" 
+                alt="Bitcoin Logo" 
+                className="w-32 h-32 drop-shadow-lg"
+              />
             </div>
-            <div className="absolute inset-0 w-40 h-40 mx-auto bg-white/10 rounded-3xl blur-xl"></div>
+            <div className="absolute inset-0 w-36 h-36 mx-auto bg-white/10 rounded-3xl blur-xl"></div>
           </div>
           
           {/* Main heading */}
           <div className="space-y-4">
             <h3 className="text-4xl font-bold text-white leading-tight">
               Bitcoin-Native
-              <span className="block text-orange-100">Payroll Platform</span>
+              <span className="block text-white ">Business Platform</span>
             </h3>
-            <p className="text-orange-100 text-lg leading-relaxed max-w-md mx-auto">
-              Streamline your remote team payments with real-time Bitcoin conversions, 
-              automated payroll scheduling, and comprehensive expense management.
+            <p className="text-orange-100 text-lg leading-relaxed max-w-xl mx-auto text-center">
+              The complete Bitcoin business suite for modern companies. From payroll and invoicing 
+              to reporting and compliance, Everything you need to run your business on Bitcoin.
             </p>
           </div>
           
           {/* Feature list - properly centered */}
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="space-y-4">
-              <div className="flex items-center justify-start space-x-4">
-                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                <span className="text-white font-medium">Real-time BTC/USD conversions</span>
-              </div>
-              <div className="flex items-center justify-start space-x-4">
-                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                <span className="text-white font-medium">Automated salary scheduling</span>
-              </div>
-              <div className="flex items-center justify-start space-x-4">
-                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                <span className="text-white font-medium">Expense reimbursement workflow</span>
-              </div>
-              <div className="flex items-center justify-start space-x-4">
-                <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                <span className="text-white font-medium">Comprehensive reporting</span>
+            <div className="flex justify-center">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                  <span className="text-white font-medium">Complete payroll & HR management</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                  <span className="text-white font-medium">Invoice generation & payment tracking</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                  <span className="text-white font-medium">Real-time Bitcoin price integration</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
+                  <span className="text-white font-medium">Business analytics & compliance tools</span>
+                </div>
               </div>
             </div>
           </div>

@@ -12,10 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Settings, Users, AlertTriangle, Bitcoin, Building2, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 export default function AdminWithdrawalMethodsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   const employeePayoutMethods = [
     {
@@ -25,7 +27,7 @@ export default function AdminWithdrawalMethodsPage() {
       method: "Bitcoin Wallet",
       address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
       status: "verified",
-      lastUpdated: "2024-01-15"
+      lastUpdated: "2025-01-15"
     },
     {
       id: 2,
@@ -34,7 +36,7 @@ export default function AdminWithdrawalMethodsPage() {
       method: "Bitcoin Wallet",
       address: "bc1qw8wcdqr4zy8h7a2l6k9j8h7g6f5d4s3a2q1w0e9r8t7y6",
       status: "verified",
-      lastUpdated: "2024-01-10"
+      lastUpdated: "2025-01-10"
     },
     {
       id: 3,
@@ -43,7 +45,7 @@ export default function AdminWithdrawalMethodsPage() {
       method: "Bank Transfer",
       address: "****1234",
       status: "pending",
-      lastUpdated: "2024-01-20"
+      lastUpdated: "2025-01-20"
     }
   ];
 
@@ -69,6 +71,7 @@ export default function AdminWithdrawalMethodsPage() {
         <Header 
           title="Employee Withdrawal Methods" 
           subtitle="Manage how employees receive Bitcoin payments"
+          btcRate={btcRate}
         />
         
         <main className="p-4 lg:p-6 space-y-6">

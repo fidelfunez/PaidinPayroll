@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Construction } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 interface PlaceholderPageProps {
   title: string;
@@ -13,12 +14,13 @@ interface PlaceholderPageProps {
 
 export default function PlaceholderPage({ title, subtitle, description }: PlaceholderPageProps) {
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title={title} subtitle={subtitle} />
+        <Header title={title} subtitle={subtitle} btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-4xl mx-auto">

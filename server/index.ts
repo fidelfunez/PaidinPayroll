@@ -74,6 +74,14 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
 
+  // Skip static assets (let express.static handle them)
+  const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.webmanifest'];
+  const hasStaticExtension = staticExtensions.some(ext => req.path.endsWith(ext));
+  
+  if (hasStaticExtension) {
+    return res.status(404).json({ error: 'Static file not found' });
+  }
+
   // Serve index.html for all other routes (SPA fallback)
   res.sendFile(path.join(__dirname, '../dist/public/index.html'));
 });

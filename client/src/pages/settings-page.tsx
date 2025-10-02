@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
@@ -15,6 +16,7 @@ import { ProfileForm } from "@/components/profile/profile-form";
 export default function SettingsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   
   const [notifications, setNotifications] = useState({
     payrollReminders: true,
@@ -30,6 +32,7 @@ export default function SettingsPage() {
         <Header 
           title="Settings" 
           subtitle="Manage your account preferences and security settings"
+          btcRate={btcRate}
         />
         
         <main className="py-8 px-6">

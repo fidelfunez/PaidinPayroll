@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Bitcoin, CreditCard, Building2, AlertCircle, CheckCircle, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ import type { User } from "@shared/schema";
 export default function WithdrawalMethodPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState<"bitcoin" | "bank_transfer" | "not_set">(user?.withdrawalMethod || "not_set");
   const [bitcoinAddress, setBitcoinAddress] = useState(user?.btcAddress || "");
@@ -125,6 +127,7 @@ export default function WithdrawalMethodPage() {
         <Header 
           title="Withdrawal Method" 
           subtitle="Configure how you receive your Bitcoin payments"
+          btcRate={btcRate}
         />
         
         <main className="p-4 lg:p-6 space-y-6">

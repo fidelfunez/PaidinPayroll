@@ -46,6 +46,13 @@ export function Sidebar() {
       ]
     },
     {
+      id: 'accounting',
+      title: 'Accounting',
+      items: [
+        { name: 'Financial Dashboard', href: '/accounting', icon: PieChart },
+      ]
+    },
+    {
       id: 'finance',
       title: 'Finance & Tax',
       items: [
@@ -103,7 +110,7 @@ export function Sidebar() {
       items: [
         { name: 'Invoices & Reports', href: '/reports', icon: PieChart },
         { name: 'PDF Payslips', href: '/payslips', icon: Download },
-        { name: 'Tax & Compliance', href: '/admin-tax-compliance', icon: Shield },
+        { name: 'Tax & Compliance', href: '/tax-compliance-dashboard', icon: Shield },
       ]
     },
     {
@@ -166,12 +173,12 @@ export function Sidebar() {
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Only show logo when sidebar is expanded */}
           {!isCollapsed && (
-            <>
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center ml-1">
-                <span className="text-sm font-bold text-white">₿</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">Paidin</span>
-            </>
+            <img 
+              src="/paidin - logos/Logo Designs (Transparent)/paidin-text-and-icon-logo.png" 
+              alt="PaidIn Logo" 
+              className="ml-1"
+              style={{ height: '100px' }}
+            />
           )}
         </div>
         <div className="flex-shrink-0">

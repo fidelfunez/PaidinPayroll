@@ -6,15 +6,17 @@ import { Footer } from "@/components/layout/footer";
 import { Upload, FileText, Download, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 export default function FilesPage() {
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Files" subtitle="Manage your uploaded documents" />
+        <Header title="Files" subtitle="Manage your uploaded documents" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">

@@ -6,12 +6,13 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Loader2, TrendingUp, Clock, DollarSign, Users, CheckSquare, FileBarChart, Receipt, Wallet, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useBitcoinQuotes } from "@/hooks/use-bitcoin-quotes";
+import { useBtcRateProvider } from "@/hooks/use-btc-rate-context";
 import { getQueryFn } from "@/lib/queryClient";
 
 interface DashboardStats {
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
   const { currentQuote } = useBitcoinQuotes();
+  const { updateRate, setLoading } = useBtcRateProvider();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
 
@@ -44,6 +46,18 @@ export default function DashboardPage() {
     queryKey: ['/api/dashboard/stats'],
     queryFn: getQueryFn({ on401: "throw" }),
   });
+
+  // Update shared BTC rate when dashboard gets the data
+  useEffect(() => {
+    if (stats?.currentBtcRate) {
+      updateRate(stats.currentBtcRate);
+    }
+    if (isLoading) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [stats?.currentBtcRate, isLoading, updateRate, setLoading]);
 
   if (isLoading) {
     return (
@@ -68,7 +82,7 @@ export default function DashboardPage() {
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header 
           title="Dashboard" 
-          subtitle="Overview of your Bitcoin payroll operations"
+          subtitle="Overview of your business operations"
           btcRate={stats?.currentBtcRate}
         />
         
@@ -78,15 +92,17 @@ export default function DashboardPage() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-xl lg:text-2xl">₿</span>
-                  </div>
+                  <img 
+                    src="/app - graphic designs/Bitcoin - logo - yellow.png" 
+                    alt="Bitcoin Logo" 
+                    className="w-10 h-10 lg:w-12 lg:h-12"
+                  />
                   <div>
                     <h2 className="text-xl lg:text-2xl font-bold">
                       Welcome back, {user?.firstName || 'User'}!
                     </h2>
                     <p className="text-orange-100 text-sm lg:text-base">
-                      Ready to revolutionize payroll with Bitcoin
+                      Ready to revolutionize your business with Bitcoin
                     </p>
                   </div>
                 </div>
@@ -101,9 +117,11 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="hidden lg:block">
-                <div className="w-24 h-24 lg:w-32 lg:h-32 bg-white/10 rounded-full flex items-center justify-center">
-                  <span className="text-4xl lg:text-6xl">₿</span>
-                </div>
+                <img 
+                  src="/app - graphic designs/Bitcoin - logo.png" 
+                  alt="Bitcoin Logo" 
+                  className="w-24 h-24 lg:w-32 lg:h-32"
+                />
               </div>
             </div>
           </div>

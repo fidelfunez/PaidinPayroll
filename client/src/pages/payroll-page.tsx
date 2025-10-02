@@ -11,6 +11,7 @@ import { useState } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PayrollPayment, User } from "@shared/schema";
@@ -35,9 +36,7 @@ export default function PayrollPage() {
     enabled: user?.role === 'admin',
   });
 
-  const { data: btcRate } = useQuery<{ rate: number }>({
-    queryKey: ['/api/btc-rate'],
-  });
+  const { rate: btcRate } = useBtcRate();
 
   const processPaymentMutation = useMutation({
     mutationFn: async (paymentId: number) => {
@@ -91,7 +90,7 @@ export default function PayrollPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/payroll'] });
       toast({
         title: "Lightning invoice created",
-        description: `Invoice created for ${data.lightningInvoice.amountUsd} USD (${data.lightningInvoice.amountSats} sats)`,
+        description: `Invoice created for ${data.lightningInvoice?.amountUsd || 'unknown'} USD (${data.lightningInvoice?.amountSats || 'unknown'} sats)`,
       });
     },
     onError: (error: any) => {
@@ -121,6 +120,27 @@ export default function PayrollPage() {
       toast({
         title: "Lightning payment failed",
         description: error.message || "Failed to send Lightning payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPaymentMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const response = await apiRequest('POST', `/api/payroll/${paymentId}/reset-payment`, {});
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payroll'] });
+      toast({
+        title: "Payment reset",
+        description: "Payment has been reset to pending status and can be retried.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Reset failed",
+        description: error.message || "Failed to reset payment. Please try again.",
         variant: "destructive",
       });
     },
@@ -168,7 +188,7 @@ export default function PayrollPage() {
         <Header 
           title="Payroll Management" 
           subtitle="Schedule and manage Bitcoin salary payments"
-          btcRate={btcRate?.rate}
+          btcRate={btcRate}
         />
         
         <main className="p-6 space-y-6">
@@ -359,8 +379,23 @@ export default function PayrollPage() {
                                   </Button>
                                 )}
                                 {payment.status === 'processing' && (
-                                  <div className="text-xs text-blue-500 py-1">
-                                    Processing Lightning payment...
+                                  <div className="flex gap-2">
+                                    <div className="text-xs text-blue-500 py-1">
+                                      Processing Lightning payment...
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => resetPaymentMutation.mutate(payment.id)}
+                                      disabled={resetPaymentMutation.isPending}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {resetPaymentMutation.isPending ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        'Reset Payment'
+                                      )}
+                                    </Button>
                                   </div>
                                 )}
                                 {payment.status === 'completed' && payment.transactionHash && (

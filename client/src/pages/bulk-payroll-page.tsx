@@ -1,5 +1,6 @@
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -9,12 +10,13 @@ import { Users, Construction } from "lucide-react";
 export default function BulkPayrollPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Bulk Payroll" subtitle="Process multiple employee payments simultaneously" />
+        <Header title="Bulk Payroll" subtitle="Process multiple employee payments simultaneously" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-4xl mx-auto">

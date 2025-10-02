@@ -13,9 +13,11 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 export default function TimeOffPage() {
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const timeOffRequests: any[] = [];
@@ -35,7 +37,7 @@ export default function TimeOffPage() {
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Time Off" subtitle="Request and manage your leave" />
+        <Header title="Time Off" subtitle="Request and manage your leave" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">

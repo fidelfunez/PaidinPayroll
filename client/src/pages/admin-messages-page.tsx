@@ -13,12 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageSquare, Send, Search, Plus, User, Loader2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { useConversations, useConversationMessages, useSendMessage, useCreateConversation, useMessagingWebSocket } from "@/hooks/use-messaging";
 import { useQuery } from "@tanstack/react-query";
 
 export default function AdminMessagesPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [showNewConversation, setShowNewConversation] = useState(false);
@@ -119,6 +121,7 @@ export default function AdminMessagesPage() {
         <Header 
           title="Team Messages" 
           subtitle="Communicate with employees and manage conversations"
+          btcRate={btcRate}
         />
         
         <main className="flex-1 p-4 lg:p-6 pb-4 min-h-0 h-[calc(100vh-12rem)]">

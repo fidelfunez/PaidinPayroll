@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
 import { BitcoinQuotesProvider } from "@/hooks/use-bitcoin-quotes";
+import { BtcRateProvider } from "@/hooks/use-btc-rate-context";
 import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
@@ -40,6 +41,8 @@ import PayslipsPage from "@/pages/payslips-page";
 import AuditLogsPage from "@/pages/audit-logs-page";
 import AdminTaxCompliancePage from "@/pages/admin-tax-compliance-page";
 import BulkPayrollPage from "@/pages/bulk-payroll-page";
+import AccountingPage from "@/pages/accounting-page";
+import TaxComplianceDashboardPage from "@/pages/tax-compliance-dashboard-page";
 
 function Router() {
   return (
@@ -68,6 +71,8 @@ function Router() {
       <ProtectedRoute path="/audit-logs" component={AuditLogsPage} />
       <ProtectedRoute path="/admin-messages" component={AdminMessagesPage} />
       <ProtectedRoute path="/bulk-payroll" component={BulkPayrollPage} />
+      <ProtectedRoute path="/accounting" component={AccountingPage} />
+      <ProtectedRoute path="/tax-compliance-dashboard" component={TaxComplianceDashboardPage} />
       <Route path="/help-center" component={HelpCenterPage} />
       <Route path="/api-documentation" component={ApiDocumentationPage} />
       <Route path="/security" component={SecurityPage} />
@@ -83,14 +88,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BitcoinQuotesProvider>
-          <SidebarProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </SidebarProvider>
-        </BitcoinQuotesProvider>
+        <BtcRateProvider>
+          <BitcoinQuotesProvider>
+            <SidebarProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </SidebarProvider>
+          </BitcoinQuotesProvider>
+        </BtcRateProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

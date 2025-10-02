@@ -15,6 +15,7 @@ interface PaymentRequest {
 interface PaymentResponse {
   payment_hash: string;
   payment_request: string;
+  bolt11: string;
   checking_id: string;
   lnurl_response?: any;
 }
@@ -50,6 +51,7 @@ class LNbitsService {
     const url = `${this.config.baseUrl}${endpoint}`;
     const headers = {
       'X-Api-Key': this.config.apiKey,
+      'X-Wallet-Id': '663f5dca25c74d0cbc1f89d516400a6d',
       'Content-Type': 'application/json',
       ...options.headers
     };
@@ -68,7 +70,7 @@ class LNbitsService {
 
   // Check wallet balance
   async getWalletBalance(): Promise<{ balance: number }> {
-    return this.makeRequest('/api/v1/wallet');
+    return this.makeRequest('/api/v1/wallet/663f5dca25c74d0cbc1f89d516400a6d');
   }
 
   // Create a payment (send money)
@@ -100,6 +102,7 @@ class LNbitsService {
     const url = `${this.config.baseUrl}${endpoint}`;
     const headers = {
       'X-Api-Key': this.config.adminKey,
+      'X-Wallet-Id': '663f5dca25c74d0cbc1f89d516400a6d',
       'Content-Type': 'application/json',
       ...options.headers
     };

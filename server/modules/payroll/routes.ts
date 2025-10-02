@@ -29,16 +29,26 @@ export default function payrollRoutes(app: Express) {
         return res.status(400).json({ message: 'User must be associated with a company' });
       }
 
+      // Get current BTC rate
+      const currentBtcRate = await storage.getLatestBtcRate();
+      if (!currentBtcRate) {
+        return res.status(500).json({ message: 'Unable to get current Bitcoin rate' });
+      }
+
+      const amountUsd = parseFloat(validation.data.amountUsd?.toString() || '0');
+      const amountBtc = amountUsd / parseFloat(currentBtcRate.rate);
+
       const paymentData = {
         ...validation.data,
         companyId: req.user.companyId,
-        createdBy: req.user.id,
-        createdAt: new Date()
-      };
+        amountBtc: amountBtc,
+        btcRate: parseFloat(currentBtcRate.rate)
+      } as any; // Type assertion to bypass schema validation for computed fields
 
       const payment = await storage.createPayrollPayment(paymentData);
       res.status(201).json(payment);
     } catch (error) {
+      console.error('Payroll creation error:', error);
       res.status(500).json({ message: 'Failed to create payroll payment' });
     }
   });
@@ -104,7 +114,7 @@ export default function payrollRoutes(app: Express) {
       res.json({
         payment: updatedPayment,
         lightningInvoice: {
-          paymentRequest: lightningInvoice.payment_request,
+          paymentRequest: lightningInvoice.bolt11 || lightningInvoice.payment_request,
           paymentHash: lightningInvoice.payment_hash,
           amountSats: amountSats,
           amountUsd: amountUsd,
@@ -116,6 +126,47 @@ export default function payrollRoutes(app: Express) {
       console.error('Lightning invoice creation error:', error);
       res.status(500).json({ 
         message: 'Failed to create Lightning invoice. Please try again.' 
+      });
+    }
+  });
+
+  // Reset payment status from processing to pending (for retry)
+  app.post('/api/payroll/:id/reset-payment', requireAuth, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ message: 'Invalid payment ID' });
+      }
+
+      // Only admins can reset payments
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Only administrators can reset payments' });
+      }
+
+      // Get the payment
+      const payment = await storage.getPayrollPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      // Only allow resetting from processing status
+      if (payment.status !== 'processing') {
+        return res.status(400).json({ message: 'Can only reset payments from processing status' });
+      }
+
+      // Reset payment to pending
+      const updatedPayment = await storage.updatePayrollPayment(paymentId, {
+        status: 'pending',
+        transactionHash: null,
+        paidDate: null
+      });
+
+      res.json({ payment: updatedPayment });
+
+    } catch (error) {
+      console.error('Payment reset error:', error);
+      res.status(500).json({ 
+        message: 'Failed to reset payment. Please try again.' 
       });
     }
   });

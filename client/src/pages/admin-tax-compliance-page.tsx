@@ -1,4 +1,5 @@
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -9,12 +10,13 @@ import { FileText, Construction } from "lucide-react";
 export default function AdminTaxCompliancePage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Tax & Compliance" subtitle="Review employee tax documents and compliance status" />
+        <Header title="Tax & Compliance" subtitle="Review employee tax documents and compliance status" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-4xl mx-auto">

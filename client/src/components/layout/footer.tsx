@@ -12,17 +12,21 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-bold text-white">₿</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">Paidin</span>
+            <div className="flex items-center space-x-3 -mt-4 mb-1">
+              <img 
+                src="/paidin - logos/Logo Designs (Transparent)/paidin-text-and-icon-logo.png" 
+                alt="PaidIn Logo" 
+                className="h-24"
+              />
             </div>
-            <p className="text-muted-foreground text-sm max-w-md">
-              The future of payroll is here. Streamline your remote team payments with 
-              real-time Bitcoin conversions, automated scheduling, and comprehensive reporting.
+            <p className="text-muted-foreground text-sm max-w-md mb-1">
+              The complete Bitcoin business platform for modern companies.
+              <br />
+              From payroll and invoicing to reporting and compliance
+              <br />
+              everything you need to run your business on Bitcoin.
             </p>
-            <div className="flex items-center mt-4 text-xs text-muted-foreground">
+            <div className="flex items-center text-xs text-muted-foreground">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Bitcoin network operational
             </div>

@@ -11,6 +11,7 @@ import { Download, Search, Calendar, FileText, Eye } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 interface PayslipRecord {
   id: number;
@@ -28,6 +29,7 @@ interface PayslipRecord {
 export default function PayslipsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("all");
 
@@ -137,6 +139,7 @@ This payslip confirms Bitcoin salary payment for the specified period.
         <Header 
           title="PDF Payslips" 
           subtitle="Generate and manage employee payslips"
+          btcRate={btcRate}
         />
         
         <main className="flex-1 p-4 lg:p-6 space-y-6">
@@ -217,10 +220,10 @@ This payslip confirms Bitcoin salary payment for the specified period.
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="all">All Periods</option>
-                  <option value="2024">2024</option>
-                  <option value="March">March 2024</option>
-                  <option value="February">February 2024</option>
-                  <option value="January">January 2024</option>
+                  <option value="2025">2025</option>
+                  <option value="March">March 2025</option>
+                  <option value="February">February 2025</option>
+                  <option value="January">January 2025</option>
                 </select>
               </div>
             </CardContent>

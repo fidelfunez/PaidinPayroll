@@ -9,9 +9,11 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Clock, Play, Square, Plus } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 export default function TimeTrackingPage() {
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const [isTracking, setIsTracking] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00:00");
 
@@ -25,7 +27,7 @@ export default function TimeTrackingPage() {
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Time Tracking" subtitle="Track your working hours" />
+        <Header title="Time Tracking" subtitle="Track your working hours" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">

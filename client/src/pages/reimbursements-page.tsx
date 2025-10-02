@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import type { ExpenseReimbursement } from "@shared/schema";
 
 export default function ReimbursementsPage() {
@@ -27,9 +28,7 @@ export default function ReimbursementsPage() {
     queryKey: ['/api/expenses'],
   });
 
-  const { data: btcRate } = useQuery<{ rate: number }>({
-    queryKey: ['/api/btc-rate'],
-  });
+  const { rate: btcRate } = useBtcRate();
 
   const updateExpenseMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
@@ -126,7 +125,7 @@ export default function ReimbursementsPage() {
         <Header 
           title="Reimbursements" 
           subtitle="Manage expense claims and Bitcoin payouts"
-          btcRate={btcRate?.rate}
+          btcRate={btcRate}
         />
         
         <main className="p-6 space-y-6">

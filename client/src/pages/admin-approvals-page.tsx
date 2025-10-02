@@ -10,10 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckSquare, Clock, DollarSign, Receipt, User, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 export default function AdminApprovalsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
 
   const { data: allExpenses } = useQuery({
     queryKey: ['/api/expenses']
@@ -32,7 +34,7 @@ export default function AdminApprovalsPage() {
       type: "Bonus Payment",
       amount: 0.025,
       amountUsd: 2500,
-      requestDate: "2024-01-20",
+      requestDate: "2025-01-20",
       reason: "Exceptional performance on Q4 project delivery"
     },
     {
@@ -41,7 +43,7 @@ export default function AdminApprovalsPage() {
       type: "Salary Adjustment",
       amount: 0.15,
       amountUsd: 15000,
-      requestDate: "2024-01-18",
+      requestDate: "2025-01-18",
       reason: "Promotion to Senior Developer"
     }
   ];
@@ -51,20 +53,20 @@ export default function AdminApprovalsPage() {
       id: 1,
       employeeName: "Alex Rodriguez",
       type: "Vacation",
-      startDate: "2024-02-15",
-      endDate: "2024-02-22",
+      startDate: "2025-02-15",
+      endDate: "2025-02-22",
       days: 6,
-      requestDate: "2024-01-19",
+      requestDate: "2025-01-19",
       reason: "Family vacation"
     },
     {
       id: 2,
       employeeName: "Sarah Johnson", 
       type: "Sick Leave",
-      startDate: "2024-01-25",
-      endDate: "2024-01-26",
+      startDate: "2025-01-25",
+      endDate: "2025-01-26",
       days: 2,
-      requestDate: "2024-01-24",
+      requestDate: "2025-01-24",
       reason: "Medical appointment"
     }
   ];
@@ -87,6 +89,7 @@ export default function AdminApprovalsPage() {
         <Header 
           title="Approvals" 
           subtitle="Review and approve employee requests"
+          btcRate={btcRate}
         />
         
         <main className="p-4 lg:p-6 space-y-6">

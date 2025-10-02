@@ -25,7 +25,7 @@ async function fetchBtcRate(): Promise<number> {
     console.error('Failed to fetch BTC rate:', error);
     // Return last known rate or default
     const lastRate = await storage.getLatestBtcRate();
-    return lastRate ? parseFloat(lastRate.rate) : 43250; // Fallback rate
+    return lastRate ? parseFloat(lastRate.rate) : 118509; // Current BTC rate fallback
   }
 }
 

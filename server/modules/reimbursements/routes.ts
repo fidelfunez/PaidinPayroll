@@ -12,7 +12,7 @@ async function fetchBtcRate(): Promise<number> {
   } catch (error) {
     console.error('Failed to fetch BTC rate:', error);
     const lastRate = await storage.getLatestBtcRate();
-    return lastRate ? parseFloat(lastRate.rate) : 43250;
+    return lastRate ? parseFloat(lastRate.rate) : 118509;
   }
 }
 

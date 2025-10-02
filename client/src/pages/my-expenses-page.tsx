@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ExpenseModal } from "@/components/modals/expense-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import type { ExpenseReimbursement } from "@shared/schema";
 
 export default function MyExpensesPage() {
@@ -22,9 +23,7 @@ export default function MyExpensesPage() {
     queryKey: ['/api/expenses'],
   });
 
-  const { data: btcRate } = useQuery<{ rate: number }>({
-    queryKey: ['/api/btc-rate'],
-  });
+  const { rate: btcRate } = useBtcRate();
 
   if (isLoading) {
     return (
@@ -61,7 +60,7 @@ export default function MyExpensesPage() {
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="My Expenses" subtitle="Track your submitted expense claims" btcRate={btcRate?.rate} />
+        <Header title="My Expenses" subtitle="Track your submitted expense claims" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">

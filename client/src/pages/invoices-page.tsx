@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { Download, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import type { PayrollPayment } from "@shared/schema";
 
 export default function InvoicesPage() {
@@ -18,9 +19,7 @@ export default function InvoicesPage() {
     queryKey: ['/api/payroll'],
   });
 
-  const { data: btcRate } = useQuery<{ rate: number }>({
-    queryKey: ['/api/btc-rate'],
-  });
+  const { rate: btcRate } = useBtcRate();
 
   const formatUsd = (amount: string | number | undefined) => {
     if (amount === undefined || amount === null) return '$0.00';
@@ -38,7 +37,7 @@ export default function InvoicesPage() {
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <Header title="Invoices & Payslips" subtitle="View and download your payment history" btcRate={btcRate?.rate} />
+        <Header title="Invoices & Payslips" subtitle="View and download your payment history" btcRate={btcRate} />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">

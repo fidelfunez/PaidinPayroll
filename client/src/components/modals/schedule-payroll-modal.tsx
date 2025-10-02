@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 import type { User } from "@shared/schema";
 
 const payrollSchema = z.object({
@@ -35,10 +36,7 @@ export function SchedulePayrollModal({ open, onOpenChange }: SchedulePayrollModa
     enabled: open,
   });
 
-  const { data: btcRate } = useQuery<{ rate: number }>({
-    queryKey: ['/api/btc-rate'],
-    enabled: open,
-  });
+  const { rate: btcRate } = useBtcRate();
 
   const form = useForm({
     resolver: zodResolver(payrollSchema),
@@ -113,7 +111,7 @@ export function SchedulePayrollModal({ open, onOpenChange }: SchedulePayrollModa
     return sum + parseFloat(employee?.monthlySalary || '0');
   }, 0);
 
-  const totalBtc = btcRate ? totalUsd / btcRate.rate : 0;
+  const totalBtc = btcRate ? totalUsd / btcRate : 0;
 
   const formatUsd = (amount: number | undefined) => {
     if (amount === undefined || amount === null) return '$0.00';
@@ -215,7 +213,7 @@ export function SchedulePayrollModal({ open, onOpenChange }: SchedulePayrollModa
               </div>
               <div className="flex justify-between text-sm text-muted-foreground mb-2">
                 <span>Current BTC Rate:</span>
-                <span>{btcRate ? formatUsd(btcRate.rate) : 'Loading...'}</span>
+                <span>{btcRate ? formatUsd(btcRate) : 'Loading...'}</span>
               </div>
               <div className="flex justify-between font-medium text-foreground">
                 <span>Total BTC Required:</span>

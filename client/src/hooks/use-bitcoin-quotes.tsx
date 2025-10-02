@@ -12,7 +12,7 @@ const bitcoinQuotes = [
     tagline: "Empowering trustless financial sovereignty"
   },
   {
-    quote: "Bitcoin is peer-to-peer electronic cash that is valuable over legacy systems because of the mathematical proof inherent in the system.",
+    quote: "Bitcoin is peer-to-peer electronic cash that derives its value from mathematical proof.",
     author: "Adam Back",
     tagline: "Transforming money through cryptographic proof"
   },
@@ -32,14 +32,14 @@ const bitcoinQuotes = [
     tagline: "Preserving purchasing power through digital gold"
   },
   {
-    quote: "In the long run, Bitcoin will be seen as humanity's greatest monetary innovation.",
-    author: "Vijay Boyapati",
-    tagline: "Enabling sound money for the digital age"
+    quote: "Bitcoin is the first monetary network that has ever existed that doesn't require trust in a central authority.",
+    author: "Jack Mallers",
+    tagline: "Building trustless financial infrastructure"
   },
   {
-    quote: "Bitcoin gives us, for the first time, a way for one Internet user to transfer a unique piece of digital property to another Internet user.",
-    author: "Marc Andreessen",
-    tagline: "Redefining digital ownership and exchange"
+    quote: "Bitcoin changes everything. I don't think there's anything more important in my lifetime to work on.",
+    author: "Jack Dorsey",
+    tagline: "Dedicated to Bitcoin's revolutionary potential"
   }
 ];
 

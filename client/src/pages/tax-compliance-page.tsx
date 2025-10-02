@@ -18,23 +18,23 @@ export default function TaxCompliancePage() {
   const taxDocuments = [
     {
       type: "W-2",
-      year: 2024,
+      year: 2025,
       status: "ready",
-      downloadDate: "2024-01-31",
+      downloadDate: "2025-01-31",
       description: "Wage and Tax Statement"
     },
     {
       type: "1099-MISC",
-      year: 2024,
+      year: 2025,
       status: "pending",
       downloadDate: null,
       description: "Bitcoin Payment Records"
     },
     {
       type: "Crypto Tax Report",
-      year: 2024,
+      year: 2025,
       status: "ready",
-      downloadDate: "2024-12-31",
+      downloadDate: "2025-12-31",
       description: "Detailed Bitcoin transaction history"
     },
     {
@@ -50,7 +50,7 @@ export default function TaxCompliancePage() {
     totalBitcoinIncome: 85000,
     estimatedTaxLiability: 18700,
     quarterlyPayments: 4675,
-    nextDueDate: "2024-04-15"
+    nextDueDate: "2025-04-15"
   };
 
   const complianceItems = [
@@ -63,8 +63,8 @@ export default function TaxCompliancePage() {
     {
       title: "Quarterly Estimated Taxes",
       status: "pending",
-      description: "Q1 2024 estimated tax payment",
-      dueDate: "April 15, 2024"
+      description: "Q1 2025 estimated tax payment",
+      dueDate: "April 15, 2025"
     },
     {
       title: "State Tax Registration",
@@ -76,7 +76,7 @@ export default function TaxCompliancePage() {
       title: "FBAR Filing",
       status: "not-required",
       description: "Foreign bank account reporting",
-      dueDate: "June 30, 2024"
+      dueDate: "June 30, 2025"
     }
   ];
 
@@ -95,7 +95,7 @@ export default function TaxCompliancePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Calculator className="w-6 h-6 text-orange-500" />
-                2024 Tax Summary
+                2025 Tax Summary
               </CardTitle>
             </CardHeader>
             <CardContent>

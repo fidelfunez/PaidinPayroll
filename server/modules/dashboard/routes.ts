@@ -11,7 +11,7 @@ async function fetchBtcRate(): Promise<number> {
   } catch (error) {
     console.error('Failed to fetch BTC rate:', error);
     // Return last known rate or default
-    return 50000; // Default fallback rate
+    return 118509; // Current BTC rate fallback
   }
 }
 
@@ -71,7 +71,7 @@ export default function dashboardRoutes(app: Express) {
         pendingPaymentsAmount: 0,
         monthlyPayrollUsd: 0,
         activeEmployees: 0,
-        currentBtcRate: 50000,
+        currentBtcRate: 118509,
         recentActivity: [],
         userRole: req.user?.role || 'employee',
       };

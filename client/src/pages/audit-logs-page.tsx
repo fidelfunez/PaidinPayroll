@@ -11,6 +11,7 @@ import { Search, Download, Filter, User, DollarSign, Settings, Shield } from "lu
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 interface AuditLog {
   id: number;
@@ -28,6 +29,7 @@ interface AuditLog {
 export default function AuditLogsPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
+  const { rate: btcRate } = useBtcRate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSeverity, setFilterSeverity] = useState("all");
 
@@ -35,7 +37,7 @@ export default function AuditLogsPage() {
   const auditLogs: AuditLog[] = [
     {
       id: 1,
-      timestamp: "2024-03-15 09:30:25",
+      timestamp: "2025-01-15 09:30:25",
       userId: 1,
       userName: "fidelf",
       action: "LOGIN",
@@ -47,7 +49,7 @@ export default function AuditLogsPage() {
     },
     {
       id: 2,
-      timestamp: "2024-03-15 10:15:42",
+      timestamp: "2025-01-15 10:15:42",
       userId: 1,
       userName: "fidelf",
       action: "PAYROLL_PROCESS",
@@ -59,7 +61,7 @@ export default function AuditLogsPage() {
     },
     {
       id: 3,
-      timestamp: "2024-03-15 11:22:18",
+      timestamp: "2025-01-15 11:22:18",
       userId: 2,
       userName: "danielacerna25",
       action: "EXPENSE_SUBMIT",
@@ -71,7 +73,7 @@ export default function AuditLogsPage() {
     },
     {
       id: 4,
-      timestamp: "2024-03-15 14:45:33",
+      timestamp: "2025-01-15 14:45:33",
       userId: 1,
       userName: "fidelf",
       action: "USER_SETTINGS_UPDATE",
@@ -83,7 +85,7 @@ export default function AuditLogsPage() {
     },
     {
       id: 5,
-      timestamp: "2024-03-15 16:10:07",
+      timestamp: "2025-01-15 16:10:07",
       userId: 1,
       userName: "fidelf",
       action: "SECURITY_CONFIG",
@@ -149,6 +151,7 @@ export default function AuditLogsPage() {
         <Header 
           title="Audit Logs" 
           subtitle="Track system changes and security events"
+          btcRate={btcRate}
         />
         
         <main className="flex-1 p-4 lg:p-6 space-y-6">

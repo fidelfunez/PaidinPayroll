@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 8080;
 // CORS configuration
 app.use(cors({
   origin: [
-    'https://paidin-app.netlify.app',
+    'https://app.paidin.io',
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:4173',

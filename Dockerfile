@@ -1,4 +1,4 @@
-Bitcoin-Native# Use Node.js 20 Alpine for better-sqlite3 compatibility
+# Use Node.js 20 Alpine for better-sqlite3 compatibility
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed

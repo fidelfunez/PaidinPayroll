@@ -43,6 +43,17 @@ import AdminTaxCompliancePage from "@/pages/admin-tax-compliance-page";
 import BulkPayrollPage from "@/pages/bulk-payroll-page";
 import AccountingPage from "@/pages/accounting-page";
 import TaxComplianceDashboardPage from "@/pages/tax-compliance-dashboard-page";
+import CompanyOnboardingPage from "@/pages/company-onboarding-page";
+import TestOnboardingPage from "@/pages/test-onboarding-page";
+import SimpleOnboardingPage from "@/pages/simple-onboarding-page";
+import MinimalOnboardingPage from "@/pages/minimal-onboarding-page";
+import BitcoinEducationPage from "@/pages/bitcoin-education-page";
+import GettingStartedPage from "@/pages/getting-started-page";
+import FAQPage from "@/pages/faq-page";
+import SupportPage from "@/pages/support-page";
+import WalletPage from "@/pages/wallet-page";
+import IntegrationsPage from "@/pages/integrations-page";
+import APIAccessPage from "@/pages/api-access-page";
 
 function Router() {
   return (
@@ -73,6 +84,14 @@ function Router() {
       <ProtectedRoute path="/bulk-payroll" component={BulkPayrollPage} />
       <ProtectedRoute path="/accounting" component={AccountingPage} />
       <ProtectedRoute path="/tax-compliance-dashboard" component={TaxComplianceDashboardPage} />
+      <ProtectedRoute path="/wallet" component={WalletPage} />
+      <ProtectedRoute path="/bitcoin-education" component={BitcoinEducationPage} />
+      <ProtectedRoute path="/getting-started" component={GettingStartedPage} />
+      <ProtectedRoute path="/faq" component={FAQPage} />
+      <ProtectedRoute path="/support" component={SupportPage} />
+      <ProtectedRoute path="/integrations" component={IntegrationsPage} />
+      <ProtectedRoute path="/api-access" component={APIAccessPage} />
+      <Route path="/onboarding" component={CompanyOnboardingPage} />
       <Route path="/help-center" component={HelpCenterPage} />
       <Route path="/api-documentation" component={ApiDocumentationPage} />
       <Route path="/security" component={SecurityPage} />

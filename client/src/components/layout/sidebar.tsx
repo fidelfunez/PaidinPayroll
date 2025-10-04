@@ -9,7 +9,8 @@ import {
   Users, CreditCard, CheckSquare, Download, Shield, MessageSquare, 
   Clock, Calendar, Gift, Wallet, Bell, FolderOpen, FileBarChart, ChevronDown, ChevronRight,
   TrendingUp, Building2, Layers, Target, Search, Archive, Award, Banknote, 
-  ScrollText, PieChart, Mail, Zap
+  ScrollText, PieChart, Mail, Zap, HelpCircle, BookOpen, MessageCircle, 
+  FileQuestion, Headphones, CreditCard as CreditCardIcon, History
 } from "lucide-react";
 
 export function Sidebar() {
@@ -69,6 +70,16 @@ export function Sidebar() {
       ]
     },
     {
+      id: 'help',
+      title: 'Help Center',
+      items: [
+        { name: 'Bitcoin Education', href: '/bitcoin-education', icon: BookOpen },
+        { name: 'Getting Started', href: '/getting-started', icon: HelpCircle },
+        { name: 'FAQ', href: '/faq', icon: FileQuestion },
+        { name: 'Support', href: '/support', icon: Headphones },
+      ]
+    },
+    {
       id: 'settings',
       title: 'Settings',
       items: [
@@ -84,6 +95,7 @@ export function Sidebar() {
       items: [
         { name: 'Dashboard', href: '/', icon: BarChart3 },
         { name: 'Employees', href: '/employees', icon: Users },
+        { name: 'Wallet', href: '/wallet', icon: Wallet },
       ]
     },
     {
@@ -97,20 +109,21 @@ export function Sidebar() {
       ]
     },
     {
-      id: 'approval',
-      title: 'Approvals & Tasks',
+      id: 'accounting',
+      title: 'Accounting Management',
       items: [
-        { name: 'Approvals', href: '/approvals', icon: CheckSquare },
-        { name: 'Audit Logs', href: '/audit-logs', icon: Search },
+        { name: 'Accounting Dashboard', href: '/accounting', icon: PieChart },
+        { name: 'Invoicing & Reports', href: '/reports', icon: FileText },
+        { name: 'PDF Payslips', href: '/payslips', icon: Download },
       ]
     },
     {
-      id: 'reports',
-      title: 'Reports & Documents',
+      id: 'compliance',
+      title: 'Global Compliance',
       items: [
-        { name: 'Invoices & Reports', href: '/reports', icon: PieChart },
-        { name: 'PDF Payslips', href: '/payslips', icon: Download },
         { name: 'Tax & Compliance', href: '/tax-compliance-dashboard', icon: Shield },
+        { name: 'Audit Logs', href: '/audit-logs', icon: Search },
+        { name: 'Approvals', href: '/approvals', icon: CheckSquare },
       ]
     },
     {
@@ -118,12 +131,25 @@ export function Sidebar() {
       title: 'Communication',
       items: [
         { name: 'Messages', href: '/admin-messages', icon: MessageSquare },
+        { name: 'Notifications', href: '/notifications', icon: Bell },
       ]
     },
     {
-      id: 'settings',
-      title: 'Settings',
+      id: 'help',
+      title: 'Help Center',
       items: [
+        { name: 'Bitcoin Education', href: '/bitcoin-education', icon: BookOpen },
+        { name: 'Getting Started', href: '/getting-started', icon: HelpCircle },
+        { name: 'FAQ', href: '/faq', icon: FileQuestion },
+        { name: 'Support', href: '/support', icon: Headphones },
+      ]
+    },
+    {
+      id: 'advanced',
+      title: 'Advanced Tools',
+      items: [
+        { name: 'Integrations', href: '/integrations', icon: Layers },
+        { name: 'API Access', href: '/api-access', icon: Zap },
         { name: 'Settings', href: '/settings', icon: Settings },
       ]
     }

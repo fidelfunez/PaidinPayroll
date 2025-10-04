@@ -82,10 +82,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res) => {
-    // Normalize username to lowercase for consistency
-    const normalizedUsername = req.body.username.toLowerCase();
-    
-    const existingUser = await storage.getUserByUsername(normalizedUsername);
+    const existingUser = await storage.getUserByUsername(req.body.username);
     if (existingUser) {
       return res.status(400).json({ 
         message: "This username is already taken. Please try a different username." 
@@ -95,7 +92,6 @@ export function setupAuth(app: Express) {
     // Transform numeric fields to handle empty strings
     const userData = {
       ...req.body,
-      username: normalizedUsername, // Store username in lowercase
       password: await hashPassword(req.body.password),
       monthlySalary: req.body.monthlySalary === "" ? null : req.body.monthlySalary,
       createdAt: new Date(),
@@ -116,11 +112,8 @@ export function setupAuth(app: Express) {
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     
-    // Normalize username to lowercase for case-insensitive login
-    const normalizedUsername = username.toLowerCase();
-    
-    // Get user by username (now case-insensitive)
-    const user = await storage.getUserByUsername(normalizedUsername);
+    // Get user by username (case-insensitive lookup handled in storage layer)
+    const user = await storage.getUserByUsername(username);
     if (!user || !(await comparePasswords(password, user.password))) {
       return res.status(401).json({ 
         message: "Username or password is incorrect. Please check your credentials and try again." 

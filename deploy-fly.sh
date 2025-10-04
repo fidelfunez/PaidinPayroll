@@ -32,5 +32,5 @@ echo "🚀 Deploying to Fly.io..."
 fly deploy
 
 echo "🎉 Backend deployed to Fly.io!"
-echo "🌐 Your backend URL: https://paidin-backend.fly.dev"
+echo "🌐 Your backend URL: https://paidin-app.fly.dev"
 echo "📝 Update VITE_BACKEND_URL in Netlify with this URL" 

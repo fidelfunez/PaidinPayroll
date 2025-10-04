@@ -46,7 +46,7 @@ import {
   type InsertOnboardingTaskProgress
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, or, arrayContains } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, arrayContains, sql } from "drizzle-orm";
 import session from "express-session";
 import * as expressSession from "express-session";
 import connectSqlite3 from "connect-sqlite3";
@@ -191,9 +191,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    // Convert username to lowercase for case-insensitive matching
-    const normalizedUsername = username.toLowerCase();
-    const [user] = await db.select().from(users).where(eq(users.username, normalizedUsername));
+    // Case-insensitive username lookup using SQLite's LOWER() function
+    const [user] = await db.select().from(users).where(sql`LOWER(${users.username}) = LOWER(${username})`);
     return user || undefined;
   }
 

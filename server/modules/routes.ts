@@ -12,6 +12,7 @@ import btcRoutes from "./btc/routes";
 import messagingRoutes from "./messaging/routes";
 import integrationRoutes from "./integrations/routes";
 import adminRoutes from "./admin/routes";
+import onboardingRoutes from "./onboarding/routes";
 
 // Module route configurations
 export const moduleRoutes = {
@@ -24,6 +25,7 @@ export const moduleRoutes = {
   messaging: messagingRoutes,
   integrations: integrationRoutes,
   admin: adminRoutes,
+  onboarding: onboardingRoutes,
 };
 
 // Register all module routes

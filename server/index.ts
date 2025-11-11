@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT) || 8080;
 
 // Run database migrations on startup with absolute path
 // try {
@@ -31,17 +31,21 @@ const PORT = process.env.PORT || 8080;
 // }
 
 // CORS configuration
+const allowedOrigins = [
+  'https://app.paidin.io',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:4173',
+  'http://localhost:8080'
+];
+
 app.use(cors({
-  origin: [
-    'https://app.paidin.io',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:4173',
-    'http://localhost:8080'
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 
 // Session middleware
@@ -50,8 +54,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
     httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-origin in production
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));

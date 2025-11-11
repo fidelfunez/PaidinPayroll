@@ -1,10 +1,10 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Get backend URL from environment or use production URL as fallback
+// Get backend URL from environment or use relative path for development
 const getBackendUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side: use environment variable or default to production URL
-    return import.meta.env.VITE_BACKEND_URL || 'https://paidin-app.fly.dev';
+    // Client-side: use environment variable or default to relative path for development
+    return import.meta.env.VITE_BACKEND_URL || '';
   }
   return '';
 };
@@ -76,6 +76,7 @@ export async function apiRequest(
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
+    credentials: 'include', // Include credentials for cross-origin requests
   });
 
   await throwIfResNotOk(res);
@@ -99,6 +100,7 @@ export const getQueryFn: <T>(options: {
     
     const res = await fetch(fullUrl, {
       headers,
+      credentials: 'include', // Include credentials for cross-origin requests
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

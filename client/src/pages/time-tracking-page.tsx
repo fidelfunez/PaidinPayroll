@@ -24,9 +24,9 @@ export default function TimeTrackingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header title="Time Tracking" subtitle="Track your working hours" btcRate={btcRate} />
         
         <main className="p-6">

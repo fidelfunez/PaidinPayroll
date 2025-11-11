@@ -28,12 +28,12 @@ export default function PayrollPage() {
 
   const { data: employees } = useQuery<User[]>({
     queryKey: ['/api/employees'],
-    enabled: user?.role === 'admin',
+    enabled: user?.role === 'admin' || user?.role === 'super_admin',
   });
 
   const { data: employeesWithWithdrawal } = useQuery<User[]>({
     queryKey: ['/api/employees/withdrawal-methods'],
-    enabled: user?.role === 'admin',
+    enabled: user?.role === 'admin' || user?.role === 'super_admin',
   });
 
   const { rate: btcRate } = useBtcRate();
@@ -182,23 +182,23 @@ export default function PayrollPage() {
   const btcRequired = btcRate ? monthlyBudget / btcRate.rate : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header 
           title="Payroll Management" 
           subtitle="Schedule and manage Bitcoin salary payments"
           btcRate={btcRate}
         />
         
-        <main className="p-6 space-y-6">
-          <div className="flex justify-between items-center">
+        <main className="p-4 lg:p-6 space-y-6 animate-fade-in">
+          <div className="flex justify-between items-center mb-2">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Payroll Management</h1>
-              <p className="text-muted-foreground mt-1">Schedule and manage Bitcoin salary payments</p>
+              <h1 className="text-3xl font-bold text-foreground tracking-tight">Payroll Management</h1>
+              <p className="text-muted-foreground mt-1.5">Schedule and manage Bitcoin salary payments</p>
             </div>
-            {user?.role === 'admin' && (
-              <Button onClick={() => setShowModal(true)} className="bg-primary hover:bg-primary/90">
+            {(user?.role === 'admin' || user?.role === 'super_admin') && (
+              <Button onClick={() => setShowModal(true)} size="lg" className="shadow-lg">
                 <Plus className="w-4 h-4 mr-2" />
                 Schedule Payroll
               </Button>
@@ -206,60 +206,68 @@ export default function PayrollPage() {
           </div>
 
           {/* Payroll Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Active Employees</div>
-                    <div className="text-2xl font-bold text-foreground mt-1">{activeEmployees}</div>
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Active Employees</div>
+                    <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">{activeEmployees}</div>
                   </div>
-                  <Users className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center shadow-lg border border-blue-300/50">
+                    <Users className="w-6 h-6 text-blue-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Next Payroll</div>
-                    <div className="text-2xl font-bold text-foreground mt-1">March 15</div>
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Next Payroll</div>
+                    <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">March 15</div>
                   </div>
-                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center shadow-lg border border-purple-300/50">
+                    <Calendar className="w-6 h-6 text-purple-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Monthly Budget</div>
-                    <div className="text-2xl font-bold text-foreground mt-1">{formatUsd(monthlyBudget)}</div>
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Monthly Budget</div>
+                    <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">{formatUsd(monthlyBudget)}</div>
                   </div>
-                  <DollarSign className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center shadow-lg border border-green-300/50">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-muted-foreground">BTC Required</div>
-                    <div className="text-2xl font-bold text-foreground mt-1">{formatBtc(btcRequired)}</div>
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">BTC Required</div>
+                    <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">{formatBtc(btcRequired)}</div>
                   </div>
-                  <Bitcoin className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center shadow-lg border border-orange-300/50">
+                    <Bitcoin className="w-6 h-6 text-orange-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Payroll Payments Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payroll Payments</CardTitle>
+          <Card className="border-gray-200/80">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold">Payroll Payments</CardTitle>
             </CardHeader>
             <CardContent>
               {payments && payments.length > 0 ? (
@@ -272,7 +280,7 @@ export default function PayrollPage() {
                       <TableHead>BTC Amount</TableHead>
                       <TableHead>Scheduled Date</TableHead>
                       <TableHead>Status</TableHead>
-                      {user?.role === 'admin' && <TableHead>Actions</TableHead>}
+                      {(user?.role === 'admin' || user?.role === 'super_admin') && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -314,7 +322,7 @@ export default function PayrollPage() {
                           <TableCell>{formatBtc(payment.amountBtc)}</TableCell>
                           <TableCell>{new Date(payment.scheduledDate).toLocaleDateString()}</TableCell>
                           <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          {user?.role === 'admin' && (
+                          {(user?.role === 'admin' || user?.role === 'super_admin') && (
                             <TableCell>
                               <div className="flex gap-2">
                                 {payment.status === 'pending' && employee?.btcAddress && (

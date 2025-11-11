@@ -22,15 +22,15 @@ export class PaymentPollingService {
     // Only start polling if payment service is available
     // Don't crash if payment service isn't configured
     try {
-      this.pollingInterval = setInterval(async () => {
-        try {
-          await this.checkPendingPayments();
-        } catch (error) {
+    this.pollingInterval = setInterval(async () => {
+      try {
+        await this.checkPendingPayments();
+      } catch (error) {
           // Silently handle errors - don't log unless it's a critical issue
           // Payment polling is optional and shouldn't crash the server
           console.error('Payment polling error (non-critical):', error);
-        }
-      }, 60000); // Check every minute
+      }
+    }, 60000); // Check every minute
       
       console.log('Payment polling service initialized');
     } catch (error) {

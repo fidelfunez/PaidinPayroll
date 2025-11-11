@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, UserPlus, Mail, DollarSign, Calendar, MapPin, Shield, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBtcRate } from "@/hooks/use-btc-rate-context";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AddEmployeeModalProps {
   open: boolean;
@@ -27,7 +28,7 @@ const employeeSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["employee", "admin"], {
+  role: z.enum(["employee", "admin", "super_admin"], {
     required_error: "Please select a role"
   }),
   department: z.string().min(2, "Department is required"),
@@ -56,6 +57,7 @@ interface OnboardingStep {
 }
 
 export function AddEmployeeModal({ open, onOpenChange, onEmployeeAdded }: AddEmployeeModalProps) {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -348,7 +350,7 @@ export function AddEmployeeModal({ open, onOpenChange, onEmployeeAdded }: AddEmp
                     <div className="space-y-2">
                       <Label htmlFor="role">Role *</Label>
                       <Select 
-                        onValueChange={(value) => setValue("role", value as "employee" | "admin")}
+                        onValueChange={(value) => setValue("role", value as "employee" | "admin" | "super_admin")}
                         defaultValue="employee"
                       >
                         <SelectTrigger className={errors.role ? "border-red-500" : ""}>
@@ -357,6 +359,9 @@ export function AddEmployeeModal({ open, onOpenChange, onEmployeeAdded }: AddEmp
                         <SelectContent>
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          {user?.role === 'super_admin' && (
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       {errors.role && (

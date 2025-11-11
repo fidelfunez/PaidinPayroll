@@ -11,6 +11,7 @@ import { db } from './db.js';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { storage } from './storage.js';
 import { paymentPolling } from './payment-polling';
+import { ensureFidelUser } from './ensure-fidel-user.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,11 +38,11 @@ try {
 
 // CORS configuration
 const allowedOrigins = [
-  'https://app.paidin.io',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:4173',
-  'http://localhost:8080'
+    'https://app.paidin.io',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    'http://localhost:8080'
 ];
 
 app.use(cors({
@@ -98,11 +99,14 @@ app.get('*', (req, res) => {
 });
 
 // Start server with error handling
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Database path: ${getDatabasePath()}`);
   console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  
+  // Ensure fidel user exists (runs on every server start)
+  await ensureFidelUser();
   
   // Start payment polling (gracefully handle errors)
   try {

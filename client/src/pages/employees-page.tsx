@@ -99,6 +99,53 @@ export default function EmployeesPage() {
 
   const employees = mockEmployees;
 
+  // Role change mutation
+  const roleChangeMutation = useMutation({
+    mutationFn: async ({ userId, newRole, reason }: { userId: number; newRole: string; reason?: string }) => {
+      const response = await fetch(`/api/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole, reason }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update role');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Role Updated",
+        description: data.message,
+      });
+      // In a real app, you'd invalidate the employees query here
+      // queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle role change
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    // Add confirmation dialog here later
+    const confirmed = window.confirm(
+      `Are you sure you want to change this user's role to ${newRole}?`
+    );
+    
+    if (confirmed) {
+      roleChangeMutation.mutate({ userId, newRole });
+    }
+  };
+
   // Filter employees based on search and filters
   const filteredEmployees = employees.filter(employee => {
     const matchesSearch = searchTerm === "" || 
@@ -188,56 +235,72 @@ export default function EmployeesPage() {
   const departments = [...new Set(employees.map(emp => emp.department))];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header title="Employee Management" subtitle="Manage your team members" btcRate={btcRate} />
         
-        <main className="p-6">
+        <main className="p-4 lg:p-6 space-y-6 animate-fade-in">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Enhanced Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalEmployees}</div>
-                  <p className="text-xs text-muted-foreground">All team members</p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
+              <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Total Employees</div>
+                      <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">{totalEmployees}</div>
+                      <p className="text-xs text-muted-foreground mt-2">All team members</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center shadow-lg border border-blue-300/50">
+                      <Users className="w-6 h-6 text-blue-600" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active</CardTitle>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{activeEmployees}</div>
-                  <p className="text-xs text-muted-foreground">Currently active</p>
+              <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Active</div>
+                      <div className="text-3xl font-bold text-green-600 mt-2 tracking-tight">{activeEmployees}</div>
+                      <p className="text-xs text-muted-foreground mt-2">Currently active</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center shadow-lg border border-green-300/50">
+                      <UserCheck className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">{pendingEmployees}</div>
-                  <p className="text-xs text-muted-foreground">Invitation pending</p>
+              <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Pending</div>
+                      <div className="text-3xl font-bold text-yellow-600 mt-2 tracking-tight">{pendingEmployees}</div>
+                      <p className="text-xs text-muted-foreground mt-2">Invitation pending</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center shadow-lg border border-yellow-300/50">
+                      <Clock className="w-6 h-6 text-yellow-600" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Departments</CardTitle>
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{departments.length}</div>
-                  <p className="text-xs text-muted-foreground">Active departments</p>
+              <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Departments</div>
+                      <div className="text-3xl font-bold text-foreground mt-2 tracking-tight">{departments.length}</div>
+                      <p className="text-xs text-muted-foreground mt-2">Active departments</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center shadow-lg border border-purple-300/50">
+                      <Filter className="w-6 h-6 text-purple-600" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -271,9 +334,9 @@ export default function EmployeesPage() {
             </div>
 
             {/* Employee Table */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Team Members</CardTitle>
+            <Card className="border-gray-200/80">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-xl font-bold">Team Members</CardTitle>
                 <Button 
                   onClick={handleAddEmployeeClick}
                   className="bg-orange-600 hover:bg-orange-700"
@@ -320,9 +383,27 @@ export default function EmployeesPage() {
                         </TableCell>
                         <TableCell>{employee.email}</TableCell>
                         <TableCell>
-                          <Badge variant={employee.role === 'admin' ? 'default' : 'secondary'}>
-                            {employee.role}
-                          </Badge>
+                          {(user?.role === 'admin' || user?.role === 'super_admin') ? (
+                            <Select
+                              value={employee.role}
+                              onValueChange={(newRole) => handleRoleChange(employee.id, newRole)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="employee">Employee</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                {user?.role === 'super_admin' && (
+                                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant={employee.role === 'admin' || employee.role === 'super_admin' ? 'default' : 'secondary'}>
+                              {employee.role}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>{formatSalary(employee.monthlySalary)}</TableCell>
                         <TableCell>

@@ -32,7 +32,7 @@ export default function MessagesPage() {
   // Get employees list for admin users to start new conversations
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
-    enabled: user?.role === 'admin'
+    enabled: user?.role === 'admin' || user?.role === 'super_admin'
   });
 
   // Join conversation when selected
@@ -90,9 +90,9 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} flex flex-col`}>
+      <div className={`flex-1 flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'} flex flex-col`}>
         <Header 
           title="Messages" 
           subtitle="Communicate with your team and support"
@@ -112,7 +112,7 @@ export default function MessagesPage() {
                       <div className="w-2 h-2 bg-red-500 rounded-full" title="Disconnected" />
                     )}
                   </CardTitle>
-                  {user?.role === 'admin' && (
+                  {(user?.role === 'admin' || user?.role === 'super_admin') && (
                     <Button size="sm">
                       <Plus className="w-4 h-4" />
                     </Button>

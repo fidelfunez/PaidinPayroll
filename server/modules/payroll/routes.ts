@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { requireAuth } from "../../auth";
+import { requireAuth, requireSuperAdmin } from "../../auth";
 import { storage } from "../../storage";
 import { lnbitsService } from "../../lnbits";
 import { insertPayrollPaymentSchema } from "@shared/schema";
@@ -73,7 +73,7 @@ export default function payrollRoutes(app: Express) {
   });
 
   // Create Lightning invoice for payroll payment
-  app.post('/api/payroll/:id/create-lightning-invoice', requireAuth, async (req, res) => {
+  app.post('/api/payroll/:id/create-lightning-invoice', requireSuperAdmin, async (req, res) => {
     try {
       const paymentId = parseInt(req.params.id);
       if (isNaN(paymentId)) {
@@ -172,7 +172,7 @@ export default function payrollRoutes(app: Express) {
   });
 
   // Process Lightning payment (send payment to employee)
-  app.post('/api/payroll/:id/process-lightning-payment', requireAuth, async (req, res) => {
+  app.post('/api/payroll/:id/process-lightning-payment', requireSuperAdmin, async (req, res) => {
     try {
       const paymentId = parseInt(req.params.id);
       if (isNaN(paymentId)) {
@@ -240,7 +240,7 @@ export default function payrollRoutes(app: Express) {
   });
 
   // Get Lightning payment status
-  app.get('/api/payroll/:id/lightning-status', requireAuth, async (req, res) => {
+  app.get('/api/payroll/:id/lightning-status', requireSuperAdmin, async (req, res) => {
     try {
       const paymentId = parseInt(req.params.id);
       if (isNaN(paymentId)) {
@@ -273,12 +273,8 @@ export default function payrollRoutes(app: Express) {
   });
 
   // Get Lightning wallet balance
-  app.get('/api/lightning/balance', requireAuth, async (req, res) => {
+  app.get('/api/lightning/balance', requireSuperAdmin, async (req, res) => {
     try {
-      // Only admins can check wallet balance
-      if (req.user?.role !== 'admin') {
-        return res.status(403).json({ message: 'Only administrators can check wallet balance' });
-      }
 
       const balance = await lnbitsService.getWalletBalance();
       const currentBtcRate = await storage.getLatestBtcRate();

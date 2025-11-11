@@ -13,6 +13,7 @@ import messagingRoutes from "./messaging/routes";
 import integrationRoutes from "./integrations/routes";
 import adminRoutes from "./admin/routes";
 import onboardingRoutes from "./onboarding/routes";
+import platformRoutes from "./platform/routes";
 
 // Module route configurations
 export const moduleRoutes = {
@@ -26,6 +27,7 @@ export const moduleRoutes = {
   integrations: integrationRoutes,
   admin: adminRoutes,
   onboarding: onboardingRoutes,
+  platform: platformRoutes,
 };
 
 // Register all module routes

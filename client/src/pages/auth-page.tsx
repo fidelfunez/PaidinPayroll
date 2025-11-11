@@ -16,13 +16,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PasswordStrength } from "@/components/ui/password-strength";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z.string().min(1, "Username or email is required"),
   password: z.string().min(1, "Password is required"),
 });
 
-const registerSchema = insertUserSchema.extend({
+const registerSchema = insertUserSchema
+  .omit({ companyId: true, monthlySalary: true })
+  .extend({
   confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
+    monthlySalary: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
@@ -93,53 +97,94 @@ export default function AuthPage() {
   };
 
   const onRegister = (data: z.infer<typeof registerSchema>) => {
-    const { confirmPassword, ...registerData } = data;
-    registerMutation.mutate(registerData, {
+    const { confirmPassword, monthlySalary, ...registerData } = data;
+    // Backend handles companyId assignment automatically
+    registerMutation.mutate({
+      ...registerData,
+      monthlySalary: monthlySalary ? parseFloat(monthlySalary) : null,
+    }, {
       onSuccess: () => setLocation("/"),
     });
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,146,60,0.1),transparent_50%)] animate-pulse"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(245,158,11,0.08),transparent_50%)] animate-pulse" style={{ animationDelay: '1s', animationDuration: '3s' }}></div>
+      </div>
+
+      {/* Geometric pattern overlay */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgb(0,0,0) 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}></div>
+      </div>
+
       {/* Left side - Auth forms */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <img 
-                src="/paidin - logos/Logo Designs (Transparent)/paidin-icon-logo.png" 
-                alt="PaidIn Logo" 
-                className="w-16 h-16"
-              />
+      <div className="flex-1 flex items-center justify-center p-8 relative z-10">
+        <div className="w-full max-w-md space-y-8 animate-fade-in">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center mb-6 relative">
+              {/* Logo with glow effect */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl animate-pulse"></div>
+                <div className="relative bg-white/80 backdrop-blur-md rounded-2xl p-3 shadow-xl border border-white/50">
+                  <img 
+                    src="/paidin - logos/Logo Designs (Transparent)/paidin-icon-logo.png" 
+                    alt="PaidIn Logo" 
+                    className="w-16 h-16 drop-shadow-lg"
+                  />
+                </div>
+              </div>
             </div>
-            <h2 className="text-3xl font-bold text-foreground">
-              Welcome to Paid<span className="text-orange-500">In</span>
+            <h2 className="text-4xl font-bold text-foreground tracking-tight">
+              Welcome to Paid<span className="text-primary bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">In</span>
             </h2>
-            <p className="mt-2 text-muted-foreground">Bitcoin-native business platform for modern teams</p>
+            <p className="mt-3 text-lg text-muted-foreground font-light">Bitcoin-native business platform for modern teams</p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-white/60 backdrop-blur-sm p-1 rounded-xl border border-white/50 shadow-lg">
+              <TabsTrigger 
+                value="login" 
+                className="rounded-lg transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-primary font-medium"
+              >
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                className="rounded-lg transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-primary font-medium"
+              >
+                Sign Up
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sign In</CardTitle>
+            <TabsContent value="login" className="animate-fade-in">
+              <Card className="border-white/50 bg-white/70 backdrop-blur-xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-all duration-300">
+                <CardHeader className="space-y-1 pb-4">
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                    Sign In
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground font-light">Welcome back! Please enter your credentials.</p>
                 </CardHeader>
                 <CardContent>
                   <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+                    <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5">
                       <FormField
                         control={loginForm.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel className="text-sm font-medium">Username or Email</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your username" {...field} />
+                              <Input 
+                                placeholder="Enter your username or email" 
+                                {...field}
+                                className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -151,22 +196,23 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="text-sm font-medium">Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
                                   type={showLoginPassword ? "text" : "password"} 
                                   placeholder="Enter your password" 
                                   {...field} 
+                                  className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200 pr-10"
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                   {capsLockOn && (
-                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                    <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
                                   )}
                                   <button
                                     type="button"
                                     onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200 p-1 rounded hover:bg-gray-100/50"
                                   >
                                     {showLoginPassword ? (
                                       <EyeOff className="h-4 w-4" />
@@ -178,8 +224,8 @@ export default function AuthPage() {
                               </div>
                             </FormControl>
                             {capsLockOn && (
-                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
-                                <AlertTriangle className="h-3 w-3" />
+                              <p className="text-sm text-amber-600 flex items-center gap-1.5 mt-1.5 font-medium">
+                                <AlertTriangle className="h-3.5 w-3.5" />
                                 Caps Lock is on
                               </p>
                             )}
@@ -190,7 +236,7 @@ export default function AuthPage() {
 
                       <Button 
                         type="submit" 
-                        className="w-full"
+                        className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
                         disabled={loginMutation.isPending}
                       >
                         {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -202,23 +248,30 @@ export default function AuthPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create Account</CardTitle>
+            <TabsContent value="register" className="animate-fade-in">
+              <Card className="border-white/50 bg-white/70 backdrop-blur-xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-all duration-300">
+                <CardHeader className="space-y-1 pb-4">
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                    Create Account
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground font-light">Join thousands of businesses using Bitcoin payroll.</p>
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
-                    <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+                    <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5">
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={registerForm.control}
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel className="text-sm font-medium">First Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Satoshi" {...field} />
+                                <Input 
+                                  placeholder="Satoshi" 
+                                  {...field}
+                                  className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -230,9 +283,13 @@ export default function AuthPage() {
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel className="text-sm font-medium">Last Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nakamoto" {...field} />
+                                <Input 
+                                  placeholder="Nakamoto" 
+                                  {...field}
+                                  className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -245,9 +302,13 @@ export default function AuthPage() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel className="text-sm font-medium">Username</FormLabel>
                             <FormControl>
-                              <Input placeholder="satoshi" {...field} />
+                              <Input 
+                                placeholder="satoshi" 
+                                {...field}
+                                className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -259,11 +320,16 @@ export default function AuthPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel className="text-sm font-medium">Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="satoshi@company.com" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="satoshi@company.com" 
+                                {...field}
+                                className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+                              />
                             </FormControl>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs text-muted-foreground font-light mt-1.5">
                               Note: Each email address can only be used for one account
                             </p>
                             <FormMessage />
@@ -271,28 +337,28 @@ export default function AuthPage() {
                         )}
                       />
 
-
                       <FormField
                         control={registerForm.control}
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="text-sm font-medium">Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
                                   type={showRegisterPassword ? "text" : "password"} 
                                   placeholder="••••••••" 
                                   {...field} 
+                                  className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200 pr-10"
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                   {capsLockOn && (
-                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                    <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
                                   )}
                                   <button
                                     type="button"
                                     onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200 p-1 rounded hover:bg-gray-100/50"
                                   >
                                     {showRegisterPassword ? (
                                       <EyeOff className="h-4 w-4" />
@@ -304,8 +370,8 @@ export default function AuthPage() {
                               </div>
                             </FormControl>
                             {capsLockOn && (
-                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
-                                <AlertTriangle className="h-3 w-3" />
+                              <p className="text-sm text-amber-600 flex items-center gap-1.5 mt-1.5 font-medium">
+                                <AlertTriangle className="h-3.5 w-3.5" />
                                 Caps Lock is on
                               </p>
                             )}
@@ -320,22 +386,23 @@ export default function AuthPage() {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
+                            <FormLabel className="text-sm font-medium">Confirm Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
                                   type={showConfirmPassword ? "text" : "password"} 
                                   placeholder="••••••••" 
                                   {...field} 
+                                  className="bg-white/80 border-gray-200/80 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200 pr-10"
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                   {capsLockOn && (
-                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                    <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
                                   )}
                                   <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200 p-1 rounded hover:bg-gray-100/50"
                                   >
                                     {showConfirmPassword ? (
                                       <EyeOff className="h-4 w-4" />
@@ -347,8 +414,8 @@ export default function AuthPage() {
                               </div>
                             </FormControl>
                             {capsLockOn && (
-                              <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
-                                <AlertTriangle className="h-3 w-3" />
+                              <p className="text-sm text-amber-600 flex items-center gap-1.5 mt-1.5 font-medium">
+                                <AlertTriangle className="h-3.5 w-3.5" />
                                 Caps Lock is on
                               </p>
                             )}
@@ -359,7 +426,7 @@ export default function AuthPage() {
 
                       <Button 
                         type="submit" 
-                        className="w-full"
+                        className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
                         disabled={registerMutation.isPending}
                       >
                         {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -375,70 +442,75 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Hero section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 items-center justify-center p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-10 w-20 h-20 bg-white rounded-full"></div>
-          <div className="absolute top-1/3 left-8 w-12 h-12 bg-white rounded-full"></div>
-          <div className="absolute bottom-20 right-1/3 w-16 h-16 bg-white rounded-full"></div>
-          <div className="absolute bottom-10 left-10 w-8 h-8 bg-white rounded-full"></div>
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 items-center justify-center p-12 relative overflow-hidden">
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-400/50 via-orange-500/80 to-amber-700/50"></div>
+        
+        {/* Animated floating circles */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+          <div className="absolute top-1/3 left-8 w-24 h-24 bg-white/15 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
+          <div className="absolute bottom-20 right-1/3 w-40 h-40 bg-white/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }}></div>
+          <div className="absolute bottom-10 left-10 w-20 h-20 bg-white/12 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '0.5s' }}></div>
+          <div className="absolute top-1/2 right-1/4 w-28 h-28 bg-white/10 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '5.5s', animationDelay: '1.5s' }}></div>
+        </div>
+
+        {/* Geometric pattern overlay */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-full h-full" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }}></div>
         </div>
         
-        <div className="max-w-lg text-center space-y-8 relative z-10">
-          {/* Main Bitcoin logo with glow effect */}
-          <div className="relative">
-            <div className="w-36 h-36 mx-auto bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border border-white/30">
+        <div className="max-w-lg text-center relative z-10 animate-fade-in px-8 py-12">
+          {/* Main Bitcoin logo with premium glow effect */}
+          <div className="relative mb-10">
+            <div className="absolute inset-0 w-32 h-32 mx-auto bg-white/20 rounded-3xl blur-3xl animate-pulse"></div>
+            <div className="relative w-32 h-32 mx-auto bg-white/25 backdrop-blur-md rounded-3xl flex items-center justify-center shadow-2xl border-2 border-white/30">
               <img 
                 src="/app - graphic designs/Bitcoin - logo.png" 
                 alt="Bitcoin Logo" 
-                className="w-32 h-32 drop-shadow-lg"
+                className="w-28 h-28 drop-shadow-2xl"
               />
             </div>
-            <div className="absolute inset-0 w-36 h-36 mx-auto bg-white/10 rounded-3xl blur-xl"></div>
+            <div className="absolute -inset-4 w-32 h-32 mx-auto bg-gradient-to-br from-white/20 to-transparent rounded-3xl blur-xl"></div>
           </div>
           
           {/* Main heading */}
-          <div className="space-y-4">
-            <h3 className="text-4xl font-bold text-white leading-tight">
+          <div className="space-y-5 mb-10">
+            <h3 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight px-4">
               Bitcoin-Native
-              <span className="block text-white ">Business Platform</span>
+              <span className="block mt-3">Business Platform</span>
             </h3>
-            <p className="text-orange-100 text-lg leading-relaxed max-w-xl mx-auto text-center">
+            <p className="text-orange-50 text-base lg:text-lg leading-relaxed max-w-md mx-auto text-center font-light px-2">
               The complete Bitcoin business suite for modern companies. From payroll and invoicing 
-              to reporting and compliance, Everything you need to run your business on Bitcoin.
+              to reporting and compliance, everything you need to run your business on Bitcoin.
             </p>
           </div>
           
-          {/* Feature list - properly centered */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+          {/* Feature list - Enhanced styling */}
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-8 border border-white/25 shadow-2xl">
             <div className="flex justify-center">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                  <span className="text-white font-medium">Complete payroll & HR management</span>
+              <div className="space-y-4 text-left w-full max-w-sm">
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-2.5 h-2.5 bg-orange-200 rounded-full flex-shrink-0 shadow-lg group-hover:scale-125 transition-transform duration-200"></div>
+                  <span className="text-white font-medium text-sm leading-relaxed">Complete payroll & HR management</span>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                  <span className="text-white font-medium">Invoice generation & payment tracking</span>
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-2.5 h-2.5 bg-orange-200 rounded-full flex-shrink-0 shadow-lg group-hover:scale-125 transition-transform duration-200"></div>
+                  <span className="text-white font-medium text-sm leading-relaxed">Invoice generation & payment tracking</span>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                  <span className="text-white font-medium">Real-time Bitcoin price integration</span>
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-2.5 h-2.5 bg-orange-200 rounded-full flex-shrink-0 shadow-lg group-hover:scale-125 transition-transform duration-200"></div>
+                  <span className="text-white font-medium text-sm leading-relaxed">Real-time Bitcoin price integration</span>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="w-3 h-3 bg-orange-200 rounded-full flex-shrink-0"></div>
-                  <span className="text-white font-medium">Business analytics & compliance tools</span>
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-2.5 h-2.5 bg-orange-200 rounded-full flex-shrink-0 shadow-lg group-hover:scale-125 transition-transform duration-200"></div>
+                  <span className="text-white font-medium text-sm leading-relaxed">Business analytics & compliance tools</span>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* Trust indicator */}
-          <div className="flex items-center justify-center space-x-2 text-orange-100">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm font-medium">Secure • Transparent • Lightning Fast</span>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Enums (SQLite doesn't have native enums, so we use text)
-export const roleEnum = ['admin', 'employee', 'super_admin'] as const;
+export const roleEnum = ['admin', 'employee', 'super_admin', 'platform_admin'] as const;
 export const paymentStatusEnum = ['pending', 'processing', 'completed', 'failed'] as const;
 export const withdrawalMethodEnum = ['bitcoin', 'bank_transfer', 'not_set'] as const;
 export const expenseStatusEnum = ['pending', 'approved', 'rejected', 'paid'] as const;
@@ -15,6 +15,16 @@ export const integrationTypeEnum = ['slack', 'quickbooks', 'zapier', 'btcpay', '
 export const integrationStatusEnum = ['connected', 'disconnected', 'error'] as const;
 export const taskTypeEnum = ['form', 'document', 'video', 'quiz', 'meeting', 'system'] as const;
 export const taskStatusEnum = ['pending', 'in_progress', 'completed'] as const;
+// Payment integration enums
+export const plaidAccountTypeEnum = ['depository', 'credit', 'loan', 'investment', 'other'] as const;
+export const plaidAccountStatusEnum = ['active', 'inactive', 'error'] as const;
+export const paymentIntentStatusEnum = ['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing', 'requires_capture', 'canceled', 'succeeded'] as const;
+export const conversionStatusEnum = ['pending', 'quoted', 'executing', 'completed', 'failed', 'expired'] as const;
+export const walletTypeEnum = ['company', 'employee'] as const;
+export const walletStatusEnum = ['initializing', 'active', 'inactive', 'error'] as const;
+export const transactionTypePaymentEnum = ['funding', 'payout', 'swap_btc_to_usd', 'swap_usd_to_btc', 'conversion'] as const;
+export const webhookProviderEnum = ['stripe', 'strike', 'breez'] as const;
+export const webhookEventStatusEnum = ['pending', 'processing', 'completed', 'failed'] as const;
 
 // Companies table for multi-tenancy
 export const companies = sqliteTable("companies", {
@@ -25,6 +35,15 @@ export const companies = sqliteTable("companies", {
   logo: text("logo"), // Base64 encoded logo
   primaryColor: text("primary_color").default('#f97316'), // Orange default
   isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  // Subscription fields
+  subscriptionPlan: text("subscription_plan").default('starter'),
+  subscriptionStatus: text("subscription_status").default('active'),
+  subscriptionStartDate: integer("subscription_start_date", { mode: 'timestamp' }),
+  subscriptionEndDate: integer("subscription_end_date", { mode: 'timestamp' }),
+  maxEmployees: integer("max_employees").default(10),
+  monthlyFee: real("monthly_fee").default(29.99),
+  billingEmail: text("billing_email"),
+  paymentStatus: text("payment_status").default('current'),
   createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
   updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
@@ -64,6 +83,17 @@ export const payrollPayments = sqliteTable("payroll_payments", {
   lnbitsPaymentHash: text("lnbits_payment_hash"),
   lnbitsInvoiceId: text("lnbits_invoice_id"),
   processingNotes: text("processing_notes"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Role changes audit table
+export const roleChanges = sqliteTable("role_changes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  oldRole: text("old_role", { enum: roleEnum }).notNull(),
+  newRole: text("new_role", { enum: roleEnum }).notNull(),
+  changedBy: integer("changed_by").notNull().references(() => users.id),
+  reason: text("reason"),
   createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
 });
 
@@ -284,6 +314,21 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   expenseReimbursements: many(expenseReimbursements),
   approvedExpenses: many(expenseReimbursements, { relationName: "approver" }),
   sentMessages: many(messages),
+  roleChanges: many(roleChanges, { relationName: 'userRoleChanges' }),
+  roleChangesMade: many(roleChanges, { relationName: 'roleChangesByUser' }),
+}));
+
+export const roleChangesRelations = relations(roleChanges, ({ one }) => ({
+  user: one(users, {
+    fields: [roleChanges.userId],
+    references: [users.id],
+    relationName: 'userRoleChanges',
+  }),
+  changedByUser: one(users, {
+    fields: [roleChanges.changedBy],
+    references: [users.id],
+    relationName: 'roleChangesByUser',
+  }),
 }));
 
 export const payrollPaymentsRelations = relations(payrollPayments, ({ one }) => ({
@@ -539,7 +584,182 @@ export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
 export type OnboardingTaskProgress = typeof onboardingTaskProgress.$inferSelect;
 export type InsertOnboardingTaskProgress = z.infer<typeof insertOnboardingTaskProgressSchema>;
+export type RoleChange = typeof roleChanges.$inferSelect;
+export type InsertRoleChange = typeof roleChanges.$inferInsert;
+
+// Payment Integration Tables
+
+// Plaid accounts table - Store connected bank accounts
+export const plaidAccounts = sqliteTable("plaid_accounts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  plaidItemId: text("plaid_item_id").notNull(),
+  plaidAccessToken: text("plaid_access_token").notNull(), // Encrypted
+  accountId: text("account_id").notNull(),
+  accountName: text("account_name").notNull(),
+  accountType: text("account_type", { enum: plaidAccountTypeEnum }).notNull(),
+  accountMask: text("account_mask"),
+  institutionId: text("institution_id").notNull(),
+  institutionName: text("institution_name").notNull(),
+  status: text("status", { enum: plaidAccountStatusEnum }).notNull().default('active'),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Payment intents table - Track Stripe payment intents
+export const paymentIntents = sqliteTable("payment_intents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  stripePaymentIntentId: text("stripe_payment_intent_id").notNull().unique(),
+  amount: real("amount").notNull(), // Amount in cents
+  currency: text("currency").notNull().default('usd'),
+  status: text("status", { enum: paymentIntentStatusEnum }).notNull().default('requires_payment_method'),
+  plaidAccountId: integer("plaid_account_id").notNull().references(() => plaidAccounts.id),
+  metadata: text("metadata"), // JSON string for additional data
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Conversions table - Track USD to BTC conversions via Strike
+export const conversions = sqliteTable("conversions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  paymentIntentId: integer("payment_intent_id").notNull().references(() => paymentIntents.id),
+  strikeQuoteId: text("strike_quote_id").notNull(),
+  amountUsd: real("amount_usd").notNull(),
+  amountBtc: real("amount_btc").notNull(),
+  exchangeRate: real("exchange_rate").notNull(),
+  status: text("status", { enum: conversionStatusEnum }).notNull().default('pending'),
+  strikeInvoiceId: text("strike_invoice_id"),
+  completedAt: integer("completed_at", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Breez wallets table - Track Breez wallet instances
+export const breezWallets = sqliteTable("breez_wallets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  userId: integer("user_id").references(() => users.id), // Null for company wallets
+  walletType: text("wallet_type", { enum: walletTypeEnum }).notNull(),
+  breezNodeId: text("breez_node_id").notNull().unique(),
+  balance: real("balance").notNull().default(0), // Balance in sats
+  invoiceCapability: integer("invoice_capability", { mode: 'boolean' }).notNull().default(true),
+  status: text("status", { enum: walletStatusEnum }).notNull().default('initializing'),
+  lastSyncAt: integer("last_sync_at", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Wallet transactions table - Unified transaction ledger
+export const walletTransactions = sqliteTable("wallet_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyId: integer("company_id").notNull().references(() => companies.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  transactionType: text("transaction_type", { enum: transactionTypePaymentEnum }).notNull(),
+  sourceType: text("source_type").notNull(), // 'stripe', 'strike', 'breez', etc.
+  sourceId: text("source_id").notNull(), // ID from the source system
+  amount: real("amount").notNull(),
+  currency: text("currency").notNull(), // 'usd', 'btc', 'sats'
+  status: text("status", { enum: paymentStatusEnum }).notNull().default('pending'),
+  metadata: text("metadata"), // JSON string for additional data
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Webhook events table - Audit log for all webhook events
+export const webhookEvents = sqliteTable("webhook_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  provider: text("provider", { enum: webhookProviderEnum }).notNull(),
+  eventType: text("event_type").notNull(),
+  eventId: text("event_id").notNull(),
+  payload: text("payload").notNull(), // JSON string of the webhook payload
+  processed: integer("processed", { mode: 'boolean' }).notNull().default(false),
+  processedAt: integer("processed_at", { mode: 'timestamp' }),
+  error: text("error"), // Error message if processing failed
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().default(Date.now),
+});
+
+// Relations for payment integration tables
+export const plaidAccountsRelations = relations(plaidAccounts, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [plaidAccounts.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [plaidAccounts.userId],
+    references: [users.id],
+  }),
+  paymentIntents: many(paymentIntents),
+}));
+
+export const paymentIntentsRelations = relations(paymentIntents, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [paymentIntents.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [paymentIntents.userId],
+    references: [users.id],
+  }),
+  plaidAccount: one(plaidAccounts, {
+    fields: [paymentIntents.plaidAccountId],
+    references: [plaidAccounts.id],
+  }),
+  conversions: many(conversions),
+}));
+
+export const conversionsRelations = relations(conversions, ({ one }) => ({
+  company: one(companies, {
+    fields: [conversions.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [conversions.userId],
+    references: [users.id],
+  }),
+  paymentIntent: one(paymentIntents, {
+    fields: [conversions.paymentIntentId],
+    references: [paymentIntents.id],
+  }),
+}));
+
+export const breezWalletsRelations = relations(breezWallets, ({ one }) => ({
+  company: one(companies, {
+    fields: [breezWallets.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [breezWallets.userId],
+    references: [users.id],
+  }),
+}));
+
+export const walletTransactionsRelations = relations(walletTransactions, ({ one }) => ({
+  company: one(companies, {
+    fields: [walletTransactions.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [walletTransactions.userId],
+    references: [users.id],
+  }),
+}));
 
 // Types for new tables
 export type BtcpayConfig = typeof btcpayConfig.$inferSelect;
 export type InsertBtcpayConfig = z.infer<typeof insertBtcpayConfigSchema>;
+
+// Payment integration types
+export type PlaidAccount = typeof plaidAccounts.$inferSelect;
+export type InsertPlaidAccount = typeof plaidAccounts.$inferInsert;
+export type PaymentIntent = typeof paymentIntents.$inferSelect;
+export type InsertPaymentIntent = typeof paymentIntents.$inferInsert;
+export type Conversion = typeof conversions.$inferSelect;
+export type InsertConversion = typeof conversions.$inferInsert;
+export type BreezWallet = typeof breezWallets.$inferSelect;
+export type InsertBreezWallet = typeof breezWallets.$inferInsert;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;
+export type InsertWalletTransaction = typeof walletTransactions.$inferInsert;
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type InsertWebhookEvent = typeof webhookEvents.$inferInsert;

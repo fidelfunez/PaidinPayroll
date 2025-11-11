@@ -54,6 +54,23 @@ import SupportPage from "@/pages/support-page";
 import WalletPage from "@/pages/wallet-page";
 import IntegrationsPage from "@/pages/integrations-page";
 import APIAccessPage from "@/pages/api-access-page";
+import BitcoinSettingsPage from "@/pages/bitcoin-settings-page";
+import ProcessPaymentsPage from "@/pages/process-payments-page";
+import TransactionsPage from "@/pages/transactions-page";
+import FinancialAnalyticsPage from "@/pages/financial-analytics-page";
+import PlatformDashboardPage from "@/pages/platform-dashboard-page";
+import PlatformCompaniesPage from "@/pages/platform-companies-page";
+import { 
+  PlatformStaffPage,
+  PlatformAnalyticsPage,
+  PlatformSubscriptionsPage,
+  PlatformRevenuePage,
+  PlatformHealthPage,
+  PlatformAuditPage,
+  PlatformSupportPage,
+  PlatformSettingsPage,
+  PlatformDocsPage
+} from "@/pages/platform-placeholder-page";
 
 function Router() {
   return (
@@ -91,6 +108,23 @@ function Router() {
       <ProtectedRoute path="/support" component={SupportPage} />
       <ProtectedRoute path="/integrations" component={IntegrationsPage} />
       <ProtectedRoute path="/api-access" component={APIAccessPage} />
+      {/* Super Admin Only Routes */}
+      <ProtectedRoute path="/bitcoin-settings" component={BitcoinSettingsPage} />
+      <ProtectedRoute path="/process-payments" component={ProcessPaymentsPage} />
+      <ProtectedRoute path="/transactions" component={TransactionsPage} />
+      <ProtectedRoute path="/financial-analytics" component={FinancialAnalyticsPage} />
+      {/* Platform Admin Routes */}
+      <ProtectedRoute path="/platform" component={PlatformDashboardPage} />
+      <ProtectedRoute path="/platform/companies" component={PlatformCompaniesPage} />
+      <ProtectedRoute path="/platform/staff" component={PlatformStaffPage} />
+      <ProtectedRoute path="/platform/analytics" component={PlatformAnalyticsPage} />
+      <ProtectedRoute path="/platform/subscriptions" component={PlatformSubscriptionsPage} />
+      <ProtectedRoute path="/platform/revenue" component={PlatformRevenuePage} />
+      <ProtectedRoute path="/platform/health" component={PlatformHealthPage} />
+      <ProtectedRoute path="/platform/audit" component={PlatformAuditPage} />
+      <ProtectedRoute path="/platform/support" component={PlatformSupportPage} />
+      <ProtectedRoute path="/platform/settings" component={PlatformSettingsPage} />
+      <ProtectedRoute path="/platform/docs" component={PlatformDocsPage} />
       <Route path="/onboarding" component={CompanyOnboardingPage} />
       <Route path="/help-center" component={HelpCenterPage} />
       <Route path="/api-documentation" component={ApiDocumentationPage} />

@@ -9,7 +9,7 @@ const dbPath = getDatabasePath();
 let sqlite: Database;
 try {
   sqlite = new Database(dbPath);
-  console.log(`Database initialized successfully at: ${dbPath}`);
+console.log(`Database initialized successfully at: ${dbPath}`);
 } catch (error) {
   console.error('Failed to initialize database:', error);
   console.error('Database path:', dbPath);

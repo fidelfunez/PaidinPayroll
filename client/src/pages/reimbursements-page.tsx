@@ -119,9 +119,9 @@ export default function ReimbursementsPage() {
     .reduce((sum, e) => sum + parseFloat(e.amountBtc || '0'), 0) || 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header 
           title="Reimbursements" 
           subtitle="Manage expense claims and Bitcoin payouts"
@@ -220,7 +220,7 @@ export default function ReimbursementsPage() {
                       <TableHead>BTC Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
-                      {user?.role === 'admin' && <TableHead>Actions</TableHead>}
+                      {(user?.role === 'admin' || user?.role === 'super_admin') && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -239,7 +239,7 @@ export default function ReimbursementsPage() {
                         </TableCell>
                         <TableCell>{getStatusBadge(expense.status)}</TableCell>
                         <TableCell>{new Date(expense.createdAt).toLocaleDateString()}</TableCell>
-                        {user?.role === 'admin' && (
+                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
                           <TableCell>
                             <div className="flex space-x-2">
                               {expense.status === 'pending' && (

@@ -241,13 +241,13 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     try {
-      // Use SQLite session store for production
+    // Use SQLite session store for production
       const dbDir = path.dirname(getDatabasePath());
-      this.sessionStore = new SQLiteSessionStore({
-        db: 'sessions.db',
+    this.sessionStore = new SQLiteSessionStore({
+      db: 'sessions.db',
         dir: dbDir,
-        table: 'sessions'
-      });
+      table: 'sessions'
+    });
       console.log(`Session store initialized at: ${dbDir}/sessions.db`);
     } catch (error) {
       console.error('Failed to initialize session store:', error);

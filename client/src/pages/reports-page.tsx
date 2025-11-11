@@ -90,11 +90,11 @@ export default function ReportsPage() {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
         <Sidebar />
-        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
           <Header 
             title="Reports" 
             subtitle="Access Denied"
@@ -115,27 +115,29 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header 
           title="Reports" 
           subtitle="Export and analyze payroll and expense data"
           btcRate={btcRate?.rate}
         />
         
-        <main className="p-6 space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-            <p className="text-muted-foreground mt-1">Export and analyze payroll and expense data</p>
+        <main className="p-4 lg:p-6 space-y-6 animate-fade-in">
+          <div className="mb-2">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Reports</h1>
+            <p className="text-muted-foreground mt-1.5">Export and analyze payroll and expense data</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {/* Payroll Reports */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-xl font-bold">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mr-3 border border-blue-300/50">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                  </div>
                   Payroll Reports
                 </CardTitle>
               </CardHeader>
@@ -184,10 +186,12 @@ export default function ReportsPage() {
             </Card>
 
             {/* Expense Reports */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="w-5 h-5 mr-2" />
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-xl font-bold">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center mr-3 border border-green-300/50">
+                    <Calendar className="w-5 h-5 text-green-600" />
+                  </div>
                   Expense Reports
                 </CardTitle>
               </CardHeader>

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, requireAuth, requireAdmin } from "./auth";
+import { setupAuth, requireAuth, requireAdmin, requireSuperAdmin } from "./auth";
 import { z } from "zod";
 import { 
   insertPayrollPaymentSchema, 
@@ -14,6 +14,10 @@ import {
 // WebSocket imports temporarily disabled
 // import { initializeMessagingWebSocket, messagingWS } from "./websocket";
 import { btcpayService } from "./btcpay";
+import { registerWebhookRoutes } from "./modules/webhooks/routes";
+import { registerPaymentRoutes } from "./modules/payments/routes";
+import { registerWalletRoutes } from "./modules/wallets/routes";
+import { registerPaymentAdminRoutes } from "./modules/admin/payment-admin-routes";
 
 // Bitcoin API utility
 async function fetchBtcRate(): Promise<number> {
@@ -32,6 +36,14 @@ async function fetchBtcRate(): Promise<number> {
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
+
+  // Register webhook routes (before other routes to avoid conflicts)
+  registerWebhookRoutes(app);
+
+  // Register payment and wallet routes
+  registerPaymentRoutes(app);
+  registerWalletRoutes(app);
+  registerPaymentAdminRoutes(app);
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {
@@ -280,7 +292,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // BtcpayInvoice endpoints
-  app.get('/api/btcpay/invoices', requireAuth, async (req, res) => {
+  app.get('/api/btcpay/invoices', requireSuperAdmin, async (req, res) => {
     try {
       // Use storage to get all BTCPay invoices
       const invoices = await storage.getBtcpayInvoices();
@@ -290,7 +302,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post('/api/btcpay/invoices', requireAuth, async (req, res) => {
+  app.post('/api/btcpay/invoices', requireSuperAdmin, async (req, res) => {
     try {
       // Ensure required 'amount' property is passed
       const { amount, currency, description, orderId, customerEmail, customerName, redirectUrl, webhookUrl } = req.body;
@@ -310,7 +322,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get('/api/btcpay/invoices/:id', requireAuth, async (req, res) => {
+  app.get('/api/btcpay/invoices/:id', requireSuperAdmin, async (req, res) => {
     try {
       const invoiceId = req.params.id.toString();
       const invoice = await btcpayService.getInvoice(invoiceId);
@@ -323,7 +335,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.patch('/api/btcpay/invoices/:id', requireAuth, async (req, res) => {
+  app.patch('/api/btcpay/invoices/:id', requireSuperAdmin, async (req, res) => {
     try {
       const invoiceId = req.params.id.toString();
       // Comment out or remove updateInvoice if it doesn't exist

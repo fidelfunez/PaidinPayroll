@@ -34,9 +34,9 @@ export default function InvoicesPage() {
   const myPayments = payments?.filter(payment => payment.userId === user?.id) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header title="Invoices & Payslips" subtitle="View and download your payment history" btcRate={btcRate} />
         
         <main className="p-6">

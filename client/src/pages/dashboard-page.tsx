@@ -77,7 +77,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
       <Sidebar />
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
         <Header 
@@ -86,62 +86,74 @@ export default function DashboardPage() {
           btcRate={stats?.currentBtcRate}
         />
         
-        <main className="p-4 lg:p-6 space-y-6">
+        <main className="p-4 lg:p-6 space-y-6 animate-fade-in">
           {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-2xl p-6 lg:p-8 text-white shadow-xl border border-orange-400/20 relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <img 
-                    src="/app - graphic designs/Bitcoin - logo - yellow.png" 
-                    alt="Bitcoin Logo" 
-                    className="w-10 h-10 lg:w-12 lg:h-12"
-                  />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl"></div>
+                    <div className="relative bg-white/20 backdrop-blur-md rounded-2xl p-2 border border-white/30 shadow-lg">
+                      <img 
+                        src="/app - graphic designs/Bitcoin - logo - yellow.png" 
+                        alt="Bitcoin Logo" 
+                        className="w-12 h-12 lg:w-14 lg:h-14"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <h2 className="text-xl lg:text-2xl font-bold">
+                    <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
                       Welcome back, {user?.firstName || 'User'}!
                     </h2>
-                    <p className="text-orange-100 text-sm lg:text-base">
+                    <p className="text-orange-50 text-base lg:text-lg mt-1">
                       Ready to revolutionize your business with Bitcoin
                     </p>
                   </div>
                 </div>
                 {/* Bitcoin Quotes - Desktop Only */}
-                <div className="hidden lg:block bg-white/10 rounded-lg p-3 lg:p-4 backdrop-blur-sm">
-                  <p className="text-base lg:text-lg font-medium mb-2 leading-relaxed">
+                <div className="hidden lg:block bg-white/15 backdrop-blur-md rounded-xl p-4 lg:p-5 border border-white/20 shadow-lg">
+                  <p className="text-lg lg:text-xl font-semibold mb-2 leading-relaxed">
                     "{currentQuote.quote}"
                   </p>
-                  <p className="text-orange-100 text-xs lg:text-sm">
+                  <p className="text-orange-50 text-sm lg:text-base font-medium">
                     — {currentQuote.author} • {currentQuote.tagline}
                   </p>
                 </div>
               </div>
-              <div className="hidden lg:block">
-                <img 
-                  src="/app - graphic designs/Bitcoin - logo.png" 
-                  alt="Bitcoin Logo" 
-                  className="w-24 h-24 lg:w-32 lg:h-32"
-                />
+              <div className="hidden lg:block relative">
+                <div className="absolute inset-0 bg-white/10 rounded-3xl blur-2xl"></div>
+                <div className="relative">
+                  <img 
+                    src="/app - graphic designs/Bitcoin - logo.png" 
+                    alt="Bitcoin Logo" 
+                    className="w-28 h-28 lg:w-36 lg:h-36 drop-shadow-2xl"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Balance Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total BTC Balance</p>
-                    <p className="text-2xl font-bold text-foreground mt-2">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Total BTC Balance</p>
+                    <p className="text-3xl font-bold text-foreground mt-2 tracking-tight">
                       {stats ? formatBtc(stats.totalBtcBalance) : '--'}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm font-medium text-muted-foreground mt-2">
                       {stats ? `≈ ${formatUsd(stats.totalBtcBalanceUsd)}` : '--'}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-bitcoin-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-bitcoin-600" viewBox="0 0 24 24" fill="currentColor">
+                  <div className="w-14 h-14 bg-gradient-to-br from-bitcoin-100 to-bitcoin-200 rounded-xl flex items-center justify-center shadow-lg border border-bitcoin-300/50">
+                    <svg className="w-7 h-7 text-bitcoin-600" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.546z"/>
                     </svg>
                   </div>
@@ -149,40 +161,40 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
-                    <p className="text-2xl font-bold text-foreground mt-2">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Pending Payments</p>
+                    <p className="text-3xl font-bold text-foreground mt-2 tracking-tight">
                       {stats?.pendingPaymentsCount || 0}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm font-medium text-muted-foreground mt-2">
                       {stats ? formatUsd(stats.pendingPaymentsAmount) : '--'}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-yellow-600" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center shadow-lg border border-yellow-300/50">
+                    <Clock className="w-7 h-7 text-yellow-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="border-gray-200/80 bg-gradient-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <CardContent className="pt-6 pb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                    <p className="text-2xl font-bold text-foreground mt-2">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">This Month</p>
+                    <p className="text-3xl font-bold text-foreground mt-2 tracking-tight">
                       {stats ? formatUsd(stats.monthlyPayrollUsd) : '--'}
                     </p>
-                    <p className="text-sm text-green-600 mt-1">
-                      <TrendingUp className="w-3 h-3 inline mr-1" />
+                    <p className="text-sm font-semibold text-green-600 mt-2 flex items-center gap-1">
+                      <TrendingUp className="w-4 h-4" />
                       +12.5% from last month
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center shadow-lg border border-green-300/50">
+                    <TrendingUp className="w-7 h-7 text-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -192,18 +204,18 @@ export default function DashboardPage() {
           {/* Recent Activity & Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+            <Card className="border-gray-200/80">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {stats?.recentActivity?.slice(0, 5).map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50/80 transition-colors duration-200 group cursor-pointer">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md transition-transform duration-200 group-hover:scale-110 ${
                         activity.type === 'payroll' 
-                          ? 'bg-green-100' 
-                          : 'bg-blue-100'
+                          ? 'bg-gradient-to-br from-green-100 to-green-200 border border-green-300/50' 
+                          : 'bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-300/50'
                       }`}>
                         {activity.type === 'payroll' ? (
                           <DollarSign className={`w-4 h-4 ${
@@ -218,12 +230,12 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">{activity.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(activity.date).toLocaleDateString()} • {activity.status}
+                        <p className="text-sm font-semibold text-foreground">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(activity.date).toLocaleDateString()} • <span className="font-medium">{activity.status}</span>
                         </p>
                       </div>
-                      <div className="text-sm font-medium text-foreground">
+                      <div className="text-base font-bold text-foreground">
                         {formatUsd(parseFloat(activity.amount))}
                       </div>
                     </div>
@@ -241,12 +253,12 @@ export default function DashboardPage() {
             </Card>
 
             {/* Role-based Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+            <Card className="border-gray-200/80">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {user?.role === 'admin' ? (
+                {(user?.role === 'admin' || user?.role === 'super_admin') ? (
                   // Admin Quick Actions
                   <>
                     <Button 

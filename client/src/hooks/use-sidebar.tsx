@@ -48,7 +48,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       '/payroll': 'hr',
       '/employees': 'hr',
       '/reimbursements': 'finance',
-      '/reports': 'finance'
+      '/reports': 'accounting',
+      '/accounting': 'accounting',
+      '/payslips': 'accounting'
     };
 
     const sectionId = sectionMappings[location as keyof typeof sectionMappings];

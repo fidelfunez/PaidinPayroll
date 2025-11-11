@@ -88,29 +88,33 @@ export function Sidebar() {
     }
   ];
 
-  const adminNavigation = [
+  const superAdminNavigation = [
     {
       id: 'overview',
       title: 'Overview',
       items: [
         { name: 'Dashboard', href: '/', icon: BarChart3 },
         { name: 'Employees', href: '/employees', icon: Users },
-        { name: 'Wallet', href: '/wallet', icon: Wallet },
+        { name: 'Financial Analytics', href: '/financial-analytics', icon: TrendingUp },
       ]
     },
     {
       id: 'finance',
-      title: 'Finance & Payroll',
+      title: 'Finance & Treasury',
       items: [
+        { name: 'Bitcoin Wallet', href: '/wallet', icon: Wallet },
+        { name: 'Payment Processing', href: '/process-payments', icon: Zap },
         { name: 'Payroll', href: '/payroll', icon: DollarSign },
         { name: 'Bulk Payroll', href: '/bulk-payroll', icon: Zap },
         { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
+        { name: 'Transaction History', href: '/transactions', icon: History },
         { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
+        { name: 'Bitcoin Settings', href: '/bitcoin-settings', icon: Settings },
       ]
     },
     {
       id: 'accounting',
-      title: 'Accounting Management',
+      title: 'Accounting',
       items: [
         { name: 'Accounting Dashboard', href: '/accounting', icon: PieChart },
         { name: 'Invoicing & Reports', href: '/reports', icon: FileText },
@@ -155,7 +159,111 @@ export function Sidebar() {
     }
   ];
 
-  const navigation = user?.role === 'admin' ? adminNavigation : employeeNavigation;
+  const adminNavigation = [
+    {
+      id: 'overview',
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', href: '/', icon: BarChart3 },
+        { name: 'Employees', href: '/employees', icon: Users },
+      ]
+    },
+    {
+      id: 'finance',
+      title: 'Finance & Payroll',
+      items: [
+        { name: 'Payroll Schedule', href: '/payroll', icon: DollarSign },
+        { name: 'Bulk Payroll', href: '/bulk-payroll', icon: Zap },
+        { name: 'Reimbursements', href: '/reimbursements', icon: Receipt },
+        { name: 'Withdrawal Methods', href: '/withdrawal-methods', icon: CreditCard },
+      ]
+    },
+    {
+      id: 'accounting',
+      title: 'Accounting',
+      items: [
+        { name: 'Accounting Dashboard', href: '/accounting', icon: PieChart },
+        { name: 'Invoicing & Reports', href: '/reports', icon: FileText },
+        { name: 'PDF Payslips', href: '/payslips', icon: Download },
+      ]
+    },
+    {
+      id: 'compliance',
+      title: 'Global Compliance',
+      items: [
+        { name: 'Tax & Compliance', href: '/tax-compliance-dashboard', icon: Shield },
+        { name: 'Audit Logs', href: '/audit-logs', icon: Search },
+        { name: 'Approvals', href: '/approvals', icon: CheckSquare },
+      ]
+    },
+    {
+      id: 'communication',
+      title: 'Communication',
+      items: [
+        { name: 'Messages', href: '/admin-messages', icon: MessageSquare },
+        { name: 'Notifications', href: '/notifications', icon: Bell },
+      ]
+    },
+    {
+      id: 'help',
+      title: 'Help Center',
+      items: [
+        { name: 'Bitcoin Education', href: '/bitcoin-education', icon: BookOpen },
+        { name: 'Getting Started', href: '/getting-started', icon: HelpCircle },
+        { name: 'FAQ', href: '/faq', icon: FileQuestion },
+        { name: 'Support', href: '/support', icon: Headphones },
+      ]
+    },
+    {
+      id: 'advanced',
+      title: 'Advanced Tools',
+      items: [
+        { name: 'Integrations', href: '/integrations', icon: Layers },
+        { name: 'API Access', href: '/api-access', icon: Zap },
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ]
+    }
+  ];
+
+  const platformAdminNavigation = [
+    {
+      id: 'overview',
+      title: 'Platform Overview',
+      items: [
+        { name: 'Dashboard', href: '/platform', icon: BarChart3 },
+        { name: 'All Companies', href: '/platform/companies', icon: Building2 },
+        { name: 'All Staff', href: '/platform/staff', icon: Users },
+        { name: 'Analytics', href: '/platform/analytics', icon: TrendingUp },
+      ]
+    },
+    {
+      id: 'management',
+      title: 'Platform Management',
+      items: [
+        { name: 'Subscriptions', href: '/platform/subscriptions', icon: CreditCard },
+        { name: 'Revenue', href: '/platform/revenue', icon: DollarSign },
+        { name: 'System Health', href: '/platform/health', icon: Shield },
+        { name: 'Audit Logs', href: '/platform/audit', icon: Search },
+      ]
+    },
+    {
+      id: 'support',
+      title: 'Support & Tools',
+      items: [
+        { name: 'Customer Support', href: '/platform/support', icon: HelpCircle },
+        { name: 'Platform Settings', href: '/platform/settings', icon: Settings },
+        { name: 'Documentation', href: '/platform/docs', icon: BookOpen },
+      ]
+    }
+  ];
+
+  const navigation = user?.role === 'platform_admin'
+    ? platformAdminNavigation
+    : user?.role === 'super_admin' 
+    ? superAdminNavigation
+    : user?.role === 'admin' 
+    ? adminNavigation 
+    : employeeNavigation;
 
   // Get main navigation items for mobile (first item from each section)
   const getMobileNavigation = () => {
@@ -184,7 +292,7 @@ export function Sidebar() {
       )}
       
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 h-screen flex flex-col ${
+      <div className={`fixed inset-y-0 left-0 z-50 bg-white/95 backdrop-blur-sm shadow-xl border-r border-gray-200/80 transition-all duration-300 ease-out h-screen flex flex-col ${
         isCollapsed 
           ? 'w-16' 
           : 'w-64'
@@ -195,7 +303,7 @@ export function Sidebar() {
           ? 'translate-x-0' 
           : 'translate-x-0 lg:translate-x-0'
       }`}>
-      <div className="flex items-center justify-between h-16 px-2 border-b border-slate-200 flex-shrink-0">
+      <div className="flex items-center justify-between h-16 px-3 border-b border-gray-200/60 flex-shrink-0 bg-gradient-to-r from-gray-50/50 to-transparent">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Only show logo when sidebar is expanded */}
           {!isCollapsed && (
@@ -231,10 +339,10 @@ export function Sidebar() {
                 return (
                   <Link key={item.id} href={item.href}>
                     <div
-                      className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer px-3 py-3 justify-center ${
+                      className={`flex items-center text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer px-3 py-3 justify-center ${
                         isActive
-                          ? 'text-orange-700 bg-orange-50'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          ? 'text-primary bg-primary/10 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80'
                       }`}
                       title={item.title}
                     >
@@ -250,13 +358,13 @@ export function Sidebar() {
                   {!isCollapsed && (
                     <button
                       onClick={() => toggleSection(section.id)}
-                      className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 transition-colors"
+                      className="flex items-center justify-between w-full px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-gray-700 transition-all duration-200 rounded-lg hover:bg-gray-50/50"
                     >
                       <span>{section.title}</span>
                       {expandedSections.has(section.id) ? (
-                        <ChevronDown className="w-3 h-3" />
+                        <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
                       ) : (
-                        <ChevronRight className="w-3 h-3" />
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200" />
                       )}
                     </button>
                   )}
@@ -270,14 +378,14 @@ export function Sidebar() {
                         return (
                           <Link key={item.name} href={item.href}>
                             <div
-                              className={`flex items-center text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                              className={`flex items-center text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
                                 isCollapsed 
                                   ? 'px-3 py-3 justify-center' 
-                                  : 'px-3 py-2'
+                                  : 'px-3 py-2.5'
                               } ${
                                 isActive
-                                  ? 'text-orange-700 bg-orange-50'
-                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                  ? 'text-primary bg-primary/10 shadow-sm border-l-4 border-primary font-semibold'
+                                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 hover:translate-x-1'
                               }`}
                               title={isCollapsed ? item.name : undefined}
                             >
@@ -293,7 +401,7 @@ export function Sidebar() {
                   )}
                   
                   {!isCollapsed && section.id !== 'settings' && (
-                    <div className="h-px bg-slate-200 mx-3 my-2" />
+                    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-3 my-3" />
                   )}
                 </div>
               ))
@@ -303,7 +411,7 @@ export function Sidebar() {
       </div>
       
       <div className={`px-2 pb-4 flex-shrink-0 ${isCollapsed ? '' : 'px-4'}`}>
-        <div className={`bg-slate-50 rounded-lg ${isCollapsed ? 'p-2' : 'p-4'}`}>
+        <div className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 shadow-sm ${isCollapsed ? 'p-2' : 'p-4'}`}>
           {isCollapsed ? (
             <div className="flex flex-col items-center space-y-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300 flex items-center justify-center" title={`${user?.firstName} ${user?.lastName}`}>

@@ -204,19 +204,32 @@ export function setupAuth(app: Express) {
 
       // Get user's company (handle null/undefined companyId)
       let company = null;
-      if (user.companyId) {
+      
+      // Check if user has a valid companyId
+      if (user.companyId && typeof user.companyId === 'number') {
         try {
           company = await storage.getCompany(user.companyId);
-        } catch (error) {
+          if (!company) {
+            console.log(`User ${user.id} has companyId ${user.companyId} but company doesn't exist`);
+          }
+        } catch (error: any) {
           console.error('Error fetching company:', error);
+          console.error('Company ID:', user.companyId);
+          console.error('Error details:', error.message, error.stack);
         }
+      } else {
+        console.log(`User ${user.id} has invalid or missing companyId:`, user.companyId);
       }
       
+      // If no company found, create/assign default company
       if (!company) {
-        // If no company, create default company and associate user
         try {
-          let defaultCompany = (await storage.getCompanies())[0];
+          console.log('Creating or finding default company for user', user.id);
+          let companies = await storage.getCompanies();
+          let defaultCompany = companies && companies.length > 0 ? companies[0] : null;
+          
           if (!defaultCompany) {
+            console.log('Creating new default PaidIn company');
             defaultCompany = await storage.createCompany({
               name: 'PaidIn',
               slug: 'paidin',
@@ -224,15 +237,32 @@ export function setupAuth(app: Express) {
               primaryColor: '#f97316',
               isActive: true,
             });
+            console.log('Created company with ID:', defaultCompany.id);
+          } else {
+            console.log('Found existing company with ID:', defaultCompany.id);
           }
-          // Update user with company
-          await storage.updateUser(user.id, { companyId: defaultCompany.id });
-          user.companyId = defaultCompany.id;
+          
+          // Update user with company (only if they don't have one or it's invalid)
+          if (!user.companyId || user.companyId !== defaultCompany.id) {
+            console.log(`Updating user ${user.id} with companyId ${defaultCompany.id}`);
+            const updatedUser = await storage.updateUser(user.id, { companyId: defaultCompany.id });
+            if (updatedUser) {
+              user.companyId = updatedUser.companyId;
+              console.log('User updated successfully');
+            } else {
+              console.error('Failed to update user');
+            }
+          }
+          
           company = defaultCompany;
         } catch (error: any) {
           console.error('Error creating/assigning company:', error);
+          console.error('Error stack:', error.stack);
+          console.error('Error message:', error.message);
+          console.error('Error code:', error.code);
           return res.status(500).json({ 
-            message: "An error occurred during login. Please try again." 
+            message: "An error occurred during login. Please try again.",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
           });
         }
       }
@@ -264,8 +294,12 @@ export function setupAuth(app: Express) {
       });
     } catch (error: any) {
       console.error('Login error:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
       res.status(500).json({ 
-        message: "An error occurred during login. Please try again." 
+        message: "An error occurred during login. Please try again.",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

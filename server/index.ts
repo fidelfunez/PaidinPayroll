@@ -19,14 +19,22 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
-// Run database migrations on startup with absolute path
+// Run database migrations on startup
 try {
-  const migrationsPath = path.join(__dirname, '../migrations');
+  // In production (dist folder), migrations are at ../migrations
+  // In development, they're at ./migrations from project root
+  const migrationsPath = process.env.NODE_ENV === 'production' 
+    ? path.join(__dirname, '../migrations')
+    : path.join(process.cwd(), 'migrations');
   console.log('Running database migrations from:', migrationsPath);
+  console.log('__dirname:', __dirname);
+  console.log('process.cwd():', process.cwd());
   migrate(db, { migrationsFolder: migrationsPath });
   console.log('Database migrations completed successfully');
-} catch (error) {
+} catch (error: any) {
   console.error('Migration error:', error);
+  console.error('Error message:', error?.message);
+  console.error('Error stack:', error?.stack);
   // In production, we should fail if migrations don't work
   // But log the error first to help debug
   if (process.env.NODE_ENV === 'production') {

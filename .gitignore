@@ -106,3 +106,10 @@ tmp/
 temp/
 # Local Netlify folder
 .netlify
+
+# Database files (SQLite)
+*.db
+*.db-shm
+*.db-wal
+sessions.db
+paidin.db

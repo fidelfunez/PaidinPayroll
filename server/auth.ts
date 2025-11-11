@@ -309,6 +309,26 @@ export function setupAuth(app: Express) {
     res.sendStatus(200);
   });
 
+  // Debug endpoint to check user status (remove in production)
+  app.get("/api/debug/user-status", async (req, res) => {
+    try {
+      const user = await storage.getUserByUsername('fidel');
+      const companies = await storage.getCompanies();
+      res.json({
+        userExists: !!user,
+        user: user ? {
+          id: user.id,
+          username: user.username,
+          companyId: user.companyId,
+          isActive: user.isActive,
+        } : null,
+        companies: companies.map(c => ({ id: c.id, name: c.name })),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message, stack: error.stack });
+    }
+  });
+
   app.get("/api/user", async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });

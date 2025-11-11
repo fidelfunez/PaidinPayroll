@@ -84,8 +84,12 @@ export async function ensureFidelUser() {
     console.log('');
   } catch (error: any) {
     console.error('❌ Error ensuring fidel user:', error);
+    console.error('Error stack:', error?.stack);
+    console.error('Error message:', error?.message);
+    console.error('Error code:', error?.code);
     // Don't throw - allow server to start even if this fails
     // This is a convenience feature, not critical
+    // But log extensively so we can debug
   }
 }
 

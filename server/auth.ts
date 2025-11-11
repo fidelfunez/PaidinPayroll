@@ -202,49 +202,39 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // Get user's company
-      const company = await storage.getCompany(user.companyId);
+      // Get user's company (handle null/undefined companyId)
+      let company = null;
+      if (user.companyId) {
+        try {
+          company = await storage.getCompany(user.companyId);
+        } catch (error) {
+          console.error('Error fetching company:', error);
+        }
+      }
+      
       if (!company) {
         // If no company, create default company and associate user
-        let defaultCompany = (await storage.getCompanies())[0];
-        if (!defaultCompany) {
-          defaultCompany = await storage.createCompany({
-            name: 'PaidIn',
-            slug: 'paidin',
-            domain: null,
-            primaryColor: '#f97316',
-            isActive: true,
+        try {
+          let defaultCompany = (await storage.getCompanies())[0];
+          if (!defaultCompany) {
+            defaultCompany = await storage.createCompany({
+              name: 'PaidIn',
+              slug: 'paidin',
+              domain: null,
+              primaryColor: '#f97316',
+              isActive: true,
+            });
+          }
+          // Update user with company
+          await storage.updateUser(user.id, { companyId: defaultCompany.id });
+          user.companyId = defaultCompany.id;
+          company = defaultCompany;
+        } catch (error: any) {
+          console.error('Error creating/assigning company:', error);
+          return res.status(500).json({ 
+            message: "An error occurred during login. Please try again." 
           });
         }
-        // Update user with company
-        await storage.updateUser(user.id, { companyId: defaultCompany.id });
-        user.companyId = defaultCompany.id;
-        
-        // Generate token
-        const token = generateToken(user);
-        
-        return res.status(200).json({ 
-          user: { 
-            id: user.id, 
-            username: user.username, 
-            role: user.role,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            monthlySalary: user.monthlySalary,
-            withdrawalMethod: user.withdrawalMethod,
-            btcAddress: user.btcAddress,
-            createdAt: user.createdAt,
-            companyId: user.companyId,
-            company: {
-              id: defaultCompany.id,
-              name: defaultCompany.name,
-              slug: defaultCompany.slug,
-              primaryColor: defaultCompany.primaryColor || '#f97316',
-            }
-          }, 
-          token 
-        });
       }
 
       // Generate token with company context
@@ -263,12 +253,12 @@ export function setupAuth(app: Express) {
           btcAddress: user.btcAddress,
           createdAt: user.createdAt,
           companyId: user.companyId,
-          company: {
+          company: company ? {
             id: company.id,
             name: company.name,
             slug: company.slug,
             primaryColor: company.primaryColor || '#f97316',
-          }
+          } : null
         }, 
         token 
       });

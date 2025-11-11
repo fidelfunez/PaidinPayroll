@@ -180,7 +180,7 @@ export function setupAuth(app: Express) {
       }
       
       // Get user by username or email (case-insensitive lookup handled in storage layer)
-      const user = await storage.getUserByUsernameOrEmail(username);
+      let user = await storage.getUserByUsernameOrEmail(username);
       if (!user) {
         return res.status(401).json({ 
           message: "Username/email or password is incorrect. Please check your credentials and try again." 
@@ -247,7 +247,11 @@ export function setupAuth(app: Express) {
             console.log(`Updating user ${user.id} with companyId ${defaultCompany.id}`);
             const updatedUser = await storage.updateUser(user.id, { companyId: defaultCompany.id });
             if (updatedUser) {
-              user.companyId = updatedUser.companyId;
+              // Refresh user object from database to ensure we have all fields including profilePhoto
+              const refreshedUser = await storage.getUser(user.id);
+              if (refreshedUser) {
+                user = refreshedUser;
+              }
               console.log('User updated successfully');
             } else {
               console.error('Failed to update user');

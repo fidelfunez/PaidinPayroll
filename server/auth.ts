@@ -116,6 +116,8 @@ export function setupAuth(app: Express) {
           domain: null,
           primaryColor: '#f97316',
           isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
       } else {
         company = companies[0];
@@ -236,6 +238,8 @@ export function setupAuth(app: Express) {
               domain: null,
               primaryColor: '#f97316',
               isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             });
             console.log('Created company with ID:', defaultCompany.id);
           } else {

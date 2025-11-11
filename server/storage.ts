@@ -14,6 +14,13 @@ import {
   onboardingTasks,
   onboardingProgress,
   onboardingTaskProgress,
+  roleChanges,
+  plaidAccounts,
+  paymentIntents,
+  conversions,
+  breezWallets,
+  walletTransactions,
+  webhookEvents,
   type User, 
   type Company,
   type InsertUser,
@@ -43,7 +50,21 @@ import {
   type OnboardingProgress,
   type InsertOnboardingProgress,
   type OnboardingTaskProgress,
-  type InsertOnboardingTaskProgress
+  type InsertOnboardingTaskProgress,
+  type RoleChange,
+  type InsertRoleChange,
+  type PlaidAccount,
+  type InsertPlaidAccount,
+  type PaymentIntent,
+  type InsertPaymentIntent,
+  type Conversion,
+  type InsertConversion,
+  type BreezWallet,
+  type InsertBreezWallet,
+  type WalletTransaction,
+  type InsertWalletTransaction,
+  type WebhookEvent,
+  type InsertWebhookEvent
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, or, arrayContains, sql } from "drizzle-orm";
@@ -63,10 +84,16 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsernameOrEmail(loginField: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   getEmployees(): Promise<User[]>;
   getEmployeesWithWithdrawalMethods(): Promise<User[]>;
+  
+  // Role management
+  updateUserRole(userId: number, newRole: string, changedBy: number, reason?: string): Promise<User | undefined>;
+  getRoleChanges(userId?: number): Promise<RoleChange[]>;
+  getSuperAdminCount(): Promise<number>;
 
   // Payroll management
   createPayrollPayment(payment: InsertPayrollPayment): Promise<PayrollPayment>;
@@ -169,6 +196,43 @@ export interface IStorage {
   saveBTCPayConfig(config: { url: string; apiKey: string; storeId: string }): Promise<void>;
   updateBTCPayConfig(config: Partial<{ url: string; apiKey: string; storeId: string }>): Promise<void>;
 
+  // Plaid account management
+  createPlaidAccount(account: InsertPlaidAccount): Promise<PlaidAccount>;
+  getPlaidAccountById(id: number): Promise<PlaidAccount | undefined>;
+  getPlaidAccounts(userId: number, companyId: number): Promise<PlaidAccount[]>;
+  updatePlaidAccountStatus(id: number, status: 'active' | 'inactive' | 'error'): Promise<void>;
+  updatePlaidAccountStatusByItemId(itemId: string, status: 'active' | 'inactive' | 'error'): Promise<void>;
+  deletePlaidAccount(id: number): Promise<void>;
+
+  // Payment intent management
+  createPaymentIntent(intent: InsertPaymentIntent): Promise<PaymentIntent>;
+  getPaymentIntentById(id: number): Promise<PaymentIntent | undefined>;
+  getPaymentIntentByStripeId(stripeId: string): Promise<PaymentIntent | undefined>;
+  updatePaymentIntent(id: number, updates: Partial<PaymentIntent>): Promise<PaymentIntent | undefined>;
+
+  // Conversion management
+  createConversion(conversion: InsertConversion): Promise<Conversion>;
+  getConversionById(id: number): Promise<Conversion | undefined>;
+  updateConversion(id: number, updates: Partial<Conversion>): Promise<Conversion | undefined>;
+
+  // Breez wallet management
+  createBreezWallet(wallet: InsertBreezWallet): Promise<BreezWallet>;
+  getBreezWalletById(id: number): Promise<BreezWallet | undefined>;
+  getBreezWalletsByCompany(companyId: number): Promise<BreezWallet[]>;
+  getBreezWalletsByUser(userId: number): Promise<BreezWallet[]>;
+  updateBreezWallet(id: number, updates: Partial<BreezWallet>): Promise<BreezWallet | undefined>;
+
+  // Wallet transaction management
+  createWalletTransaction(transaction: InsertWalletTransaction): Promise<WalletTransaction>;
+  getWalletTransactions(userId: number, companyId: number): Promise<WalletTransaction[]>;
+  updateWalletTransaction(id: number, updates: Partial<WalletTransaction>): Promise<WalletTransaction | undefined>;
+
+  // Webhook event management
+  createWebhookEvent(event: InsertWebhookEvent): Promise<WebhookEvent>;
+  getWebhookEventById(id: number): Promise<WebhookEvent | undefined>;
+  getWebhookEvents(provider?: string, processed?: boolean): Promise<WebhookEvent[]>;
+  updateWebhookEvent(id: number, updates: Partial<WebhookEvent>): Promise<WebhookEvent | undefined>;
+
   sessionStore: expressSession.Store;
 }
 
@@ -176,12 +240,22 @@ export class DatabaseStorage implements IStorage {
   sessionStore: expressSession.Store;
 
   constructor() {
-    // Use SQLite session store for production
-    this.sessionStore = new SQLiteSessionStore({
-      db: 'sessions.db',
-      dir: path.dirname(getDatabasePath()),
-      table: 'sessions'
-    });
+    try {
+      // Use SQLite session store for production
+      const dbDir = path.dirname(getDatabasePath());
+      this.sessionStore = new SQLiteSessionStore({
+        db: 'sessions.db',
+        dir: dbDir,
+        table: 'sessions'
+      });
+      console.log(`Session store initialized at: ${dbDir}/sessions.db`);
+    } catch (error) {
+      console.error('Failed to initialize session store:', error);
+      // Fall back to memory store if SQLite session store fails
+      // This allows the server to start even if session persistence fails
+      console.warn('Using memory session store (sessions will not persist across restarts)');
+      this.sessionStore = new expressSession.MemoryStore();
+    }
   }
 
   // User management
@@ -199,6 +273,21 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
+  }
+
+  async getUserByUsernameOrEmail(loginField: string): Promise<User | undefined> {
+    // Check if the input looks like an email (contains @)
+    const isEmail = loginField.includes('@');
+    
+    if (isEmail) {
+      // Search by email (case-insensitive)
+      const [user] = await db.select().from(users).where(sql`LOWER(${users.email}) = LOWER(${loginField})`);
+      return user || undefined;
+    } else {
+      // Search by username (case-insensitive)
+      const [user] = await db.select().from(users).where(sql`LOWER(${users.username}) = LOWER(${loginField})`);
+      return user || undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -228,6 +317,61 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.role, 'employee'))
       .orderBy(users.firstName, users.lastName);
+  }
+
+  // Role management methods
+  async updateUserRole(userId: number, newRole: string, changedBy: number, reason?: string): Promise<User | undefined> {
+    // Get current user to log the role change
+    const currentUser = await this.getUser(userId);
+    if (!currentUser) {
+      return undefined;
+    }
+
+    const oldRole = currentUser.role;
+
+    // Update user role
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role: newRole })
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updatedUser) {
+      return undefined;
+    }
+
+    // Log the role change
+    await db.insert(roleChanges).values({
+      userId,
+      oldRole,
+      newRole,
+      changedBy,
+      reason,
+    });
+
+    return updatedUser;
+  }
+
+  async getRoleChanges(userId?: number): Promise<RoleChange[]> {
+    let query = db
+      .select()
+      .from(roleChanges)
+      .orderBy(desc(roleChanges.createdAt));
+
+    if (userId) {
+      query = query.where(eq(roleChanges.userId, userId));
+    }
+
+    return await query;
+  }
+
+  async getSuperAdminCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'super_admin'));
+    
+    return result[0]?.count || 0;
   }
 
   // Payroll management
@@ -887,6 +1031,189 @@ export class DatabaseStorage implements IStorage {
       .update(btcpayConfig)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(btcpayConfig.isActive, true));
+  }
+
+  // Plaid account management implementation
+  async createPlaidAccount(account: InsertPlaidAccount): Promise<PlaidAccount> {
+    const [newAccount] = await db.insert(plaidAccounts).values(account).returning();
+    return newAccount;
+  }
+
+  async getPlaidAccountById(id: number): Promise<PlaidAccount | undefined> {
+    const [account] = await db.select().from(plaidAccounts).where(eq(plaidAccounts.id, id)).limit(1);
+    return account;
+  }
+
+  async getPlaidAccounts(userId: number, companyId: number): Promise<PlaidAccount[]> {
+    return await db
+      .select()
+      .from(plaidAccounts)
+      .where(and(eq(plaidAccounts.userId, userId), eq(plaidAccounts.companyId, companyId)))
+      .orderBy(desc(plaidAccounts.createdAt));
+  }
+
+  async updatePlaidAccountStatus(id: number, status: 'active' | 'inactive' | 'error'): Promise<void> {
+    await db
+      .update(plaidAccounts)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(plaidAccounts.id, id));
+  }
+
+  async updatePlaidAccountStatusByItemId(itemId: string, status: 'active' | 'inactive' | 'error'): Promise<void> {
+    await db
+      .update(plaidAccounts)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(plaidAccounts.plaidItemId, itemId));
+  }
+
+  async deletePlaidAccount(id: number): Promise<void> {
+    await db.delete(plaidAccounts).where(eq(plaidAccounts.id, id));
+  }
+
+  // Payment intent management implementation
+  async createPaymentIntent(intent: InsertPaymentIntent): Promise<PaymentIntent> {
+    const [newIntent] = await db.insert(paymentIntents).values(intent).returning();
+    return newIntent;
+  }
+
+  async getPaymentIntentById(id: number): Promise<PaymentIntent | undefined> {
+    const [intent] = await db.select().from(paymentIntents).where(eq(paymentIntents.id, id)).limit(1);
+    return intent;
+  }
+
+  async getPaymentIntentByStripeId(stripeId: string): Promise<PaymentIntent | undefined> {
+    const [intent] = await db
+      .select()
+      .from(paymentIntents)
+      .where(eq(paymentIntents.stripePaymentIntentId, stripeId))
+      .limit(1);
+    return intent;
+  }
+
+  async updatePaymentIntent(id: number, updates: Partial<PaymentIntent>): Promise<PaymentIntent | undefined> {
+    const [updatedIntent] = await db
+      .update(paymentIntents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(paymentIntents.id, id))
+      .returning();
+    return updatedIntent;
+  }
+
+  // Conversion management implementation
+  async createConversion(conversion: InsertConversion): Promise<Conversion> {
+    const [newConversion] = await db.insert(conversions).values(conversion).returning();
+    return newConversion;
+  }
+
+  async getConversionById(id: number): Promise<Conversion | undefined> {
+    const [conversion] = await db.select().from(conversions).where(eq(conversions.id, id)).limit(1);
+    return conversion;
+  }
+
+  async updateConversion(id: number, updates: Partial<Conversion>): Promise<Conversion | undefined> {
+    const [updatedConversion] = await db
+      .update(conversions)
+      .set(updates)
+      .where(eq(conversions.id, id))
+      .returning();
+    return updatedConversion;
+  }
+
+  // Breez wallet management implementation
+  async createBreezWallet(wallet: InsertBreezWallet): Promise<BreezWallet> {
+    const [newWallet] = await db.insert(breezWallets).values(wallet).returning();
+    return newWallet;
+  }
+
+  async getBreezWalletById(id: number): Promise<BreezWallet | undefined> {
+    const [wallet] = await db.select().from(breezWallets).where(eq(breezWallets.id, id)).limit(1);
+    return wallet;
+  }
+
+  async getBreezWalletsByCompany(companyId: number): Promise<BreezWallet[]> {
+    return await db
+      .select()
+      .from(breezWallets)
+      .where(eq(breezWallets.companyId, companyId))
+      .orderBy(desc(breezWallets.createdAt));
+  }
+
+  async getBreezWalletsByUser(userId: number): Promise<BreezWallet[]> {
+    return await db
+      .select()
+      .from(breezWallets)
+      .where(eq(breezWallets.userId, userId))
+      .orderBy(desc(breezWallets.createdAt));
+  }
+
+  async updateBreezWallet(id: number, updates: Partial<BreezWallet>): Promise<BreezWallet | undefined> {
+    const [updatedWallet] = await db
+      .update(breezWallets)
+      .set(updates)
+      .where(eq(breezWallets.id, id))
+      .returning();
+    return updatedWallet;
+  }
+
+  // Wallet transaction management implementation
+  async createWalletTransaction(transaction: InsertWalletTransaction): Promise<WalletTransaction> {
+    const [newTransaction] = await db.insert(walletTransactions).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async getWalletTransactions(userId: number, companyId: number): Promise<WalletTransaction[]> {
+    return await db
+      .select()
+      .from(walletTransactions)
+      .where(and(eq(walletTransactions.userId, userId), eq(walletTransactions.companyId, companyId)))
+      .orderBy(desc(walletTransactions.createdAt));
+  }
+
+  async updateWalletTransaction(id: number, updates: Partial<WalletTransaction>): Promise<WalletTransaction | undefined> {
+    const [updatedTransaction] = await db
+      .update(walletTransactions)
+      .set(updates)
+      .where(eq(walletTransactions.id, id))
+      .returning();
+    return updatedTransaction;
+  }
+
+  // Webhook event management implementation
+  async createWebhookEvent(event: InsertWebhookEvent): Promise<WebhookEvent> {
+    const [newEvent] = await db.insert(webhookEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getWebhookEventById(id: number): Promise<WebhookEvent | undefined> {
+    const [event] = await db.select().from(webhookEvents).where(eq(webhookEvents.id, id)).limit(1);
+    return event;
+  }
+
+  async getWebhookEvents(provider?: string, processed?: boolean): Promise<WebhookEvent[]> {
+    let query = db.select().from(webhookEvents);
+    
+    const conditions = [];
+    if (provider) {
+      conditions.push(eq(webhookEvents.provider, provider as any));
+    }
+    if (processed !== undefined) {
+      conditions.push(eq(webhookEvents.processed, processed));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(webhookEvents.createdAt));
+  }
+
+  async updateWebhookEvent(id: number, updates: Partial<WebhookEvent>): Promise<WebhookEvent | undefined> {
+    const [updatedEvent] = await db
+      .update(webhookEvents)
+      .set(updates)
+      .where(eq(webhookEvents.id, id))
+      .returning();
+    return updatedEvent;
   }
 }
 

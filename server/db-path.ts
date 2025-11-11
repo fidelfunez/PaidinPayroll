@@ -3,19 +3,26 @@ import fs from 'fs';
 import path from 'path';
 
 export function getDatabasePath() {
-  let dbPath = process.env.NODE_ENV === 'production' ? '/app/data/paidin.db' : 'paidin.db';
-
+  // Check for Fly.io volume mount first
   if (process.env.NODE_ENV === 'production') {
-    const dbDir = path.dirname(dbPath);
+    // Try Fly.io volume mount path first
+    const flyVolumePath = '/app/data/paidin.db';
+    const flyVolumeDir = path.dirname(flyVolumePath);
+    
     try {
-      if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
+      if (!fs.existsSync(flyVolumeDir)) {
+        fs.mkdirSync(flyVolumeDir, { recursive: true });
       }
+      // Check if directory is writable
+      fs.accessSync(flyVolumeDir, fs.constants.W_OK);
+      return flyVolumePath;
     } catch (error) {
-      // Fallback to local file if /app/data cannot be created (should not happen on Railway)
-      dbPath = './paidin.db';
+      console.warn('Fly.io volume path not available, using local path:', error);
+      // Fallback to current directory if volume mount doesn't work
+      return './paidin.db';
     }
   }
 
-  return dbPath;
+  // Development: use local path
+  return 'paidin.db';
 } 

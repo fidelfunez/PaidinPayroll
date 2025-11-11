@@ -19,16 +19,21 @@ const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
 // Run database migrations on startup with absolute path
-// try {
-//   const migrationsPath = path.join(__dirname, '../migrations');
-//   console.log('Running database migrations from:', migrationsPath);
-//   migrate(db, { migrationsFolder: migrationsPath });
-//   console.log('Database migrations completed successfully');
-// } catch (error) {
-//   console.error('Migration error:', error);
-//   // Continue anyway - migrations might already be applied
-//   // This is expected if tables already exist
-// }
+try {
+  const migrationsPath = path.join(__dirname, '../migrations');
+  console.log('Running database migrations from:', migrationsPath);
+  migrate(db, { migrationsFolder: migrationsPath });
+  console.log('Database migrations completed successfully');
+} catch (error) {
+  console.error('Migration error:', error);
+  // In production, we should fail if migrations don't work
+  // But log the error first to help debug
+  if (process.env.NODE_ENV === 'production') {
+    console.error('CRITICAL: Database migrations failed in production');
+  }
+  // Continue anyway - migrations might already be applied
+  // This is expected if tables already exist
+}
 
 // CORS configuration
 const allowedOrigins = [
@@ -92,12 +97,33 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/public/index.html'));
 });
 
-// Start payment polling after server starts
+// Start server with error handling
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Database path: ${getDatabasePath()}`);
+  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
   
-  // Start payment polling
-  paymentPolling.startPolling();
-  console.log('Payment polling service started');
+  // Start payment polling (gracefully handle errors)
+  try {
+    paymentPolling.startPolling();
+    console.log('Payment polling service started');
+  } catch (error) {
+    console.error('Warning: Failed to start payment polling service:', error);
+    console.log('Server will continue without payment polling');
+  }
+});
+
+// Handle uncaught errors to prevent server crashes
+// In production, we want to log but allow the server to recover from non-critical errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  // Only exit on critical errors that would cause the server to be in an invalid state
+  // For now, log and continue to prevent restart loops
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Log but don't exit - these are typically async operation failures
 });

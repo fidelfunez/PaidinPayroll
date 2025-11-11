@@ -958,13 +958,6 @@ export class DatabaseStorage implements IStorage {
     return newCompany;
   }
 
-  async getCompany(id: number): Promise<Company | undefined> {
-    const [company] = await db
-      .select()
-      .from(companies)
-      .where(eq(companies.id, id));
-    return company || undefined;
-  }
 
   async getCompanyByDomain(domain: string): Promise<Company | undefined> {
     const [company] = await db
@@ -975,7 +968,89 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCompanies(): Promise<Company[]> {
-    return await db.select().from(companies).orderBy(desc(companies.createdAt));
+    try {
+      return await db.select().from(companies).orderBy(desc(companies.createdAt));
+    } catch (error: any) {
+      // If schema columns don't exist, use raw SQL to select only existing columns
+      if (error.message?.includes('no such column')) {
+        console.warn('Schema mismatch detected, using raw SQL fallback');
+        try {
+          // Use raw SQLite database to query only existing columns
+          const rows = sqlite.prepare(`
+            SELECT id, name, slug, domain, logo, primary_color, is_active, created_at, updated_at
+            FROM companies
+            ORDER BY created_at DESC
+          `).all();
+          // Map raw results to Company objects with defaults for missing columns
+          return rows.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            domain: row.domain || null,
+            logo: row.logo || null,
+            primaryColor: row.primary_color || '#f97316',
+            isActive: Boolean(row.is_active),
+            subscriptionPlan: 'starter' as const,
+            subscriptionStatus: 'active' as const,
+            subscriptionStartDate: null,
+            subscriptionEndDate: null,
+            maxEmployees: 10,
+            monthlyFee: 29.99,
+            billingEmail: null,
+            paymentStatus: 'current' as const,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at),
+          })) as Company[];
+        } catch (fallbackError: any) {
+          console.error('Fallback query also failed:', fallbackError);
+          throw error; // Throw original error
+        }
+      }
+      throw error;
+    }
+  }
+  
+  async getCompany(id: number): Promise<Company | undefined> {
+    try {
+      const [company] = await db.select().from(companies).where(eq(companies.id, id));
+      return company || undefined;
+    } catch (error: any) {
+      // If schema columns don't exist, use raw SQL
+      if (error.message?.includes('no such column')) {
+        console.warn('Schema mismatch detected in getCompany, using raw SQL fallback');
+        try {
+          const row = sqlite.prepare(`
+            SELECT id, name, slug, domain, logo, primary_color, is_active, created_at, updated_at
+            FROM companies
+            WHERE id = ?
+          `).get(id) as any;
+          if (!row) return undefined;
+          return {
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            domain: row.domain || null,
+            logo: row.logo || null,
+            primaryColor: row.primary_color || '#f97316',
+            isActive: Boolean(row.is_active),
+            subscriptionPlan: 'starter' as const,
+            subscriptionStatus: 'active' as const,
+            subscriptionStartDate: null,
+            subscriptionEndDate: null,
+            maxEmployees: 10,
+            monthlyFee: 29.99,
+            billingEmail: null,
+            paymentStatus: 'current' as const,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at),
+          } as Company;
+        } catch (fallbackError: any) {
+          console.error('Fallback query also failed:', fallbackError);
+          return undefined;
+        }
+      }
+      throw error;
+    }
   }
 
   async updateCompany(id: number, updates: Partial<Company>): Promise<Company | undefined> {

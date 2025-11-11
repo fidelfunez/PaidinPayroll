@@ -58,8 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(data.token);
       return data;
     },
-    onSuccess: (data: { user: UserWithCompany; token: string }) => {
+    onSuccess: async (data: { user: UserWithCompany; token: string }) => {
+      // Set the user data from login response
       queryClient.setQueryData(["/api/user"], data.user);
+      // Immediately refetch to ensure we have the latest data including profilePhoto
+      // This ensures the profile photo loads on first render without refresh
+      await queryClient.refetchQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: Error) => {
       toast({

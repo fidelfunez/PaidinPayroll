@@ -278,6 +278,8 @@ export function setupAuth(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          bio: user.bio,
+          profilePhoto: user.profilePhoto,
           monthlySalary: user.monthlySalary,
           withdrawalMethod: user.withdrawalMethod,
           btcAddress: user.btcAddress,

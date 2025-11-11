@@ -24,8 +24,6 @@ export async function ensureFidelUser() {
         domain: null,
         primaryColor: '#f97316',
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
       console.log('✅ Company created with ID:', company.id);
     } else {

@@ -21,18 +21,25 @@ const PORT = Number(process.env.PORT) || 8080;
 
 // Run database migrations on startup
 try {
-  // In production (dist folder), migrations are at ../migrations
+  // In production (dist folder), migrations are at dist/migrations (copied during build)
   // In development, they're at ./migrations from project root
-  const migrationsPath = process.env.NODE_ENV === 'production' 
-    ? path.join(__dirname, '../migrations')
-    : path.join(process.cwd(), 'migrations');
+  let migrationsPath: string;
+  if (process.env.NODE_ENV === 'production') {
+    // In production: __dirname is /app/dist, migrations are at /app/dist/migrations
+    migrationsPath = path.join(__dirname, 'migrations');
+  } else {
+    // In development: migrations are at project root
+    migrationsPath = path.join(process.cwd(), 'migrations');
+  }
   console.log('Running database migrations from:', migrationsPath);
   console.log('__dirname:', __dirname);
   console.log('process.cwd():', process.cwd());
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  
   migrate(db, { migrationsFolder: migrationsPath });
-  console.log('Database migrations completed successfully');
+  console.log('✅ Database migrations completed successfully');
 } catch (error: any) {
-  console.error('Migration error:', error);
+  console.error('❌ Migration error:', error);
   console.error('Error message:', error?.message);
   console.error('Error stack:', error?.stack);
   // In production, we should fail if migrations don't work

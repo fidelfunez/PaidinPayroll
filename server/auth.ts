@@ -89,10 +89,11 @@ export function setupAuth(app: Express) {
           const user = await storage.getUser(decoded.id);
           if (user && user.isActive) {
             // Get user's company
-            const company = await storage.getCompany(user.companyId);
+            const company = user.companyId ? await storage.getCompany(user.companyId) : null;
             if (company) {
               req.user = {
                 ...user,
+                companyId: user.companyId, // Ensure companyId is explicitly set
                 company: {
                   id: company.id,
                   name: company.name,
@@ -100,8 +101,21 @@ export function setupAuth(app: Express) {
                   primaryColor: company.primaryColor || '#f97316',
                 }
               };
-            } else {
+            } else if (user.companyId) {
               console.warn(`[JWT Middleware] User ${user.id} is active but company ${user.companyId} not found`);
+              // Still set req.user but without company object
+              req.user = {
+                ...user,
+                companyId: user.companyId,
+                company: null
+              };
+            } else {
+              console.warn(`[JWT Middleware] User ${user.id} is active but has no companyId`);
+              // Set req.user but companyId will be undefined
+              req.user = {
+                ...user,
+                company: null
+              };
             }
           } else {
             if (!user) {

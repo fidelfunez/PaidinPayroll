@@ -241,6 +241,7 @@ router.post("/wallets", async (req, res) => {
   } catch (error: any) {
     console.error("Error creating wallet:", error);
     console.error("Error stack:", error.stack);
+    console.error("Request user:", req.user ? { id: req.user.id, companyId: req.user.companyId } : 'no user');
     res.status(500).json({ 
       valid: false,
       error: "Failed to create wallet",

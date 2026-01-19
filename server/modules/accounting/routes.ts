@@ -246,12 +246,16 @@ router.post("/wallets", async (req, res) => {
   } catch (error: any) {
     console.error("Error creating wallet:", error);
     console.error("Error stack:", error.stack);
-    console.error("Request user:", req.user ? { id: req.user.id, companyId: req.user.companyId } : 'no user');
+    console.error("Request user:", req.user ? { id: req.user.id, companyId: req.user.companyId, company: req.user.company } : 'no user');
+    console.error("Request body:", { input: req.body?.input?.substring(0, 20) + '...', name: req.body?.name });
+    
+    // Return error with message in production too (for debugging)
     res.status(500).json({ 
       valid: false,
       error: "Failed to create wallet",
       message: error.message || "Unknown error",
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      // Include error details in production for now to help debug
+      details: error.message
     });
   }
 });

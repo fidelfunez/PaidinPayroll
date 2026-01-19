@@ -7,9 +7,9 @@ import { requireAuth } from "../../auth";
 
 const router = Router();
 
-// Middleware to require admin access
-// For now, we'll allow any authenticated admin user
-// Later we can refine this to require platform_admin role
+// Middleware to require platform admin access
+// Only platform_admin role can access the admin console
+// Regular 'admin' role users are company admins, not platform admins
 function requireAdminAccess(req: any, res: any, next: any) {
   if (!req.user) {
     return res.status(401).json({ 
@@ -17,12 +17,11 @@ function requireAdminAccess(req: any, res: any, next: any) {
     });
   }
   
-  // Allow admin role users (company admins can manage their own users)
-  // For platform-wide admin, we'd check for platform_admin role
-  // For now, allow any admin to access
-  if (req.user.role !== 'admin' && req.user.role !== 'platform_admin') {
+  // Only platform_admin can access the admin console
+  // Regular 'admin' role is for company admins only
+  if (req.user.role !== 'platform_admin') {
     return res.status(403).json({ 
-      message: 'You need administrator privileges to access this page.' 
+      message: 'You need platform administrator privileges to access this page.' 
     });
   }
   

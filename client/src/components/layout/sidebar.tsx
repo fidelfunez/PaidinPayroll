@@ -30,9 +30,10 @@ export function Sidebar() {
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  // Admin navigation (only show for admin users)
-  const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
-  const adminNavigation = isAdmin ? [
+  // Admin navigation (only show for platform_admin users)
+  // Regular 'admin' role is for company admins, not platform admins
+  const isPlatformAdmin = user?.role === 'platform_admin';
+  const adminNavigation = isPlatformAdmin ? [
     { name: 'Admin Console', href: '/admin', icon: Shield },
   ] : [];
 
@@ -83,7 +84,7 @@ export function Sidebar() {
         </nav>
 
         <div className="p-2 border-t space-y-2">
-          {isAdmin && adminNavigation.map((item) => {
+          {isPlatformAdmin && adminNavigation.map((item) => {
             const Icon = item.icon;
             return (
               <Link key={item.name} href={item.href}>

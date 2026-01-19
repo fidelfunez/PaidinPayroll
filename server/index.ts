@@ -24,6 +24,7 @@ console.log('💡 Run `npm run db:push` to apply schema changes');
 const allowedOrigins = [
     'https://app.paidin.io',
     process.env.FRONTEND_URL || 'http://localhost:3000', // Production frontend URL
+    process.env.NETLIFY_URL, // Netlify frontend URL (if set)
     // Development origins
     'http://localhost:5173',
     'http://localhost:3000',

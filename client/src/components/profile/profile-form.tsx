@@ -46,25 +46,7 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update profile");
-      }
+      const res = await apiRequest("PATCH", "/api/user/profile", data);
       return res.json();
     },
     onSuccess: () => {

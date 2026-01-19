@@ -115,7 +115,7 @@
   }
 
   html {
-    zoom: 0.9; /* Set default zoom to 90% for consistent sizing */
+    font-size: 13.5px; /* 84.375% of 16px (browser default) - scales all rem-based sizes */
   }
 
   body {

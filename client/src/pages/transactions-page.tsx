@@ -16,6 +16,16 @@ const TRANSACTIONS_PER_PAGE = 50;
 const SHOW_ALL_LIMIT = 9999;
 
 export default function TransactionsPage() {
+  // Force console logs - these should always appear
+  console.log('🔍 TransactionsPage component rendered');
+  console.log('🔍 TransactionsPage - Component is loading');
+  
+  // Also log to window for debugging
+  if (typeof window !== 'undefined') {
+    (window as any).__transactionsPageLoaded = true;
+    console.log('🔍 TransactionsPage - Window object updated');
+  }
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterWallet, setFilterWallet] = useState("all");
@@ -62,11 +72,13 @@ export default function TransactionsPage() {
   // Fetch transactions with pagination
   // When filters are active, fetch ALL transactions so filtering works correctly
   // Include 'page' in queryKey when using server-side pagination so pagination triggers refetch
+  console.log('🔍 Setting up transactions query with filters:', { hasActiveFilters, showAll, page });
   const { data: transactionsResponse, isLoading: transactionsLoading } = useQuery({
     queryKey: hasActiveFilters || showAll 
       ? ["transactions", showAll, hasActiveFilters]
       : ["transactions", showAll, hasActiveFilters, page],
     queryFn: async () => {
+      console.log('🚀 Transactions queryFn executing...');
       const token = localStorage.getItem('authToken');
       const headers: Record<string, string> = {};
       if (token) {
@@ -78,17 +90,42 @@ export default function TransactionsPage() {
       const limit = (showAll || hasActiveFilters) ? SHOW_ALL_LIMIT : TRANSACTIONS_PER_PAGE;
       const fetchPage = (showAll || hasActiveFilters) ? 1 : page;
       
+      console.log('📡 Fetching transactions:', { fetchPage, limit, url: `/api/accounting/transactions?page=${fetchPage}&limit=${limit}` });
+      
       const res = await fetch(`/api/accounting/transactions?page=${fetchPage}&limit=${limit}`, {
         headers,
         credentials: 'include',
       });
+      
+      console.log('📥 Transactions API response status:', res.status, res.statusText);
+      
       if (!res.ok) throw new Error("Failed to fetch transactions");
-      return res.json();
+      const data = await res.json();
+      // Debug logging - always log in production to help diagnose
+      console.log('Transactions API response:', { 
+        count: data.data?.length || 0, 
+        total: data.pagination?.total || 0,
+        hasData: !!data.data,
+        firstTransaction: data.data?.[0],
+        fullResponse: data
+      });
+      return data;
     },
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const allTransactions = transactionsResponse?.data || [];
   const serverPagination = transactionsResponse?.pagination || { total: 0, totalPages: 0, page: 1, limit: 50 };
+  
+  // Debug logging
+  console.log('Transactions page state:', {
+    hasResponse: !!transactionsResponse,
+    transactionsCount: allTransactions.length,
+    paginationTotal: serverPagination.total,
+    isLoading: transactionsLoading,
+    responseData: transactionsResponse
+  });
 
   // Fetch wallets for filter (including archived wallets for display purposes)
   const { data: wallets } = useQuery({

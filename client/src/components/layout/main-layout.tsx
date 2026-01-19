@@ -41,7 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         )}
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-0">
           {children}
         </main>
       </div>

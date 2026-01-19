@@ -96,7 +96,7 @@ export default function AccountingDashboardPage() {
   const allCompleted = checklistItems.every(item => item.completed);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto px-6 pt-6 space-y-6 [&>*:last-child]:mb-0" style={{ paddingBottom: 0 }}>
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Bitcoin Accounting</h1>
@@ -253,7 +253,7 @@ export default function AccountingDashboardPage() {
       </Card>
 
       {/* Recent Transactions */}
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow mb-0">
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
           <CardDescription>Latest Bitcoin transactions</CardDescription>

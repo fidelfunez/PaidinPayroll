@@ -8,6 +8,7 @@ import session from 'express-session';
 import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
 import { db, sqlite } from './db.js';
+import { sql } from 'drizzle-orm';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -82,8 +83,169 @@ function syncSchema() {
   }
 }
 
-// Run schema sync on startup
-syncSchema();
+// Run database schema push on startup (creates tables if they don't exist)
+async function pushSchema() {
+  try {
+    // Check if wallets table exists
+    const result = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='wallets'").get() as { name: string } | undefined;
+    
+    if (result) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Database tables already exist');
+      }
+    } else {
+      console.log('📊 Database tables not found. Creating schema...');
+      createTables();
+      console.log('✅ Database schema created successfully');
+    }
+  } catch (error: any) {
+    console.error('⚠️  Schema push warning:', error.message);
+    // Don't throw - allow server to start even if schema push fails
+    // The error will be caught when trying to use the database
+  }
+}
+
+async function createTables() {
+  // Create all tables based on schema
+  // This is a fallback if drizzle-kit push isn't available
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS companies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      logo TEXT,
+      domain TEXT,
+      primary_color TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
+      profile_photo TEXT,
+      email_verified INTEGER DEFAULT 0,
+      email_verification_token TEXT,
+      email_verification_token_expiry INTEGER,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS wallets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      wallet_type TEXT NOT NULL,
+      wallet_data TEXT NOT NULL,
+      name TEXT NOT NULL,
+      network TEXT NOT NULL DEFAULT 'mainnet',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      deleted_at INTEGER,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      wallet_id INTEGER NOT NULL REFERENCES wallets(id),
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      tx_id TEXT NOT NULL,
+      amount_btc REAL NOT NULL,
+      usd_value REAL NOT NULL,
+      fee_btc REAL DEFAULT 0 NOT NULL,
+      fee_usd REAL DEFAULT 0 NOT NULL,
+      timestamp INTEGER NOT NULL,
+      tx_type TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      confirmations INTEGER DEFAULT 0,
+      category_id INTEGER REFERENCES categories(id),
+      counterparty TEXT,
+      exchange_rate REAL NOT NULL,
+      memo TEXT,
+      notes TEXT,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      name TEXT NOT NULL,
+      quickbooks_account TEXT,
+      category_type TEXT NOT NULL,
+      is_default INTEGER DEFAULT 0 NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS purchases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      amount_btc REAL NOT NULL,
+      usd_price REAL NOT NULL,
+      purchase_date INTEGER NOT NULL,
+      notes TEXT,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS transaction_lots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+      purchase_id INTEGER NOT NULL REFERENCES purchases(id),
+      btc_amount_used REAL NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS exchange_rates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source TEXT NOT NULL DEFAULT 'coingecko',
+      currency TEXT NOT NULL DEFAULT 'USD',
+      rate REAL NOT NULL,
+      timestamp INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      UNIQUE(source, currency, timestamp)
+    );
+  `);
+}
+
+// Fix exchange_rates table if it has wrong column name
+function fixExchangeRatesTable() {
+  try {
+    const tableInfo = sqlite.prepare("PRAGMA table_info(exchange_rates)").all() as Array<{ name: string; type: string }>;
+    const columnNames = tableInfo.map(col => col.name);
+    
+    // Check if table has 'date' column instead of 'timestamp'
+    if (columnNames.includes('date') && !columnNames.includes('timestamp')) {
+      console.log('📊 Fixing exchange_rates table: renaming date column to timestamp...');
+      sqlite.exec(`
+        ALTER TABLE exchange_rates RENAME COLUMN date TO timestamp;
+      `);
+      console.log('✅ Fixed exchange_rates table');
+    }
+  } catch (error: any) {
+    // Table might not exist yet, that's okay
+    if (!error.message?.includes('no such table')) {
+      console.error('⚠️  Error fixing exchange_rates table:', error.message);
+    }
+  }
+}
+
+// Run schema push on startup (wrapped to handle async)
+(async () => {
+  await pushSchema();
+  // Fix exchange_rates table if needed
+  fixExchangeRatesTable();
+  // Run schema sync on startup (for column additions)
+  syncSchema();
+})().catch((error) => {
+  console.error('Failed to initialize database schema:', error);
+  // Continue anyway - server will start but database operations may fail
+});
 
 // CORS configuration
 const allowedOrigins: (string | RegExp)[] = [

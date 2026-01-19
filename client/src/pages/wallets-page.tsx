@@ -87,14 +87,54 @@ export default function WalletsPage() {
   });
 
   // Fetch transactions mutation
+  // Note: This mutation will continue even if the component unmounts (React Query handles this)
   const fetchTransactionsMutation = useMutation({
     mutationFn: async (walletId: number) => {
-      const res = await apiRequest("POST", `/api/accounting/wallets/${walletId}/fetch-transactions`);
-      const data = await res.json();
-      return data;
+      // Use fetch directly instead of apiRequest to ensure it doesn't get cancelled
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch(`/api/accounting/wallets/${walletId}/fetch-transactions`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        // Don't use AbortController - let the request complete even if component unmounts
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to fetch transactions' }));
+        throw new Error(errorData.error || 'Failed to fetch transactions');
+      }
+      
+      return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      // Invalidate and refetch all transaction queries (different pages use different query keys)
+      // Use predicate to match any query that starts with "transactions" or "/api/accounting/transactions"
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && (
+            key[0] === "transactions" || 
+            (typeof key[0] === "string" && key[0].includes("/api/accounting/transactions"))
+          );
+        }
+      });
+      // Force immediate refetch
+      queryClient.refetchQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && (
+            key[0] === "transactions" || 
+            (typeof key[0] === "string" && key[0].includes("/api/accounting/transactions"))
+          );
+        }
+      });
       setFetchingWalletId(null);
       
       const { stats } = data;

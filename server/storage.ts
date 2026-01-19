@@ -11,6 +11,8 @@ import { eq, or, sql } from "drizzle-orm";
 import session from "express-session";
 import connectSqlite3 from "connect-sqlite3";
 import { getDatabasePath } from './db-path';
+import path from 'path';
+import fs from 'fs';
 
 const SQLiteSessionStore = connectSqlite3(session);
 
@@ -40,10 +42,30 @@ class Storage implements IStorage {
 
   constructor() {
     const dbPath = getDatabasePath();
-    this.sessionStore = new SQLiteSessionStore({
-      db: dbPath,
-      table: 'session',
-    });
+    // For sessions, use a separate file in the same directory
+    const sessionDbPath = dbPath.replace('paidin.db', 'sessions.db');
+    const sessionDbDir = path.dirname(sessionDbPath);
+    
+    // Ensure directory exists
+    try {
+      if (!fs.existsSync(sessionDbDir)) {
+        fs.mkdirSync(sessionDbDir, { recursive: true });
+      }
+    } catch (error: any) {
+      console.error('Failed to create session database directory:', error);
+    }
+    
+    try {
+      this.sessionStore = new SQLiteSessionStore({
+        db: sessionDbPath,
+        table: 'session',
+      });
+    } catch (error: any) {
+      console.error('Failed to initialize session store:', error);
+      // Fallback to memory store if SQLite session store fails
+      // Note: MemoryStore warning is expected in production, but it's better than crashing
+      this.sessionStore = undefined; // Will use default MemoryStore from express-session
+    }
   }
 
   // ===========================

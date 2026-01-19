@@ -126,7 +126,14 @@ router.get("/wallets", async (req, res) => {
     res.json(userWallets);
   } catch (error: any) {
     console.error("Error fetching wallets:", error);
-    res.status(500).json({ error: "Failed to fetch wallets" });
+    console.error("Error stack:", error.stack);
+    console.error("Request user:", req.user ? { id: req.user.id, companyId: req.user.companyId } : 'no user');
+    res.status(500).json({ 
+      error: "Failed to fetch wallets",
+      message: error.message || "Unknown error",
+      // Include error details in production for debugging
+      details: process.env.NODE_ENV === 'production' ? error.message : error.stack
+    });
   }
 });
 
@@ -175,26 +182,43 @@ router.post("/wallets", async (req, res) => {
     let network: string;
     let inputType: string;
 
-    if (isXpub) {
-      validationResult = validateXpub(trimmedInput);
-      if (!validationResult.valid) {
-        return res.status(400).json({
-          valid: false,
-          error: validationResult.error || 'Invalid extended public key'
-        });
+    // Validate Bitcoin address or xpub with error handling
+    try {
+      if (isXpub) {
+        if (typeof validateXpub !== 'function') {
+          throw new Error('Bitcoin validator module not loaded. validateXpub is not available.');
+        }
+        validationResult = validateXpub(trimmedInput);
+        if (!validationResult.valid) {
+          return res.status(400).json({
+            valid: false,
+            error: validationResult.error || 'Invalid extended public key'
+          });
+        }
+        network = validationResult.network || 'mainnet';
+        inputType = 'xpub';
+      } else {
+        if (typeof validateBitcoinAddress !== 'function') {
+          throw new Error('Bitcoin validator module not loaded. validateBitcoinAddress is not available.');
+        }
+        validationResult = validateBitcoinAddress(trimmedInput);
+        if (!validationResult.valid) {
+          return res.status(400).json({
+            valid: false,
+            error: validationResult.error || 'Invalid Bitcoin address'
+          });
+        }
+        network = validationResult.network || 'mainnet';
+        inputType = 'address';
       }
-      network = validationResult.network || 'mainnet';
-      inputType = 'xpub';
-    } else {
-      validationResult = validateBitcoinAddress(trimmedInput);
-      if (!validationResult.valid) {
-        return res.status(400).json({
-          valid: false,
-          error: validationResult.error || 'Invalid Bitcoin address'
-        });
-      }
-      network = validationResult.network || 'mainnet';
-      inputType = 'address';
+    } catch (validationError: any) {
+      console.error("Validation error:", validationError);
+      return res.status(500).json({
+        valid: false,
+        error: "Validation failed",
+        message: validationError.message || "Unable to validate Bitcoin address or xpub",
+        details: process.env.NODE_ENV === 'production' ? validationError.message : validationError.stack
+      });
     }
 
     // Check for duplicates (check ALL wallets, including archived)
@@ -246,16 +270,29 @@ router.post("/wallets", async (req, res) => {
   } catch (error: any) {
     console.error("Error creating wallet:", error);
     console.error("Error stack:", error.stack);
+    console.error("Error name:", error.name);
     console.error("Request user:", req.user ? { id: req.user.id, companyId: req.user.companyId, company: req.user.company } : 'no user');
     console.error("Request body:", { input: req.body?.input?.substring(0, 20) + '...', name: req.body?.name });
+    
+    // Check for specific error types
+    let errorMessage = error.message || "Unknown error";
+    if (error.code === 'SQLITE_CONSTRAINT') {
+      errorMessage = "Database constraint error. This wallet may already exist.";
+    } else if (error.message?.includes('Cannot find module')) {
+      errorMessage = `Module not found: ${error.message}`;
+    } else if (error.message?.includes('bitcoin-validator')) {
+      errorMessage = "Bitcoin validation module not available. Please check server configuration.";
+    }
     
     // Return error with message in production too (for debugging)
     res.status(500).json({ 
       valid: false,
       error: "Failed to create wallet",
-      message: error.message || "Unknown error",
+      message: errorMessage,
       // Include error details in production for now to help debug
-      details: error.message
+      details: process.env.NODE_ENV === 'production' ? errorMessage : error.stack,
+      errorCode: error.code,
+      errorName: error.name
     });
   }
 });
@@ -417,6 +454,7 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
 
     // Separate transactions into: new, already in this wallet, or in different wallet
     const newTransactions: typeof fetchedTransactions = [];
+    const skippedTxIds: string[] = [];
     let reassignedCount = 0;
     let skippedCount = 0;
 
@@ -429,6 +467,10 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
       } else if (existing.walletId === walletId) {
         // Already belongs to this wallet - skip
         skippedCount++;
+        skippedTxIds.push(tx.txId);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`Skipping transaction ${tx.txId.substring(0, 16)}... (already in wallet ${walletId})`);
+        }
       } else {
         // Exists but belongs to different wallet - reassign it
         try {
@@ -448,6 +490,7 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(`${newTransactions.length} new transactions, ${reassignedCount} reassigned, ${skippedCount} already in this wallet`);
+      console.log(`Fetched ${fetchedTransactions.length} total, expected to have ${newTransactions.length + skippedCount + reassignedCount} accounted for`);
     }
 
     // Insert new transactions
@@ -480,6 +523,14 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
       }
     }
 
+    // Verify the math: fetched should equal added + skipped + reassigned + failed
+    const accountedFor = addedCount + skippedCount + reassignedCount + failedCount;
+    const discrepancy = fetchedTransactions.length - accountedFor;
+    
+    if (discrepancy !== 0 && process.env.NODE_ENV !== 'production') {
+      console.warn(`⚠️  Transaction count mismatch! Fetched: ${fetchedTransactions.length}, Accounted for: ${accountedFor}, Missing: ${discrepancy}`);
+    }
+
     const response = {
       success: true,
       stats: {
@@ -487,8 +538,13 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
         added: addedCount,
         reassigned: reassignedCount,
         skipped: skippedCount,
-        failed: failedCount
-      }
+        failed: failedCount,
+        accountedFor: accountedFor,
+        discrepancy: discrepancy
+      },
+      ...(process.env.NODE_ENV !== 'production' && skippedTxIds.length > 0 ? {
+        skippedTxIds: skippedTxIds.map(id => id.substring(0, 16) + '...')
+      } : {})
     };
 
     if (failedCount > 0) {
@@ -547,7 +603,10 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
 // Get all transactions for current user's company (with pagination)
 router.get("/transactions", async (req, res) => {
   try {
+    console.log('📥 GET /transactions - Request received');
+    
     if (!req.user) {
+      console.log('❌ GET /transactions - Not authenticated');
       return res.status(401).json({ error: "Not authenticated" });
     }
     
@@ -557,10 +616,14 @@ router.get("/transactions", async (req, res) => {
       return res.status(400).json({ error: "User account is not associated with a company. Please contact support." });
     }
 
+    console.log('📊 GET /transactions - Company ID:', companyId);
+
     // Pagination parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = (page - 1) * limit;
+
+    console.log('📊 GET /transactions - Pagination:', { page, limit, offset });
 
     // Get total count of transactions for this company
     const [{ count }] = await db
@@ -571,6 +634,8 @@ router.get("/transactions", async (req, res) => {
     const totalTransactions = Number(count);
     const totalPages = Math.ceil(totalTransactions / limit);
 
+    console.log('📊 GET /transactions - Total transactions in DB:', totalTransactions);
+
     // Get paginated transactions
     const companyTransactions = await db
       .select()
@@ -579,6 +644,8 @@ router.get("/transactions", async (req, res) => {
       .orderBy(desc(transactions.timestamp))
       .limit(limit)
       .offset(offset);
+
+    console.log('📊 GET /transactions - Returning transactions:', companyTransactions.length);
 
     // Return paginated response
     res.json({

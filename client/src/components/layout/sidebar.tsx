@@ -156,7 +156,7 @@ export function Sidebar() {
             <img 
               src="/favicon/paidin-logo.png" 
               alt="PaidIn Logo" 
-              className="h-10 w-10 rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover -ml-[6px]"
             />
             <div>
               <h2 className="text-xl font-bold text-gray-900">PaidIn</h2>

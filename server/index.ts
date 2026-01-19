@@ -139,7 +139,7 @@ app.use(session({
 app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.static(path.join(__dirname, '../dist/public')));
 
-// Register all module routes
+// Register all module routes (must be before catch-all route)
 registerAllRoutes(app);
 
 // Health check endpoint
@@ -148,8 +148,9 @@ app.get('/health', (req, res) => {
 });
 
 // Static file handler - ONLY for non-API routes
+// This catch-all must come AFTER all API routes are registered
 app.get('*', (req, res) => {
-  // Skip API routes
+  // Skip API routes - these should have been handled by registerAllRoutes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }

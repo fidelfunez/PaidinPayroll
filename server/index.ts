@@ -25,6 +25,11 @@ const allowedOrigins = [
     'https://app.paidin.io',
     process.env.FRONTEND_URL || 'http://localhost:3000', // Production frontend URL
     process.env.NETLIFY_URL, // Netlify frontend URL (if set)
+    // Allow all Netlify preview deployments (for development/testing)
+    ...(process.env.NODE_ENV !== 'production' ? [] : [
+      /^https:\/\/.*\.netlify\.app$/, // All Netlify preview deployments
+      /^https:\/\/.*\.netlify\.com$/  // Netlify subdomains
+    ]),
     // Development origins
     'http://localhost:5173',
     'http://localhost:3000',
@@ -32,8 +37,30 @@ const allowedOrigins = [
     'http://localhost:8080'
 ].filter(Boolean); // Remove undefined values
 
+// CORS with origin validation
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check against allowed origins
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -46,25 +46,48 @@ class Storage implements IStorage {
     const sessionDbPath = dbPath.replace('paidin.db', 'sessions.db');
     const sessionDbDir = path.dirname(sessionDbPath);
     
+    console.log(`🔍 Initializing session store...`);
+    console.log(`   Session DB path: ${sessionDbPath}`);
+    console.log(`   Session DB directory: ${sessionDbDir}`);
+    
     // Ensure directory exists
     try {
       if (!fs.existsSync(sessionDbDir)) {
+        console.log(`📁 Creating session database directory: ${sessionDbDir}`);
         fs.mkdirSync(sessionDbDir, { recursive: true });
+        console.log(`✅ Session database directory created: ${sessionDbDir}`);
+      } else {
+        console.log(`✅ Session database directory exists: ${sessionDbDir}`);
+      }
+      
+      // Verify directory is writable
+      try {
+        fs.accessSync(sessionDbDir, fs.constants.W_OK);
+        console.log(`✅ Session database directory is writable: ${sessionDbDir}`);
+      } catch (accessError: any) {
+        console.error(`❌ Session database directory is NOT writable: ${sessionDbDir}`, accessError);
+        throw new Error(`Session database directory is not writable: ${sessionDbDir}`);
       }
     } catch (error: any) {
-      console.error('Failed to create session database directory:', error);
+      console.error('❌ Failed to create/verify session database directory:', error);
+      // Continue anyway - will fall back to memory store
     }
     
     try {
+      console.log(`📂 Opening session database at: ${sessionDbPath}`);
       this.sessionStore = new SQLiteSessionStore({
         db: sessionDbPath,
         table: 'session',
       });
+      console.log(`✅ Session store initialized successfully`);
     } catch (error: any) {
-      console.error('Failed to initialize session store:', error);
+      console.error('❌ Failed to initialize session store:', error);
+      console.error('   Error details:', error.message);
+      console.error('   Stack:', error.stack);
       // Fallback to memory store if SQLite session store fails
       // Note: MemoryStore warning is expected in production, but it's better than crashing
       this.sessionStore = undefined; // Will use default MemoryStore from express-session
+      console.log('⚠️  Falling back to MemoryStore for sessions');
     }
   }
 

@@ -1,7 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Get backend URL from environment or use relative path for development
-const getBackendUrl = () => {
+export const getBackendUrl = () => {
   if (typeof window !== 'undefined') {
     // Client-side: use environment variable or default to relative path for development
     return import.meta.env.VITE_BACKEND_URL || '';

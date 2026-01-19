@@ -14,6 +14,8 @@ export function registerAllRoutes(app: Express): Server {
   
   // Register accounting routes
   app.use("/api/accounting", accountingRoutes);
+  console.log('✅ Accounting routes registered at /api/accounting');
+  console.log('   Available routes include: POST /api/accounting/wallets/:id/fetch-transactions');
 
   // Register admin routes
   app.use("/api/admin", adminRoutes);

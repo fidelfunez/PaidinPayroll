@@ -99,10 +99,25 @@ export default function TransactionsPage() {
       
       console.log('📥 Transactions API response status:', res.status, res.statusText);
       
-      if (!res.ok) throw new Error("Failed to fetch transactions");
-      const data = await res.json();
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Transactions API error:', { status: res.status, statusText: res.statusText, errorText });
+        throw new Error(`Failed to fetch transactions: ${res.status} ${res.statusText}`);
+      }
+      
+      const responseText = await res.text();
+      console.log('📄 Raw API response text:', responseText.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON response:', parseError, 'Response text:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
+      
       // Debug logging - always log in production to help diagnose
-      console.log('Transactions API response:', { 
+      console.log('✅ Transactions API response:', { 
         count: data.data?.length || 0, 
         total: data.pagination?.total || 0,
         hasData: !!data.data,

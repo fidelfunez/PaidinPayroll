@@ -355,18 +355,31 @@ router.patch("/wallets/:id/archive", async (req, res) => {
   }
 });
 
+// Test route to verify routing works
+router.get("/test-route", async (req, res) => {
+  res.json({ message: "Accounting routes are working", timestamp: new Date().toISOString() });
+});
+
 // Fetch transactions from blockchain for a wallet
 router.post("/wallets/:id/fetch-transactions", async (req, res) => {
+  console.log(`[API] ===== FETCH TRANSACTIONS ROUTE HIT =====`);
+  console.log(`[API] POST /api/accounting/wallets/:id/fetch-transactions called with id: ${req.params.id}`);
+  console.log(`[API] Full request path: ${req.path}, Original URL: ${req.originalUrl}`);
+  console.log(`[API] Request method: ${req.method}`);
+  console.log(`[API] Request headers:`, JSON.stringify(req.headers, null, 2));
   try {
     const companyId = req.user?.companyId;
     
     if (!companyId) {
+      console.log(`[API] No companyId found for user`);
       return res.status(401).json({ error: "Not authenticated" });
     }
 
     const walletId = parseInt(req.params.id);
+    console.log(`[API] Parsed walletId: ${walletId}, companyId: ${companyId}`);
     
     if (isNaN(walletId)) {
+      console.log(`[API] Invalid wallet ID: ${req.params.id}`);
       return res.status(400).json({ error: "Invalid wallet ID" });
     }
 
@@ -382,7 +395,10 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
       )
       .limit(1);
 
+    console.log(`[API] Wallet lookup result:`, wallet ? `Found wallet ${wallet.id}` : 'Wallet not found');
+
     if (!wallet) {
+      console.log(`[API] Wallet ${walletId} not found for company ${companyId}`);
       return res.status(404).json({ error: "Wallet not found" });
     }
 

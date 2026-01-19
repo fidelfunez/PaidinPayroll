@@ -5,6 +5,14 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Exclude API routes from SPA redirect - they should go to backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://paidin-app.fly.dev/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback for all other routes
 [[redirects]]
   from = "/*"
   to = "/index.html"

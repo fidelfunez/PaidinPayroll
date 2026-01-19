@@ -9,6 +9,7 @@ import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
 import { db, sqlite } from './db.js';
 import { sql } from 'drizzle-orm';
+import { storage } from './storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,9 +17,25 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
+// Global error handlers to catch unhandled errors
+process.on('uncaughtException', (error) => {
+  console.error('❌ UNCAUGHT EXCEPTION:', error);
+  console.error('   Error name:', error.name);
+  console.error('   Error message:', error.message);
+  console.error('   Error stack:', error.stack);
+  // Don't exit - let the server try to continue
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ UNHANDLED REJECTION at:', promise);
+  console.error('   Reason:', reason);
+  // Don't exit - let the server try to continue
+});
+
 // Schema sync: Ensure required columns exist
 function syncSchema() {
   try {
+    console.log('📊 Syncing schema - checking for missing columns...');
     // Check if email_verified column exists in users table
     const tableInfo = sqlite.prepare("PRAGMA table_info(users)").all() as Array<{ name: string; type: string }>;
     const columnNames = tableInfo.map(col => col.name);
@@ -86,22 +103,21 @@ function syncSchema() {
 // Run database schema push on startup (creates tables if they don't exist)
 async function pushSchema() {
   try {
+    console.log('📊 Checking if database tables exist...');
     // Check if wallets table exists
     const result = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='wallets'").get() as { name: string } | undefined;
     
     if (result) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ Database tables already exist');
-      }
+      console.log('✅ Database tables already exist');
     } else {
       console.log('📊 Database tables not found. Creating schema...');
       createTables();
       console.log('✅ Database schema created successfully');
     }
   } catch (error: any) {
-    console.error('⚠️  Schema push warning:', error.message);
-    // Don't throw - allow server to start even if schema push fails
-    // The error will be caught when trying to use the database
+    console.error('❌ Schema push error:', error.message);
+    console.error('   Error details:', error);
+    throw error; // Re-throw to be caught by the async handler
   }
 }
 
@@ -216,6 +232,7 @@ async function createTables() {
 // Fix exchange_rates table if it has wrong column name
 function fixExchangeRatesTable() {
   try {
+    console.log('📊 Checking exchange_rates table structure...');
     const tableInfo = sqlite.prepare("PRAGMA table_info(exchange_rates)").all() as Array<{ name: string; type: string }>;
     const columnNames = tableInfo.map(col => col.name);
     
@@ -226,24 +243,49 @@ function fixExchangeRatesTable() {
         ALTER TABLE exchange_rates RENAME COLUMN date TO timestamp;
       `);
       console.log('✅ Fixed exchange_rates table');
+    } else {
+      console.log('✅ Exchange_rates table structure is correct');
     }
   } catch (error: any) {
     // Table might not exist yet, that's okay
-    if (!error.message?.includes('no such table')) {
-      console.error('⚠️  Error fixing exchange_rates table:', error.message);
+    if (error.message?.includes('no such table')) {
+      console.log('ℹ️  Exchange_rates table does not exist yet (will be created if needed)');
+    } else {
+      console.error('❌ Error fixing exchange_rates table:', error.message);
+      console.error('   Error details:', error);
     }
   }
 }
 
 // Run schema push on startup (wrapped to handle async)
 (async () => {
-  await pushSchema();
-  // Fix exchange_rates table if needed
-  fixExchangeRatesTable();
-  // Run schema sync on startup (for column additions)
-  syncSchema();
+  try {
+    console.log('📊 Starting database schema initialization...');
+    await pushSchema();
+    console.log('✅ Schema push completed');
+    
+    // Fix exchange_rates table if needed
+    console.log('📊 Checking exchange_rates table...');
+    fixExchangeRatesTable();
+    console.log('✅ Exchange rates table check completed');
+    
+    // Run schema sync on startup (for column additions)
+    console.log('📊 Running schema sync...');
+    syncSchema();
+    console.log('✅ Schema sync completed');
+    console.log('✅ Database schema initialization completed successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to initialize database schema:', error);
+    console.error('   Error name:', error?.name);
+    console.error('   Error message:', error?.message);
+    console.error('   Error stack:', error?.stack);
+    // Continue anyway - server will start but database operations may fail
+  }
 })().catch((error) => {
-  console.error('Failed to initialize database schema:', error);
+  console.error('❌ Unhandled error in schema initialization:', error);
+  console.error('   Error name:', error?.name);
+  console.error('   Error message:', error?.message);
+  console.error('   Error stack:', error?.stack);
   // Continue anyway - server will start but database operations may fail
 });
 
@@ -304,10 +346,12 @@ if (!SESSION_SECRET) {
   throw new Error('SESSION_SECRET or JWT_SECRET environment variable is required');
 }
 
+// Session configuration - use SQLite store if available, otherwise fall back to MemoryStore
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: storage.sessionStore || undefined, // Will use MemoryStore if sessionStore is undefined
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
     httpOnly: true,
@@ -319,6 +363,17 @@ app.use(session({
 // Middleware
 app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.static(path.join(__dirname, '../dist/public')));
+
+// Debug: Log all incoming requests
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    console.log(`[REQUEST] ${req.method} ${req.originalUrl}`);
+    if (req.method === 'OPTIONS') {
+      console.log(`[CORS] Preflight request for ${req.originalUrl}`);
+    }
+  }
+  next();
+});
 
 // Register all module routes (must be before catch-all route)
 registerAllRoutes(app);

@@ -29,19 +29,29 @@ export function getDatabasePath() {
     const flyVolumePath = '/app/data/paidin.db';
     const flyVolumeDir = path.dirname(flyVolumePath);
     
+    console.log(`🔍 Checking Fly.io volume path: ${flyVolumeDir}`);
     try {
       if (!fs.existsSync(flyVolumeDir)) {
+        console.log(`📁 Creating Fly.io volume directory: ${flyVolumeDir}`);
         fs.mkdirSync(flyVolumeDir, { recursive: true });
+        console.log(`✅ Created directory: ${flyVolumeDir}`);
+      } else {
+        console.log(`✅ Directory exists: ${flyVolumeDir}`);
       }
+      
       // Check if directory is writable
       fs.accessSync(flyVolumeDir, fs.constants.W_OK);
+      console.log(`✅ Directory is writable: ${flyVolumeDir}`);
+      console.log(`📂 Using database path: ${flyVolumePath}`);
       return flyVolumePath;
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('Fly.io volume path not available, using local path:', error);
-      }
+    } catch (error: any) {
+      console.error('❌ Fly.io volume path not available:', error.message);
+      console.error('   Attempted path:', flyVolumePath);
+      console.error('   Directory exists:', fs.existsSync(flyVolumeDir));
       // Fallback to current directory if volume mount doesn't work
-      return './paidin.db';
+      const fallbackPath = './paidin.db';
+      console.log(`⚠️  Falling back to: ${fallbackPath}`);
+      return fallbackPath;
     }
   }
 

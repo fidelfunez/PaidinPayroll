@@ -99,7 +99,16 @@ export default function WalletsPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const res = await fetch(`/api/accounting/wallets/${walletId}/fetch-transactions`, {
+      // Use apiRequest helper to ensure consistent URL handling
+      // But use fetch directly to avoid AbortController cancellation
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+      const fullUrl = `${backendUrl}/api/accounting/wallets/${walletId}/fetch-transactions`;
+      
+      console.log('🚀 Fetching transactions for wallet:', walletId);
+      console.log('🚀 Backend URL:', backendUrl || '(using relative path)');
+      console.log('🚀 Full URL:', fullUrl);
+      
+      const res = await fetch(fullUrl, {
         method: 'POST',
         headers,
         credentials: 'include',

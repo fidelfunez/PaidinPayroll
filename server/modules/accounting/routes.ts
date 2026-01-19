@@ -11,8 +11,12 @@ import {
   hasTransactionLots, 
   getTransactionLots
 } from "../../services/cost-basis-service.js";
+import { requireAuth } from "../../auth.js";
 
 const router = Router();
+
+// Apply authentication middleware to all accounting routes
+router.use(requireAuth);
 
 // ===========================
 // WALLETS
@@ -236,9 +240,12 @@ router.post("/wallets", async (req, res) => {
     });
   } catch (error: any) {
     console.error("Error creating wallet:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({ 
       valid: false,
-      error: "Failed to create wallet" 
+      error: "Failed to create wallet",
+      message: error.message || "Unknown error",
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

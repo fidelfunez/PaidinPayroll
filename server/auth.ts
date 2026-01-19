@@ -880,12 +880,24 @@ export function setupAuth(app: Express) {
 
 // Middleware to require authentication
 export function requireAuth(req: any, res: any, next: any) {
-  if (!req.user) {
-    return res.status(401).json({ 
-      message: 'Please log in to access this page.' 
+  try {
+    if (!req.user) {
+      return res.status(401).json({ 
+        message: 'Please log in to access this page.' 
+      });
+    }
+    // Ensure companyId is set
+    if (!req.user.companyId && req.user.company?.id) {
+      req.user.companyId = req.user.company.id;
+    }
+    next();
+  } catch (error: any) {
+    console.error('[requireAuth] Error in authentication middleware:', error);
+    return res.status(500).json({ 
+      error: 'Authentication error',
+      message: error.message 
     });
   }
-  next();
 }
 
 // Middleware to require admin role

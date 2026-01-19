@@ -98,9 +98,14 @@ router.post("/wallets/validate", async (req, res) => {
 // Query param: ?includeArchived=true to include archived wallets (for display purposes)
 router.get("/wallets", async (req, res) => {
   try {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const companyId = req.user.companyId || req.user.company?.id;
+    if (!companyId) {
+      console.error("User authenticated but no companyId:", { userId: req.user.id, user: req.user });
+      return res.status(400).json({ error: "User account is not associated with a company. Please contact support." });
     }
 
     const includeArchived = req.query.includeArchived === 'true';
@@ -538,9 +543,14 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
 // Get all transactions for current user's company (with pagination)
 router.get("/transactions", async (req, res) => {
   try {
-    const companyId = req.user?.companyId;
-    if (!companyId) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const companyId = req.user.companyId || req.user.company?.id;
+    if (!companyId) {
+      console.error("User authenticated but no companyId:", { userId: req.user.id, user: req.user });
+      return res.status(400).json({ error: "User account is not associated with a company. Please contact support." });
     }
 
     // Pagination parameters

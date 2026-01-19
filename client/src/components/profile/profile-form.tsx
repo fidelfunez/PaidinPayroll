@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { User, Upload, X, Save, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +18,6 @@ const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  bio: z.string().optional(),
   profilePhoto: z.string().optional(),
 });
 
@@ -42,17 +40,36 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       email: user?.email || "",
-      bio: user?.bio || "",
       profilePhoto: user?.profilePhoto || undefined,
     },
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return await apiRequest("PATCH", "/api/user/profile", data);
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update profile");
+      }
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
@@ -108,11 +125,11 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
         description: `Reduced from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)} (${compressionRatio}% smaller)`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Image processing failed:', error);
       toast({
         title: "Image processing failed",
-        description: "Please try again with a different image.",
+        description: error.message || "Please try again with a different image. If the issue persists, try a JPEG or PNG file.",
         variant: "destructive",
       });
     } finally {
@@ -236,27 +253,9 @@ export function ProfileForm({ title = "Profile Settings", showCard = true }: Pro
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bio (Optional)</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Tell us about yourself..."
-                  rows={4}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full bg-orange-600 hover:bg-orange-700 text-white"
           disabled={updateProfileMutation.isPending}
         >
           {updateProfileMutation.isPending ? (

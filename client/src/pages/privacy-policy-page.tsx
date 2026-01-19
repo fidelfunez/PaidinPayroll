@@ -10,16 +10,9 @@ export default function PrivacyPolicyPage() {
   const { user } = useAuth();
   const { isCollapsed } = useSidebar();
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
-      <Sidebar />
-      <div className={`flex-1 flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
-        <Header 
-          title="Privacy Policy" 
-          subtitle="How we collect, use, and protect your information"
-        />
-        
-        <main className="p-4 lg:p-6 space-y-6 max-w-4xl">
+  // Content component (shared for both authenticated and public views)
+  const PrivacyContent = () => (
+    <main className={`p-4 lg:p-6 space-y-6 max-w-4xl ${user ? '' : 'mx-auto mt-8'}`}>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
@@ -201,8 +194,34 @@ export default function PrivacyPolicyPage() {
             </CardContent>
           </Card>
         </main>
-        
+  );
+
+  // If user is authenticated, show full app layout
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 flex">
+        <Sidebar />
+        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16 lg:ml-16' : 'ml-16 lg:ml-64'}`}>
+          <Header 
+            title="Privacy Policy" 
+            subtitle="How we collect, use, and protect your information"
+          />
+          <PrivacyContent />
         <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // Public standalone version (no sidebar/header)
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-background to-gray-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
+          <p className="text-gray-600">How we collect, use, and protect your information</p>
+        </div>
+        <PrivacyContent />
       </div>
     </div>
   );

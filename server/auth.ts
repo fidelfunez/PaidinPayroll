@@ -3,7 +3,11 @@ import jwt from "jsonwebtoken";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, users } from "@shared/schema";
+import { sendVerificationEmail } from "./utils/email-service";
+import { db } from "./db";
+import { companies } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -19,7 +23,10 @@ declare global {
 }
 
 const scryptAsync = promisify(scrypt);
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'fallback-secret';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET or SESSION_SECRET environment variable is required');
+}
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -55,6 +62,21 @@ function verifyToken(token: string): any {
   }
 }
 
+// Generate email verification token
+function generateVerificationToken(): string {
+  return randomBytes(32).toString('hex');
+}
+
+// Generate company slug from name
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+}
+
 export function setupAuth(app: Express) {
   // JWT middleware to extract user from token
   app.use(async (req, res, next) => {
@@ -78,16 +100,205 @@ export function setupAuth(app: Express) {
                   primaryColor: company.primaryColor || '#f97316',
                 }
               };
+            } else {
+              console.warn(`[JWT Middleware] User ${user.id} is active but company ${user.companyId} not found`);
+            }
+          } else {
+            if (!user) {
+              console.warn(`[JWT Middleware] User ${decoded.id} not found in database`);
+            } else if (!user.isActive) {
+              console.warn(`[JWT Middleware] User ${user.id} is not active`);
             }
           }
         } catch (error) {
-          console.error('Error fetching user from token:', error);
+          console.error('[JWT Middleware] Error fetching user from token:', error);
         }
+      } else {
+        if (!decoded) {
+          console.warn('[JWT Middleware] Token verification failed');
+        } else if (!decoded.id) {
+          console.warn('[JWT Middleware] Token decoded but missing user id');
+        }
+      }
+    } else {
+      // Only log missing auth header for protected routes to reduce noise
+      if (req.path.startsWith('/api/') && !req.path.includes('/signup') && !req.path.includes('/login') && !req.path.includes('/verify-email')) {
+        console.log(`[JWT Middleware] No Authorization header for ${req.method} ${req.path}`);
       }
     }
     next();
   });
 
+  // New signup endpoint: Creates company + admin user with email verification
+  app.post("/api/signup", async (req, res) => {
+    try {
+      const { 
+        firstName, 
+        lastName, 
+        email, 
+        username, 
+        password, 
+        companyName,
+        plan = 'free' // 'free', 'starter', 'growth', 'scale'
+      } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !username || !password || !companyName) {
+        return res.status(400).json({ 
+          message: "All fields are required: firstName, lastName, email, username, password, companyName" 
+        });
+      }
+
+      // Check if username exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: "This username is already taken. Please try a different username." 
+        });
+      }
+
+      // Check if email exists
+      const existingEmail = await storage.getUserByEmail(email);
+      if (existingEmail) {
+        return res.status(400).json({ 
+          message: "This email is already registered. Please use a different email or log in." 
+        });
+      }
+
+      // Generate company slug and ensure uniqueness
+      let baseSlug = generateSlug(companyName);
+      let companySlug = baseSlug;
+      let counter = 1;
+      
+      // Check for slug conflicts
+      while (true) {
+        const existingCompany = await db.select()
+          .from(companies)
+          .where(eq(companies.slug, companySlug))
+          .limit(1);
+        
+        if (existingCompany.length === 0) break;
+        companySlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
+      // Determine subscription details based on plan
+      const planConfig = {
+        free: { maxEmployees: 3, monthlyFee: 0, subscriptionStatus: 'active' },
+        starter: { maxEmployees: 10, monthlyFee: 149.99, subscriptionStatus: 'trial' },
+        growth: { maxEmployees: 50, monthlyFee: 499.99, subscriptionStatus: 'trial' },
+        scale: { maxEmployees: 100, monthlyFee: 999.99, subscriptionStatus: 'trial' },
+      };
+
+      const selectedPlan = planConfig[plan as keyof typeof planConfig] || planConfig.free;
+
+      // Create company - pass createdAt/updatedAt as Date objects (even though omitted from insertCompanySchema, we pass them with 'as any')
+      const companyData: any = {
+        name: companyName,
+        slug: companySlug,
+        isActive: true,
+        subscriptionPlan: plan,
+        subscriptionStatus: selectedPlan.subscriptionStatus,
+        maxEmployees: selectedPlan.maxEmployees,
+        monthlyFee: selectedPlan.monthlyFee,
+        createdAt: new Date(), // Pass Date object explicitly to avoid default number/Date mismatch
+        updatedAt: new Date(), // Pass Date object explicitly
+      };
+
+      // Only add trial dates if not free plan
+      if (plan !== 'free') {
+        const now = new Date();
+        const trialEnd = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
+        companyData.trialStartDate = now;
+        companyData.trialEndDate = trialEnd;
+      }
+
+      const company = await storage.createCompany(companyData);
+
+      // Note: Stripe customer creation removed for accounting-focused MVP
+      // Can be re-added later if billing integration is needed
+
+      // Generate verification token
+      const verificationToken = generateVerificationToken();
+      const tokenExpiryTimestamp = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      const tokenExpiry = new Date(tokenExpiryTimestamp);
+
+      // Verify tokenExpiry is a valid Date
+      if (!(tokenExpiry instanceof Date) || isNaN(tokenExpiry.getTime())) {
+        throw new Error('Failed to create valid token expiry date');
+      }
+
+      // Create admin user (not verified yet)
+      const userData: any = {
+        firstName,
+        lastName,
+        email,
+        username,
+        password: await hashPassword(password),
+        companyId: company.id,
+        role: 'admin' as const, // Only admins can sign up
+        isActive: true,
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiry: tokenExpiry,
+        monthlySalary: null,
+        createdAt: new Date(), // Pass Date object explicitly to avoid default number/Date mismatch
+      };
+
+      const user = await storage.createUser(userData);
+
+      // Use localhost for development, production URL otherwise
+      const verificationUrl = process.env.NODE_ENV === 'development'
+        ? `http://localhost:5173/verify-email/${verificationToken}`
+        : `${process.env.APP_URL || 'https://app.paidin.io'}/verify-email/${verificationToken}`;
+      
+      try {
+        await sendVerificationEmail({
+          email: user.email,
+          firstName: user.firstName,
+          verificationToken,
+          verificationUrl,
+        });
+      } catch (emailError: any) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't fail registration if email fails - user can request resend
+      }
+
+      // Return success (user not logged in until email verified)
+      res.status(201).json({ 
+        message: "Account created! Please check your email to verify your account.",
+        email: user.email,
+        requiresVerification: true,
+      });
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      console.error('Signup error stack:', error.stack);
+      // Handle unique constraint violations
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        if (error.message?.includes('email')) {
+          return res.status(400).json({ 
+            message: "This email is already registered. Please use a different email or log in." 
+          });
+        }
+        if (error.message?.includes('username')) {
+          return res.status(400).json({ 
+            message: "This username is already taken. Please try a different username." 
+          });
+        }
+        if (error.message?.includes('slug')) {
+          return res.status(400).json({ 
+            message: "A company with this name already exists. Please try a different name." 
+          });
+        }
+      }
+      res.status(500).json({ 
+        message: "Unable to create account. Please try again or contact support.",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Legacy register endpoint (for backward compatibility - creates user in existing company)
   app.post("/api/register", async (req, res) => {
     try {
       // Check if username exists
@@ -129,6 +340,7 @@ export function setupAuth(app: Express) {
         monthlySalary: req.body.monthlySalary === "" ? null : (req.body.monthlySalary ? parseFloat(req.body.monthlySalary) : null),
         role: req.body.role || 'employee',
         isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+        emailVerified: true, // Legacy users are auto-verified
         createdAt: new Date(),
       };
 
@@ -199,6 +411,15 @@ export function setupAuth(app: Express) {
       if (!passwordValid) {
         return res.status(401).json({ 
           message: "Username/email or password is incorrect. Please check your credentials and try again." 
+        });
+      }
+
+      // Check if email is verified (only for new signups)
+      if (!user.emailVerified) {
+        return res.status(403).json({ 
+          message: "Please verify your email address before logging in. Check your inbox for the verification link.",
+          requiresVerification: true,
+          email: user.email,
         });
       }
 
@@ -315,6 +536,128 @@ export function setupAuth(app: Express) {
     res.sendStatus(200);
   });
 
+  // Email verification endpoint
+  app.get("/api/verify-email/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({ message: "Verification token is required" });
+      }
+
+      // Find user by verification token
+      const [user] = await db.select()
+        .from(users)
+        .where(eq(users.emailVerificationToken, token));
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired verification token" });
+      }
+
+      // Check if token is expired
+      if (user.emailVerificationTokenExpiry && new Date(user.emailVerificationTokenExpiry) < new Date()) {
+        return res.status(400).json({ message: "Verification token has expired. Please request a new one." });
+      }
+
+      // Check if already verified
+      if (user.emailVerified) {
+        return res.status(200).json({ 
+          message: "Email already verified. You can now log in.",
+          verified: true 
+        });
+      }
+
+      // Verify the email
+      await storage.updateUser(user.id, {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiry: null,
+      });
+
+      // Generate token and log them in
+      const verifiedUser = await storage.getUser(user.id);
+      if (!verifiedUser) {
+        return res.status(500).json({ message: "Error verifying email" });
+      }
+
+      const authToken = generateToken(verifiedUser);
+      const company = await storage.getCompany(verifiedUser.companyId);
+
+      res.status(200).json({ 
+        message: "Email verified successfully!",
+        verified: true,
+        user: {
+          ...verifiedUser,
+          company: company ? {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            primaryColor: company.primaryColor,
+          } : null
+        },
+        token: authToken,
+      });
+    } catch (error: any) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ message: "Error verifying email. Please try again." });
+    }
+  });
+
+  // Resend verification email endpoint
+  app.post("/api/resend-verification", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        // Don't reveal if email exists for security
+        return res.status(200).json({ 
+          message: "If an account exists with this email, a verification link has been sent." 
+        });
+      }
+
+      if (user.emailVerified) {
+        return res.status(400).json({ message: "Email is already verified" });
+      }
+
+      // Generate new verification token
+      const verificationToken = generateVerificationToken();
+      const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await storage.updateUser(user.id, {
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiry: tokenExpiry,
+      });
+
+      // Send verification email
+      const verificationUrl = `${process.env.APP_URL || 'https://app.paidin.io'}/verify-email/${verificationToken}`;
+      
+      try {
+        await sendVerificationEmail({
+          email: user.email,
+          firstName: user.firstName,
+          verificationToken,
+          verificationUrl,
+        });
+      } catch (emailError: any) {
+        console.error('Failed to send verification email:', emailError);
+        return res.status(500).json({ message: "Failed to send verification email. Please try again." });
+      }
+
+      res.status(200).json({ 
+        message: "Verification email sent! Please check your inbox." 
+      });
+    } catch (error: any) {
+      console.error('Resend verification error:', error);
+      res.status(500).json({ message: "Error sending verification email. Please try again." });
+    }
+  });
+
   // Debug endpoint to check user status (remove in production)
   app.get("/api/debug/user-status", async (req, res) => {
     try {
@@ -359,6 +702,12 @@ export function setupAuth(app: Express) {
           name: company.name,
           slug: company.slug,
           primaryColor: company.primaryColor || '#f97316',
+          subscriptionPlan: company.subscriptionPlan,
+          subscriptionStatus: company.subscriptionStatus,
+          trialStartDate: company.trialStartDate,
+          trialEndDate: company.trialEndDate,
+          maxEmployees: company.maxEmployees,
+          monthlyFee: company.monthlyFee,
         }
       });
     } catch (error) {
@@ -367,6 +716,94 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Update user profile
+  app.patch("/api/user/profile", requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { firstName, lastName, email, profilePhoto, bio } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ 
+          error: "Missing required fields: firstName, lastName, email" 
+        });
+      }
+
+      // Check if email is being changed and if it's already taken
+      if (email !== user.email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== user.id) {
+          return res.status(400).json({ 
+            error: "Email address is already in use" 
+          });
+        }
+      }
+
+      // Update user
+      const updatedUser = await storage.updateUser(user.id, {
+        firstName,
+        lastName,
+        email,
+        profilePhoto: profilePhoto || null,
+        // Note: bio field doesn't exist in schema, so we'll skip it for now
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // Change password
+  app.patch("/api/user/password", requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          error: "Both current password and new password are required" 
+        });
+      }
+
+      // Validate new password strength
+      if (newPassword.length < 8) {
+        return res.status(400).json({ 
+          error: "New password must be at least 8 characters long" 
+        });
+      }
+
+      // Verify current password
+      const passwordValid = await comparePasswords(currentPassword, user.password);
+      if (!passwordValid) {
+        return res.status(401).json({ 
+          error: "Current password is incorrect" 
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update password
+      const updatedUser = await storage.updateUser(user.id, {
+        password: hashedPassword,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ success: true, message: "Password updated successfully" });
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ error: "Failed to change password" });
+    }
+  });
 
   // Get company by email domain (for email-based routing)
   app.post("/api/company-by-email", async (req, res) => {

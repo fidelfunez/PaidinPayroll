@@ -9,15 +9,17 @@ export interface ImageCompressionOptions {
 }
 
 export const defaultImageOptions: ImageCompressionOptions = {
-  maxSizeMB: 0.5, // 500KB
-  maxWidthOrHeight: 800, // Max dimension
+  maxSizeMB: 0.5, // 500KB final size limit
+  maxWidthOrHeight: 800, // Auto-resize: max 800px on longest side
   useWebWorker: true,
-  fileType: 'image/jpeg',
-  quality: 0.8, // 80% quality
+  fileType: 'image/webp', // Convert to WebP for best compression
+  quality: 0.85, // 85% quality (optimal for WebP)
 };
 
 /**
  * Compresses and optimizes an image file for web use
+ * Automatically converts to WebP format for best compression
+ * Falls back to JPEG if WebP is not supported by the browser
  */
 export async function compressImage(
   file: File,
@@ -28,10 +30,25 @@ export async function compressImage(
   try {
     const compressedFile = await imageCompression(file, compressionOptions);
     return compressedFile;
-  } catch (error) {
+  } catch (error: any) {
+    // If WebP fails (browser doesn't support it), fallback to JPEG
+    if (compressionOptions.fileType === 'image/webp') {
+      console.warn('WebP compression failed, falling back to JPEG:', error.message);
+      try {
+        const jpegOptions = {
+          ...compressionOptions,
+          fileType: 'image/jpeg',
+          quality: 0.8,
+        };
+        const jpegFile = await imageCompression(file, jpegOptions);
+        return jpegFile;
+      } catch (jpegError) {
+        console.error('JPEG compression also failed:', jpegError);
+        throw new Error('Image compression failed. Please try a different image file.');
+      }
+    }
     console.error('Image compression failed:', error);
-    // If compression fails, return the original file
-    return file;
+    throw error;
   }
 }
 

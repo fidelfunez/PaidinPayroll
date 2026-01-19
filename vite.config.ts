@@ -15,7 +15,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "client", "src"),
       "@shared": path.resolve(__dirname, "shared"),
       "@assets": path.resolve(__dirname, "attached_assets"),
+      "buffer": "buffer",
     },
+  },
+  define: {
+    'global': 'globalThis',
   },
   root: path.resolve(__dirname, "client"),
   build: {
@@ -23,9 +27,26 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 5173,
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
+    middlewareMode: false,
   },
+  optimizeDeps: {
+    exclude: ['@breeztech/breez-sdk-spark/web'],
+  },
+  assetsInclude: ['**/*.wasm'],
 });

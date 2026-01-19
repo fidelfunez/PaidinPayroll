@@ -10,7 +10,7 @@ async function hashPassword(password: string): Promise<string> {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-export async function ensureFidelUser() {
+export async function ensureDemoUser() {
   try {
     // Get or create company
     let companies = await storage.getCompanies();
@@ -31,11 +31,11 @@ export async function ensureFidelUser() {
       console.log('✅ Found company:', company.name, '(ID:', company.id, ')');
     }
 
-    // Check if fidel user exists
-    const existingUser = await storage.getUserByUsername('fidel');
+    // Check if demo user exists (for VCs, investors, and Y Combinator)
+    const existingUser = await storage.getUserByUsername('demo');
     
     if (existingUser) {
-      console.log('✅ User "fidel" already exists');
+      console.log('✅ Demo user already exists');
       
       // Always ensure password and company are correct
       const hashedPassword = await hashPassword('password123');
@@ -44,46 +44,49 @@ export async function ensureFidelUser() {
         companyId: company.id,
         isActive: true,
         role: 'super_admin',
+        emailVerified: true, // Demo account doesn't need email verification
       });
       
-      console.log('✅ Updated fidel user (password: password123, companyId:', company.id, ', role: super_admin)');
+      console.log('✅ Updated demo user (password: password123, companyId:', company.id, ', role: super_admin)');
     } else {
-      console.log('👤 Creating fidel user...');
+      console.log('👤 Creating demo user for investors/VCs...');
       const hashedPassword = await hashPassword('password123');
       
       const newUser = await storage.createUser({
         companyId: company.id,
-        username: 'fidel',
-        email: 'fidel@paidin.com',
+        username: 'demo',
+        email: 'demo@paidin.io',
         password: hashedPassword,
         role: 'super_admin',
-        firstName: 'Fidel',
-        lastName: 'Funez',
-        bio: 'PaidIn Founder',
+        firstName: 'Demo',
+        lastName: 'Account',
+        bio: 'Demo account for investors, VCs, and Y Combinator testing',
         btcAddress: null,
         withdrawalMethod: 'not_set',
         bankAccountDetails: null,
         monthlySalary: null,
         profilePhoto: null,
         isActive: true,
+        emailVerified: true, // Demo account doesn't need email verification
+        createdAt: new Date(), // Explicit Date object for Drizzle timestamp mode
       });
       
-      console.log('✅ User "fidel" created successfully!');
+      console.log('✅ Demo user created successfully!');
       console.log('   - ID:', newUser.id);
-      console.log('   - Username: fidel');
+      console.log('   - Username: demo');
       console.log('   - Password: password123');
       console.log('   - Role: super_admin');
       console.log('   - Company ID:', newUser.companyId);
     }
     
     console.log('');
-    console.log('🎉 Fidel user setup complete!');
-    console.log('📝 Login credentials:');
-    console.log('   - Username: fidel');
+    console.log('🎉 Demo user setup complete!');
+    console.log('📝 Login credentials for investors/VCs:');
+    console.log('   - Username: demo');
     console.log('   - Password: password123');
     console.log('');
   } catch (error: any) {
-    console.error('❌ Error ensuring fidel user:', error);
+    console.error('❌ Error ensuring demo user:', error);
     console.error('Error stack:', error?.stack);
     console.error('Error message:', error?.message);
     console.error('Error code:', error?.code);

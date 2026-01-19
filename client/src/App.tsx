@@ -5,133 +5,71 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
-import { BitcoinQuotesProvider } from "@/hooks/use-bitcoin-quotes";
-import { BtcRateProvider } from "@/hooks/use-btc-rate-context";
 import { ProtectedRoute } from "./lib/protected-route";
+import { MainLayout } from "@/components/layout/main-layout";
+
+// Core pages
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import DashboardPage from "@/pages/dashboard-page";
-import PayrollPage from "@/pages/payroll-page";
-import ReimbursementsPage from "@/pages/reimbursements-page";
-import ReportsPage from "@/pages/reports-page";
-import SettingsPage from "@/pages/settings-page";
-import MyExpensesPage from "@/pages/my-expenses-page";
-import FilesPage from "@/pages/files-page";
-import InvoicesPage from "@/pages/invoices-page";
+import SignupPage from "@/pages/signup-page";
+import VerifyEmailPage from "@/pages/verify-email-page";
 import ProfilePage from "@/pages/profile-page";
-import TimeTrackingPage from "@/pages/time-tracking-page";
-import TimeOffPage from "@/pages/time-off-page";
-import EmployeesPage from "@/pages/employees-page";
-import HelpCenterPage from "@/pages/help-center-page";
-import ApiDocumentationPage from "@/pages/api-documentation-page";
-import SecurityPage from "@/pages/security-page";
-import PrivacyPolicyPage from "@/pages/privacy-policy-page";
-import TermsOfServicePage from "@/pages/terms-of-service-page";
-import BenefitsPage from "@/pages/benefits-page";
-import TaxCompliancePage from "@/pages/tax-compliance-page";
-import WithdrawalMethodPage from "@/pages/withdrawal-method-page";
-import NotificationsPage from "@/pages/notifications-page";
+import SettingsPage from "@/pages/settings-page";
 
-// Page wrapper components for remaining placeholders
-import MessagesPage from "@/pages/messages-page";
-import AdminWithdrawalMethodsPage from "@/pages/admin-withdrawal-methods-page";
-import AdminApprovalsPage from "@/pages/admin-approvals-page";
-import AdminMessagesPage from "@/pages/admin-messages-page";
-import PayslipsPage from "@/pages/payslips-page";
-import AuditLogsPage from "@/pages/audit-logs-page";
-import AdminTaxCompliancePage from "@/pages/admin-tax-compliance-page";
-import BulkPayrollPage from "@/pages/bulk-payroll-page";
-import AccountingPage from "@/pages/accounting-page";
-import TaxComplianceDashboardPage from "@/pages/tax-compliance-dashboard-page";
-import CompanyOnboardingPage from "@/pages/company-onboarding-page";
-import TestOnboardingPage from "@/pages/test-onboarding-page";
-import SimpleOnboardingPage from "@/pages/simple-onboarding-page";
-import MinimalOnboardingPage from "@/pages/minimal-onboarding-page";
-import BitcoinEducationPage from "@/pages/bitcoin-education-page";
-import GettingStartedPage from "@/pages/getting-started-page";
-import FAQPage from "@/pages/faq-page";
-import SupportPage from "@/pages/support-page";
-import WalletPage from "@/pages/wallet-page";
-import IntegrationsPage from "@/pages/integrations-page";
-import APIAccessPage from "@/pages/api-access-page";
-import BitcoinSettingsPage from "@/pages/bitcoin-settings-page";
-import ProcessPaymentsPage from "@/pages/process-payments-page";
+// Accounting pages (new)
+import AccountingDashboardPage from "@/pages/accounting-dashboard-page";
+import WalletsPage from "@/pages/wallets-page";
 import TransactionsPage from "@/pages/transactions-page";
-import FinancialAnalyticsPage from "@/pages/financial-analytics-page";
-import PlatformDashboardPage from "@/pages/platform-dashboard-page";
-import PlatformCompaniesPage from "@/pages/platform-companies-page";
-import { 
-  PlatformStaffPage,
-  PlatformAnalyticsPage,
-  PlatformSubscriptionsPage,
-  PlatformRevenuePage,
-  PlatformHealthPage,
-  PlatformAuditPage,
-  PlatformSupportPage,
-  PlatformSettingsPage,
-  PlatformDocsPage
-} from "@/pages/platform-placeholder-page";
+import CategoriesPage from "@/pages/categories-page";
+import PurchasesPage from "@/pages/purchases-page";
+import QuickBooksExportPage from "@/pages/quickbooks-export-page";
+
+// Test pages
+import TestValidationPage from "@/pages/test-validation-page";
+import TestFlowPage from "@/pages/test-flow-page";
+
+// Wrapper component for routes that need the layout
+function LayoutRoute({ component: Component, ...rest }: any) {
+  return (
+    <ProtectedRoute
+      {...rest}
+      component={(props: any) => (
+        <MainLayout>
+          <Component {...props} />
+        </MainLayout>
+      )}
+    />
+  );
+}
 
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/payroll" component={PayrollPage} />
-      <ProtectedRoute path="/reimbursements" component={ReimbursementsPage} />
-      <ProtectedRoute path="/reports" component={ReportsPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/my-expenses" component={MyExpensesPage} />
-      <ProtectedRoute path="/files" component={FilesPage} />
-      <ProtectedRoute path="/invoices" component={InvoicesPage} />
-      <ProtectedRoute path="/profile" component={ProfilePage} />
-      <ProtectedRoute path="/time-tracking" component={TimeTrackingPage} />
-      <ProtectedRoute path="/time-off" component={TimeOffPage} />
-      <ProtectedRoute path="/benefits" component={BenefitsPage} />
-      <ProtectedRoute path="/tax-compliance" component={TaxCompliancePage} />
-      <ProtectedRoute path="/withdrawal-method" component={WithdrawalMethodPage} />
-      <ProtectedRoute path="/notifications" component={NotificationsPage} />
-      <ProtectedRoute path="/messages" component={MessagesPage} />
-      <ProtectedRoute path="/employees" component={EmployeesPage} />
-      <ProtectedRoute path="/withdrawal-methods" component={AdminWithdrawalMethodsPage} />
-      <ProtectedRoute path="/approvals" component={AdminApprovalsPage} />
-      <ProtectedRoute path="/payslips" component={PayslipsPage} />
-      <ProtectedRoute path="/admin-tax-compliance" component={AdminTaxCompliancePage} />
-      <ProtectedRoute path="/audit-logs" component={AuditLogsPage} />
-      <ProtectedRoute path="/admin-messages" component={AdminMessagesPage} />
-      <ProtectedRoute path="/bulk-payroll" component={BulkPayrollPage} />
-      <ProtectedRoute path="/accounting" component={AccountingPage} />
-      <ProtectedRoute path="/tax-compliance-dashboard" component={TaxComplianceDashboardPage} />
-      <ProtectedRoute path="/wallet" component={WalletPage} />
-      <ProtectedRoute path="/bitcoin-education" component={BitcoinEducationPage} />
-      <ProtectedRoute path="/getting-started" component={GettingStartedPage} />
-      <ProtectedRoute path="/faq" component={FAQPage} />
-      <ProtectedRoute path="/support" component={SupportPage} />
-      <ProtectedRoute path="/integrations" component={IntegrationsPage} />
-      <ProtectedRoute path="/api-access" component={APIAccessPage} />
-      {/* Super Admin Only Routes */}
-      <ProtectedRoute path="/bitcoin-settings" component={BitcoinSettingsPage} />
-      <ProtectedRoute path="/process-payments" component={ProcessPaymentsPage} />
-      <ProtectedRoute path="/transactions" component={TransactionsPage} />
-      <ProtectedRoute path="/financial-analytics" component={FinancialAnalyticsPage} />
-      {/* Platform Admin Routes */}
-      <ProtectedRoute path="/platform" component={PlatformDashboardPage} />
-      <ProtectedRoute path="/platform/companies" component={PlatformCompaniesPage} />
-      <ProtectedRoute path="/platform/staff" component={PlatformStaffPage} />
-      <ProtectedRoute path="/platform/analytics" component={PlatformAnalyticsPage} />
-      <ProtectedRoute path="/platform/subscriptions" component={PlatformSubscriptionsPage} />
-      <ProtectedRoute path="/platform/revenue" component={PlatformRevenuePage} />
-      <ProtectedRoute path="/platform/health" component={PlatformHealthPage} />
-      <ProtectedRoute path="/platform/audit" component={PlatformAuditPage} />
-      <ProtectedRoute path="/platform/support" component={PlatformSupportPage} />
-      <ProtectedRoute path="/platform/settings" component={PlatformSettingsPage} />
-      <ProtectedRoute path="/platform/docs" component={PlatformDocsPage} />
-      <Route path="/onboarding" component={CompanyOnboardingPage} />
-      <Route path="/help-center" component={HelpCenterPage} />
-      <Route path="/api-documentation" component={ApiDocumentationPage} />
-      <Route path="/security" component={SecurityPage} />
-      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-      <Route path="/terms-of-service" component={TermsOfServicePage} />
+      {/* Auth routes (no layout) */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/signup" component={SignupPage} />
+      <Route path="/verify-email/:token" component={VerifyEmailPage} />
+      
+      {/* Accounting routes (with layout) */}
+      <LayoutRoute path="/" component={AccountingDashboardPage} />
+      <LayoutRoute path="/accounting" component={AccountingDashboardPage} />
+      <LayoutRoute path="/accounting/wallets" component={WalletsPage} />
+      <LayoutRoute path="/accounting/transactions" component={TransactionsPage} />
+      <LayoutRoute path="/accounting/categories" component={CategoriesPage} />
+      <LayoutRoute path="/accounting/purchases" component={PurchasesPage} />
+      <LayoutRoute path="/accounting/export" component={QuickBooksExportPage} />
+      
+      {/* User management (with layout) */}
+      <LayoutRoute path="/profile" component={ProfilePage} />
+      <LayoutRoute path="/settings" component={SettingsPage} />
+      
+      {/* Test pages */}
+      <LayoutRoute path="/accounting/test-flow" component={TestFlowPage} />
+      
+      {/* Test pages (no auth, no layout - for development) */}
+      <Route path="/test-validation" component={TestValidationPage} />
+      
+      {/* 404 */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -141,16 +79,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BtcRateProvider>
-          <BitcoinQuotesProvider>
-            <SidebarProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Router />
-              </TooltipProvider>
-            </SidebarProvider>
-          </BitcoinQuotesProvider>
-        </BtcRateProvider>
+        <SidebarProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </SidebarProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

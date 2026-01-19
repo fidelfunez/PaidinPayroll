@@ -5,15 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Loader2, TrendingUp, Clock, DollarSign, Users, CheckSquare, FileBarChart, Receipt, Wallet, Calendar } from "lucide-react";
+import { Loader2, TrendingUp, Clock, DollarSign, Users, CheckSquare, FileBarChart, Receipt, Wallet, Calendar, AlertCircle, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SchedulePayrollModal } from "@/components/modals/schedule-payroll-modal";
 import { ExpenseModal } from "@/components/modals/expense-modal";
+import { WalletBackupModal } from "@/components/WalletBackupModal";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useBitcoinQuotes } from "@/hooks/use-bitcoin-quotes";
 import { useBtcRateProvider } from "@/hooks/use-btc-rate-context";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest } from "@/lib/queryClient";
+import { createWallet } from "@/lib/breez-wallet";
+import { useToast } from "@/hooks/use-toast";
+import { differenceInDays, differenceInHours, isAfter, formatDistanceToNow } from "date-fns";
 
 interface DashboardStats {
   totalBtcBalance: number;
@@ -32,20 +36,254 @@ interface DashboardStats {
   }>;
 }
 
+// Trial Countdown Banner Component
+function TrialCountdownBanner({ trialEndDate, plan }: { trialEndDate: Date; plan: string }) {
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [daysRemaining, setDaysRemaining] = useState<number>(0);
+  const [isExpired, setIsExpired] = useState(false);
 
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const end = new Date(trialEndDate);
+      const diff = end.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setIsExpired(true);
+        setTimeRemaining('Trial expired');
+        setDaysRemaining(0);
+        return;
+      }
+
+      setIsExpired(false);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      setDaysRemaining(days);
+      setTimeRemaining(days > 0 ? `${days} day${days !== 1 ? 's' : ''} and ${hours} hour${hours !== 1 ? 's' : ''}` : `${hours} hour${hours !== 1 ? 's' : ''}`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [trialEndDate]);
+
+  const planNames: Record<string, string> = {
+    starter: 'Starter',
+    growth: 'Growth',
+    scale: 'Scale',
+  };
+
+  if (isExpired) {
+    return (
+      <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-5 shadow-lg">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-lg">Trial Expired</h3>
+              <p className="text-sm text-gray-600">Add a payment method to continue using {planNames[plan] || plan} plan</p>
+            </div>
+          </div>
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-white"
+            onClick={() => window.location.href = '/payment'}
+          >
+            <CreditCard className="mr-2 h-4 w-4" />
+            Add Payment Method
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border-2 border-orange-200 rounded-xl p-5 shadow-lg">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+            <Clock className="h-6 w-6 text-orange-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 text-lg">
+              {daysRemaining <= 3 ? 'Trial Ending Soon' : 'Free Trial Active'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {daysRemaining <= 3 
+                ? `${timeRemaining} remaining on your ${planNames[plan] || plan} trial`
+                : `${daysRemaining} days left in your free trial`}
+            </p>
+          </div>
+        </div>
+        <Button 
+          variant="outline"
+          className="border-orange-300 text-orange-700 hover:bg-orange-100"
+          onClick={() => window.location.href = '/payment'}
+        >
+          <CreditCard className="mr-2 h-4 w-4" />
+          Add Payment Method
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const { isCollapsed } = useSidebar();
   const { currentQuote } = useBitcoinQuotes();
   const { updateRate, setLoading } = useBtcRateProvider();
+  const { toast } = useToast();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [walletMnemonic, setWalletMnemonic] = useState<string | null>(null);
+  const [showWalletBackup, setShowWalletBackup] = useState(false);
+  const [isCreatingWallet, setIsCreatingWallet] = useState(false);
+  const [hasCheckedWallet, setHasCheckedWallet] = useState(false);
+  const [walletCheckRetries, setWalletCheckRetries] = useState(0);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
     queryFn: getQueryFn({ on401: "throw" }),
   });
+
+  // Check if user has wallet when they first access dashboard (after email verification)
+  useEffect(() => {
+    const checkAndCreateWallet = async () => {
+      // Wait for auth to finish loading
+      if (isAuthLoading) {
+        console.log('⏳ Waiting for auth to finish loading...');
+        return;
+      }
+
+      if (!user || !user.emailVerified || hasCheckedWallet || isCreatingWallet) {
+        if (!user?.emailVerified) {
+          console.log('⏳ Waiting for user email verification...', { 
+            user: user ? { id: user.id, emailVerified: user.emailVerified } : 'null' 
+          });
+        }
+        return;
+      }
+
+      // Verify auth is actually working (no errors, user loaded)
+      if (authError) {
+        console.warn('⚠️ Auth error detected, skipping wallet check:', authError);
+        return;
+      }
+
+      // Check if auth token exists before making request
+      const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      if (!authToken) {
+        if (walletCheckRetries >= 5) {
+          console.warn('⚠️ Max retries reached waiting for auth token. Wallet check skipped.');
+          return;
+        }
+        console.log('⏳ Waiting for auth token to be set...', { retries: walletCheckRetries });
+        // Reset hasCheckedWallet so we can retry
+        setHasCheckedWallet(false);
+        setWalletCheckRetries(prev => prev + 1);
+        // Retry after a delay
+        setTimeout(() => {
+          checkAndCreateWallet();
+        }, 1000);
+        return;
+      }
+      
+      console.log('🔍 Checking for existing wallet...', { userId: user.id, email: user.email });
+      setHasCheckedWallet(true);
+      
+      try {
+        // Small delay to ensure auth is fully ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check if wallet exists using authenticated request
+        try {
+          const response = await apiRequest('GET', '/api/wallets/employee');
+          
+          if (response.ok) {
+            // Wallet exists - no need to create
+            const walletData = await response.json();
+            console.log('✅ Wallet already exists:', walletData);
+            setWalletCheckRetries(0);
+            return; // Exit - wallet already exists
+          }
+        } catch (checkError: any) {
+          const errorMessage = checkError?.message || '';
+          const is404 = errorMessage.includes('404') || errorMessage.includes('Not Found');
+          const is401 = errorMessage.includes('401') || errorMessage.includes('Unauthorized');
+          
+          if (is401) {
+            // Auth not ready - retry with limits
+            if (walletCheckRetries >= 3) {
+              console.warn('⚠️ Max retries reached for auth. Skipping wallet check.');
+              return;
+            }
+            console.log('⏳ Auth not ready, retrying...', { retries: walletCheckRetries });
+            setHasCheckedWallet(false);
+            setWalletCheckRetries(prev => prev + 1);
+            setTimeout(() => {
+              checkAndCreateWallet();
+            }, 2000);
+            return;
+          }
+          
+          // If 404, wallet doesn't exist - proceed to create
+          if (!is404) {
+            // Some other error - log but proceed anyway
+            console.warn('⚠️ Unexpected error checking wallet:', errorMessage);
+          }
+        }
+        
+        // No wallet exists (404) or check failed - create one
+        console.log('🔄 No wallet found, creating one...');
+        setIsCreatingWallet(true);
+        
+        try {
+          const walletResult = await createWallet('employee', user.email);
+          console.log('✅ Wallet created successfully:', walletResult);
+          setWalletMnemonic(walletResult.mnemonic);
+          setShowWalletBackup(true);
+          
+          toast({
+            title: "Welcome to PaidIn!",
+            description: "Setting up your Bitcoin wallet...",
+          });
+          setWalletCheckRetries(0);
+        } catch (walletError: any) {
+          const errorMessage = walletError?.message || '';
+          // Check if error is because wallet already exists (409 Conflict)
+          if (errorMessage.includes('already') || errorMessage.includes('exists') || errorMessage.includes('409')) {
+            console.log('ℹ️ Wallet already exists (created between check and creation), skipping');
+          } else {
+            console.error('❌ Wallet creation failed:', walletError);
+            toast({
+              title: "Wallet Setup",
+              description: "Could not create wallet automatically. You can set it up later in settings.",
+              variant: "default",
+            });
+          }
+        } finally {
+          setIsCreatingWallet(false);
+        }
+      } catch (error: any) {
+        console.error('❌ Error in wallet check/creation flow:', error);
+        setIsCreatingWallet(false);
+      }
+    };
+
+    // Only check if user is verified
+    if (user?.emailVerified) {
+      // Small delay to ensure auth token is set after email verification
+      const timer = setTimeout(() => {
+        checkAndCreateWallet();
+      }, 1000); // Increased delay to 1 second
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, hasCheckedWallet, isCreatingWallet, isAuthLoading, toast]);
 
   // Update shared BTC rate when dashboard gets the data
   useEffect(() => {
@@ -58,6 +296,26 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }, [stats?.currentBtcRate, isLoading, updateRate, setLoading]);
+
+  // Handle wallet backup confirmation
+  const handleWalletBackupConfirmed = () => {
+    setShowWalletBackup(false);
+    setWalletMnemonic(null);
+    toast({
+      title: "Wallet ready!",
+      description: "Your Bitcoin wallet is set up and ready to use.",
+    });
+  };
+
+  const handleWalletBackupSkip = () => {
+    setShowWalletBackup(false);
+    setWalletMnemonic(null);
+    toast({
+      title: "Wallet created",
+      description: "You can backup your recovery phrase later in settings.",
+      variant: "default",
+    });
+  };
 
   if (isLoading) {
     return (
@@ -87,6 +345,14 @@ export default function DashboardPage() {
         />
         
         <main className="p-4 lg:p-6 space-y-6 animate-fade-in">
+          {/* Trial Status Banner */}
+          {user?.company?.subscriptionStatus === 'trial' && user?.company?.trialEndDate && (
+            <TrialCountdownBanner 
+              trialEndDate={new Date(user.company.trialEndDate)}
+              plan={user.company.subscriptionPlan || 'starter'}
+            />
+          )}
+
           {/* Welcome Banner */}
           <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-2xl p-6 lg:p-8 text-white shadow-xl border border-orange-400/20 relative overflow-hidden">
             {/* Decorative background elements */}
@@ -398,6 +664,14 @@ export default function DashboardPage() {
         open={showExpenseModal} 
         onOpenChange={setShowExpenseModal} 
       />
+      {walletMnemonic && (
+        <WalletBackupModal
+          open={showWalletBackup}
+          mnemonic={walletMnemonic}
+          onConfirmed={handleWalletBackupConfirmed}
+          onSkip={handleWalletBackupSkip}
+        />
+      )}
     </div>
   );
 }

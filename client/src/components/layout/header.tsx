@@ -1,13 +1,18 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useBtcRate } from "@/hooks/use-btc-rate-context";
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
-  btcRate?: number;
+  btcRate?: number; // Optional prop for backwards compatibility
 }
 
-export function Header({ title, subtitle, btcRate }: HeaderProps) {
+export function Header({ title, subtitle, btcRate: propBtcRate }: HeaderProps) {
   const { user } = useAuth();
+  const { rate: contextBtcRate, isLoading } = useBtcRate();
+  
+  // Use prop if provided, otherwise use context
+  const btcRate = propBtcRate ?? contextBtcRate ?? null;
   
   const formatUsd = (amount: number | undefined) => {
     if (amount === undefined || amount === null) return '$0.00';
@@ -42,7 +47,7 @@ export function Header({ title, subtitle, btcRate }: HeaderProps) {
           <div className="text-right">
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current BTC Rate</div>
             <div className="font-bold text-lg text-foreground mt-0.5">
-              {btcRate ? formatUsd(btcRate) : 'Loading...'}
+              {isLoading ? 'Loading...' : (btcRate ? formatUsd(btcRate) : 'N/A')}
             </div>
           </div>
           <div className="relative">

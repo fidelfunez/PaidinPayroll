@@ -17,6 +17,12 @@ type UserWithCompany = SelectUser & {
     name: string;
     slug: string;
     primaryColor: string;
+    subscriptionPlan?: string;
+    subscriptionStatus?: string;
+    trialStartDate?: Date | number | null;
+    trialEndDate?: Date | number | null;
+    maxEmployees?: number;
+    monthlyFee?: number;
   } | null;
 };
 

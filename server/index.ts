@@ -8,10 +8,6 @@ import session from 'express-session';
 import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
 import { db } from './db.js';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { storage } from './storage.js';
-import { paymentPolling } from './payment-polling';
-import { ensureFidelUser } from './ensure-fidel-user.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,46 +15,21 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
-// Run database migrations on startup
-try {
-  // In production (dist folder), migrations are at dist/migrations (copied during build)
-  // In development, they're at ./migrations from project root
-  let migrationsPath: string;
-  if (process.env.NODE_ENV === 'production') {
-    // In production: __dirname is /app/dist, migrations are at /app/dist/migrations
-    migrationsPath = path.join(__dirname, 'migrations');
-  } else {
-    // In development: migrations are at project root
-    migrationsPath = path.join(process.cwd(), 'migrations');
-  }
-  console.log('Running database migrations from:', migrationsPath);
-  console.log('__dirname:', __dirname);
-  console.log('process.cwd():', process.cwd());
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  
-  migrate(db, { migrationsFolder: migrationsPath });
-  console.log('✅ Database migrations completed successfully');
-} catch (error: any) {
-  console.error('❌ Migration error:', error);
-  console.error('Error message:', error?.message);
-  console.error('Error stack:', error?.stack);
-  // In production, we should fail if migrations don't work
-  // But log the error first to help debug
-  if (process.env.NODE_ENV === 'production') {
-    console.error('CRITICAL: Database migrations failed in production');
-  }
-  // Continue anyway - migrations might already be applied
-  // This is expected if tables already exist
-}
+// Note: Migrations disabled for MVP - use `npm run db:push` to apply schema
+// The database schema is defined in shared/schema.ts and applied via drizzle-kit push
+console.log('⚠️  Migrations skipped - using schema-first approach');
+console.log('💡 Run `npm run db:push` to apply schema changes');
 
 // CORS configuration
 const allowedOrigins = [
     'https://app.paidin.io',
+    process.env.FRONTEND_URL || 'http://localhost:3000', // Production frontend URL
+    // Development origins
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:4173',
     'http://localhost:8080'
-];
+].filter(Boolean); // Remove undefined values
 
 app.use(cors({
   origin: allowedOrigins,
@@ -70,8 +41,13 @@ app.use(cors({
 }));
 
 // Session middleware
+const SESSION_SECRET = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+if (!SESSION_SECRET) {
+  throw new Error('SESSION_SECRET or JWT_SECRET environment variable is required');
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -114,23 +90,23 @@ app.get('*', (req, res) => {
 });
 
 // Start server with error handling
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Database path: ${getDatabasePath()}`);
-  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
-  
-  // Ensure fidel user exists (runs on every server start)
-  await ensureFidelUser();
-  
-  // Start payment polling (gracefully handle errors)
-  try {
-    paymentPolling.startPolling();
-    console.log('Payment polling service started');
-  } catch (error) {
-    console.error('Warning: Failed to start payment polling service:', error);
-    console.log('Server will continue without payment polling');
-  }
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ PaidIn Accounting Server running on port ${PORT}`);
+  console.log(`📁 Database path: ${getDatabasePath()}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔐 CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log('');
+  console.log('📊 Accounting API endpoints:');
+  console.log('  - GET  /api/accounting/wallets');
+  console.log('  - POST /api/accounting/wallets');
+  console.log('  - GET  /api/accounting/transactions');
+  console.log('  - POST /api/accounting/transactions/import');
+  console.log('  - GET  /api/accounting/categories');
+  console.log('  - POST /api/accounting/categories');
+  console.log('  - GET  /api/accounting/export/quickbooks');
+  console.log('  - GET  /api/accounting/rates/current');
+  console.log('');
+  console.log('🚀 Ready to accept connections!');
 });
 
 // Handle uncaught errors to prevent server crashes

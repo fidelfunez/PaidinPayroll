@@ -13,16 +13,22 @@ class BitcoinApiService {
   
   async getCurrentPrice(): Promise<number> {
     try {
-      const response = await fetch(`${this.baseUrl}/simple/price?ids=bitcoin&vs_currencies=usd`);
+      // Use backend API (cached rate, fetched once by background service)
+      const backendUrl = typeof window !== 'undefined' 
+        ? (import.meta.env.VITE_BACKEND_URL || '') 
+        : '';
+      const response = await fetch(`${backendUrl}/api/btc-rate`, {
+        credentials: 'include',
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data: BtcPriceResponse = await response.json();
-      return data.bitcoin.usd;
+      const data = await response.json();
+      return data.rate;
     } catch (error) {
-      console.error('Failed to fetch Bitcoin price:', error);
+      console.error('Failed to fetch Bitcoin price from backend:', error);
       throw new Error('Unable to fetch current Bitcoin price. Please try again later.');
     }
   }

@@ -24,41 +24,57 @@ function syncSchema() {
     
     // Check and add email_verified column
     if (!columnNames.includes('email_verified')) {
-      console.log('📊 Adding email_verified column to users table...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📊 Adding email_verified column to users table...');
+      }
       sqlite.exec(`
         ALTER TABLE users 
         ADD COLUMN email_verified INTEGER DEFAULT 0
       `);
-      console.log('✅ email_verified column added successfully');
-    } else {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ email_verified column added successfully');
+      }
+    } else if (process.env.NODE_ENV !== 'production') {
       console.log('✅ email_verified column already exists');
     }
     
     // Check and add email_verification_token column
     if (!columnNames.includes('email_verification_token')) {
-      console.log('📊 Adding email_verification_token column to users table...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📊 Adding email_verification_token column to users table...');
+      }
       sqlite.exec(`
         ALTER TABLE users 
         ADD COLUMN email_verification_token TEXT
       `);
-      console.log('✅ email_verification_token column added successfully');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ email_verification_token column added successfully');
+      }
     }
     
     // Check and add email_verification_token_expiry column
     if (!columnNames.includes('email_verification_token_expiry')) {
-      console.log('📊 Adding email_verification_token_expiry column to users table...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📊 Adding email_verification_token_expiry column to users table...');
+      }
       sqlite.exec(`
         ALTER TABLE users 
         ADD COLUMN email_verification_token_expiry INTEGER
       `);
-      console.log('✅ email_verification_token_expiry column added successfully');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ email_verification_token_expiry column added successfully');
+      }
     }
     
-    console.log('✅ Schema sync complete');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Schema sync complete');
+    }
   } catch (error: any) {
     // If column already exists, SQLite will throw an error - that's okay
     if (error.message?.includes('duplicate column') || error.message?.includes('already exists')) {
-      console.log('✅ Columns already exist (detected via error)');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Columns already exist (detected via error)');
+      }
     } else {
       console.error('⚠️  Schema sync warning:', error.message);
       // Don't throw - allow server to start even if schema sync fails
@@ -70,21 +86,24 @@ function syncSchema() {
 syncSchema();
 
 // CORS configuration
-const allowedOrigins = [
-    'https://app.paidin.io',
-    process.env.FRONTEND_URL || 'http://localhost:3000', // Production frontend URL
-    process.env.NETLIFY_URL, // Netlify frontend URL (if set)
+const allowedOrigins: (string | RegExp)[] = [
+    // Production origins from environment variables
+    process.env.APP_URL,
+    process.env.FRONTEND_URL,
+    process.env.NETLIFY_URL,
     // Allow all Netlify preview deployments (for development/testing)
-    ...(process.env.NODE_ENV !== 'production' ? [] : [
+    ...(process.env.NODE_ENV === 'production' ? [
       /^https:\/\/.*\.netlify\.app$/, // All Netlify preview deployments
       /^https:\/\/.*\.netlify\.com$/  // Netlify subdomains
-    ]),
-    // Development origins
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:4173',
-    'http://localhost:8080'
-].filter(Boolean); // Remove undefined values
+    ] : []),
+    // Development origins (only in development)
+    ...(process.env.NODE_ENV !== 'production' ? [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:4173',
+      'http://localhost:8080'
+    ] : [])
+].filter(Boolean) as (string | RegExp)[]; // Remove undefined values
 
 // CORS with origin validation
 app.use(cors({
@@ -169,22 +188,24 @@ app.get('*', (req, res) => {
 
 // Start server with error handling
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ PaidIn Accounting Server running on port ${PORT}`);
-  console.log(`📁 Database path: ${getDatabasePath()}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔐 CORS allowed origins: ${allowedOrigins.join(', ')}`);
-  console.log('');
-  console.log('📊 Accounting API endpoints:');
-  console.log('  - GET  /api/accounting/wallets');
-  console.log('  - POST /api/accounting/wallets');
-  console.log('  - GET  /api/accounting/transactions');
-  console.log('  - POST /api/accounting/transactions/import');
-  console.log('  - GET  /api/accounting/categories');
-  console.log('  - POST /api/accounting/categories');
-  console.log('  - GET  /api/accounting/export/quickbooks');
-  console.log('  - GET  /api/accounting/rates/current');
-  console.log('');
-  console.log('🚀 Ready to accept connections!');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`✅ PaidIn Accounting Server running on port ${PORT}`);
+    console.log(`📁 Database path: ${getDatabasePath()}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔐 CORS allowed origins: ${allowedOrigins.filter(o => typeof o === 'string').join(', ')}`);
+    console.log('');
+    console.log('📊 Accounting API endpoints:');
+    console.log('  - GET  /api/accounting/wallets');
+    console.log('  - POST /api/accounting/wallets');
+    console.log('  - GET  /api/accounting/transactions');
+    console.log('  - POST /api/accounting/transactions/import');
+    console.log('  - GET  /api/accounting/categories');
+    console.log('  - POST /api/accounting/categories');
+    console.log('  - GET  /api/accounting/export/quickbooks');
+    console.log('  - GET  /api/accounting/rates/current');
+    console.log('');
+    console.log('🚀 Ready to accept connections!');
+  }
 });
 
 // Handle uncaught errors to prevent server crashes

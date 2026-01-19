@@ -350,27 +350,35 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
     const xpubPrefixes = ['xpub', 'ypub', 'zpub', 'tpub', 'upub', 'vpub'];
     const isXpub = xpubPrefixes.some(prefix => wallet.walletData.startsWith(prefix));
 
-    console.log(`Fetching transactions for wallet ${walletId} (${wallet.name})`);
-    console.log(`Type: ${isXpub ? 'xPub (HD Wallet)' : 'Single Address'}, Network: ${wallet.network}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Fetching transactions for wallet ${walletId} (${wallet.name})`);
+      console.log(`Type: ${isXpub ? 'xPub (HD Wallet)' : 'Single Address'}, Network: ${wallet.network}`);
+    }
 
     // Fetch and process transactions from blockchain
     let fetchedTransactions;
     
     if (isXpub) {
-      console.log(`Scanning HD wallet (xpub)...`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Scanning HD wallet (xpub)...`);
+      }
       fetchedTransactions = await fetchXpubTransactions(
         wallet.walletData,
         wallet.network as 'mainnet' | 'testnet'
       );
     } else {
-      console.log(`Fetching single address: ${wallet.walletData}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Fetching single address: ${wallet.walletData}`);
+      }
       fetchedTransactions = await fetchAndProcessTransactions(
         wallet.walletData,
         wallet.network as 'mainnet' | 'testnet'
       );
     }
 
-    console.log(`Fetched ${fetchedTransactions.length} transactions from blockchain`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Fetched ${fetchedTransactions.length} transactions from blockchain`);
+    }
 
     if (fetchedTransactions.length === 0) {
       return res.json({
@@ -419,14 +427,18 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
             .set({ walletId: walletId })
             .where(eq(transactions.id, existing.id));
           reassignedCount++;
-          console.log(`Reassigned transaction ${tx.txId.substring(0, 12)}... from wallet ${existing.walletId} to wallet ${walletId}`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Reassigned transaction ${tx.txId.substring(0, 12)}... from wallet ${existing.walletId} to wallet ${walletId}`);
+          }
         } catch (error: any) {
           console.error(`Failed to reassign transaction ${tx.txId}:`, error);
         }
       }
     }
 
-    console.log(`${newTransactions.length} new transactions, ${reassignedCount} reassigned, ${skippedCount} already in this wallet`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`${newTransactions.length} new transactions, ${reassignedCount} reassigned, ${skippedCount} already in this wallet`);
+    }
 
     // Insert new transactions
     let addedCount = 0;
@@ -1754,7 +1766,9 @@ router.post("/transactions/cleanup-duplicates", async (req, res) => {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    console.log(`Starting duplicate transaction cleanup for company ${companyId}...`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Starting duplicate transaction cleanup for company ${companyId}...`);
+    }
 
     // Get all transactions for this company, ordered by id (oldest first)
     const allTransactions = await db
@@ -1794,7 +1808,9 @@ router.post("/transactions/cleanup-duplicates", async (req, res) => {
         const toKeep = txList[0];
         const toDelete = txList.slice(1);
         idsToDelete.push(...toDelete.map(tx => tx.id));
-        console.log(`Found ${txList.length} duplicates for tx_id ${txId.substring(0, 12)}... Keeping ${toKeep.id}, deleting ${toDelete.length}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`Found ${txList.length} duplicates for tx_id ${txId.substring(0, 12)}... Keeping ${toKeep.id}, deleting ${toDelete.length}`);
+        }
       }
     }
 

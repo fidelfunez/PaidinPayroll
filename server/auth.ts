@@ -247,10 +247,11 @@ export function setupAuth(app: Express) {
 
       const user = await storage.createUser(userData);
 
-      // Use localhost for development, production URL otherwise
-      const verificationUrl = process.env.NODE_ENV === 'development'
-        ? `http://localhost:5173/verify-email/${verificationToken}`
-        : `${process.env.APP_URL || 'https://app.paidin.io'}/verify-email/${verificationToken}`;
+      // Construct verification URL
+      const appUrl = process.env.APP_URL || (process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:5173' 
+        : 'https://app.paidin.io');
+      const verificationUrl = `${appUrl}/verify-email/${verificationToken}`;
       
       try {
         await sendVerificationEmail({
@@ -656,7 +657,10 @@ export function setupAuth(app: Express) {
       });
 
       // Send verification email
-      const verificationUrl = `${process.env.APP_URL || 'https://app.paidin.io'}/verify-email/${verificationToken}`;
+      const appUrl = process.env.APP_URL || (process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:5173' 
+        : 'https://app.paidin.io');
+      const verificationUrl = `${appUrl}/verify-email/${verificationToken}`;
       
       try {
         await sendVerificationEmail({

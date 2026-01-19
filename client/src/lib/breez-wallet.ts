@@ -215,7 +215,7 @@ export async function registerWalletWithBackend(
   console.log('🔄 Registering wallet with backend...', { nodeId: nodeId.substring(0, 20) + '...', walletType, hasEmail: !!email });
   
   // Use backend URL directly (Vite proxy might not work for all requests)
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8080' : '');
   const apiUrl = `${backendUrl}/api/wallets/breez/register`;
   
   const response = await fetch(apiUrl, {

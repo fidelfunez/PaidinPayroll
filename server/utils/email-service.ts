@@ -7,7 +7,12 @@ import { Resend } from 'resend';
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 // Resend requires verified domain - use connect@paidin.io or configure in Resend dashboard
-const fromEmail = process.env.FROM_EMAIL || 'connect@paidin.io';
+const fromEmail = process.env.FROM_EMAIL;
+const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'support@paidin.io';
+
+if (!fromEmail && process.env.NODE_ENV === 'production') {
+  throw new Error('FROM_EMAIL environment variable is required in production');
+}
 
 export interface EmailVerificationData {
   email: string;
@@ -92,7 +97,7 @@ export async function sendPaymentReminderEmail(data: PaymentReminderData): Promi
                 ${data.paymentUrl}
               </p>
               <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
-                Questions? Reply to this email or contact us at connect@paidin.io
+                Questions? Reply to this email or contact us at ${supportEmail}
               </p>
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
               <p style="font-size: 12px; color: #9ca3af; text-align: center;">
@@ -134,8 +139,10 @@ export async function sendVerificationEmail(data: EmailVerificationData): Promis
     throw new Error('Email service not configured. Please set RESEND_API_KEY environment variable.');
   }
 
-  // Construct logo URL from APP_URL, fallback to production URL
-  const appUrl = process.env.APP_URL || 'https://app.paidin.io';
+  // Construct logo URL from APP_URL
+  const appUrl = process.env.APP_URL || (process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:5173' 
+    : 'https://app.paidin.io');
   const logoUrl = `${appUrl}/favicon/paidin-logo.png`;
 
   try {

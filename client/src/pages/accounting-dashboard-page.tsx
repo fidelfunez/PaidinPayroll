@@ -4,45 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Wallet, ArrowUpDown, Download, Plus, CheckCircle2, Circle, X } from "lucide-react";
 import { Link } from "wouter";
+import { getQueryFn } from "@/lib/queryClient";
 
 export default function AccountingDashboardPage() {
   // Fetch overview data - request all transactions for dashboard stats
   const { data: transactionsResponse, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["transactions", "dashboard"],
-    queryFn: async () => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Request all transactions for dashboard stats (limit 9999)
-      const res = await fetch("/api/accounting/transactions?page=1&limit=9999", {
-        headers,
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error("Failed to fetch transactions");
-      return res.json();
-    },
+    queryKey: ["/api/accounting/transactions?page=1&limit=9999"],
+    queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true, // Always refetch on page load to ensure fresh data
   });
 
   const { data: wallets, isLoading: walletsLoading } = useQuery({
-    queryKey: ["wallets"],
-    queryFn: async () => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("/api/accounting/wallets", {
-        headers,
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error("Failed to fetch wallets");
-      return res.json();
-    },
+    queryKey: ["/api/accounting/wallets"],
+    queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true, // Always refetch on page load to ensure fresh data
   });
 

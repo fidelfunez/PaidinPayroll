@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Plus, Archive, Key, Bitcoin, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 
 interface WalletData {
   id: number;
@@ -32,50 +33,19 @@ export default function WalletsPage() {
 
   // Fetch wallets
   const { data: wallets, isLoading } = useQuery<WalletData[]>({
-    queryKey: ["wallets"],
-    queryFn: async () => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("/api/accounting/wallets", {
-        headers,
-        credentials: 'include',
-      });
-      
-      if (!res.ok) throw new Error("Failed to fetch wallets");
-      return res.json();
-    },
+    queryKey: ["/api/accounting/wallets"],
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Add wallet mutation
   const addWalletMutation = useMutation({
     mutationFn: async (newWallet: { name: string; input: string }) => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("/api/accounting/wallets", {
-        method: "POST",
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(newWallet),
-      });
-      
+      const res = await apiRequest("POST", "/api/accounting/wallets", newWallet);
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to add wallet");
-      }
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/accounting/wallets"] });
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       setIsAddDialogOpen(false);
       setWalletName("");
@@ -94,26 +64,12 @@ export default function WalletsPage() {
   // Archive wallet mutation (soft delete)
   const archiveWalletMutation = useMutation({
     mutationFn: async (walletId: number) => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch(`/api/accounting/wallets/${walletId}/archive`, {
-        method: "PATCH",
-        headers,
-        credentials: 'include',
-      });
+      const res = await apiRequest("PATCH", `/api/accounting/wallets/${walletId}/archive`);
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to archive wallet");
-      }
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/accounting/wallets"] });
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       setArchiveWalletId(null);
       toast({
@@ -133,25 +89,8 @@ export default function WalletsPage() {
   // Fetch transactions mutation
   const fetchTransactionsMutation = useMutation({
     mutationFn: async (walletId: number) => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch(`/api/accounting/wallets/${walletId}/fetch-transactions`, {
-        method: "POST",
-        headers,
-        credentials: 'include',
-      });
-      
+      const res = await apiRequest("POST", `/api/accounting/wallets/${walletId}/fetch-transactions`);
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch transactions");
-      }
       return data;
     },
     onSuccess: (data) => {

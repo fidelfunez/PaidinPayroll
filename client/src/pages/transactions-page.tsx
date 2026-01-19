@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowDownRight, ArrowUpRight, Search, ExternalLink, ArrowRightLeft, ChevronLeft, ChevronRight, Wallet, ArrowUpDown } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { getQueryFn } from "@/lib/queryClient";
 
 const TRANSACTIONS_PER_PAGE = 50;
 const SHOW_ALL_LIMIT = 9999;
@@ -91,21 +92,8 @@ export default function TransactionsPage() {
 
   // Fetch wallets for filter (including archived wallets for display purposes)
   const { data: wallets } = useQuery({
-    queryKey: ["wallets", "all"],
-    queryFn: async () => {
-      const token = localStorage.getItem('authToken');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("/api/accounting/wallets?includeArchived=true", {
-        headers,
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error("Failed to fetch wallets");
-      return res.json();
-    },
+    queryKey: ["/api/accounting/wallets?includeArchived=true"],
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch categories

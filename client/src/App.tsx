@@ -24,6 +24,9 @@ import CategoriesPage from "@/pages/categories-page";
 import PurchasesPage from "@/pages/purchases-page";
 import QuickBooksExportPage from "@/pages/quickbooks-export-page";
 
+// Admin pages
+import AdminPage from "@/pages/admin-page";
+
 // Test pages
 import TestValidationPage from "@/pages/test-validation-page";
 import TestFlowPage from "@/pages/test-flow-page";
@@ -62,6 +65,9 @@ function Router() {
       {/* User management (with layout) */}
       <LayoutRoute path="/profile" component={ProfilePage} />
       <LayoutRoute path="/settings" component={SettingsPage} />
+      
+      {/* Admin routes (with layout) */}
+      <LayoutRoute path="/admin" component={AdminPage} />
       
       {/* Test pages */}
       <LayoutRoute path="/accounting/test-flow" component={TestFlowPage} />

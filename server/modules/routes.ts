@@ -5,6 +5,7 @@ import { createServer, type Server } from "http";
 // Import active module routes
 import authRoutes from "./auth/routes";
 import accountingRoutes from "./accounting/routes";
+import adminRoutes from "./admin/routes";
 
 // Register all module routes
 export function registerAllRoutes(app: Express): Server {
@@ -13,6 +14,9 @@ export function registerAllRoutes(app: Express): Server {
   
   // Register accounting routes
   app.use("/api/accounting", accountingRoutes);
+
+  // Register admin routes
+  app.use("/api/admin", adminRoutes);
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {

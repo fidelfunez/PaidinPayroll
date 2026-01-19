@@ -4,7 +4,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, users } from "@shared/schema";
-import { sendVerificationEmail } from "./utils/email-service";
+import { sendVerificationEmail, sendAdminNotificationEmail } from "./utils/email-service";
 import { db } from "./db";
 import { companies } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -262,6 +262,27 @@ export function setupAuth(app: Express) {
       } catch (emailError: any) {
         console.error('Failed to send verification email:', emailError);
         // Don't fail registration if email fails - user can request resend
+      }
+
+      // Send admin notification email
+      if (process.env.ADMIN_EMAIL) {
+        try {
+          await sendAdminNotificationEmail({
+            to: process.env.ADMIN_EMAIL,
+            newUser: {
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              companyName: company.name,
+              signupDate: new Date(),
+              plan: plan,
+            },
+          });
+        } catch (adminEmailError: any) {
+          console.error('Failed to send admin notification email:', adminEmailError);
+          // Don't fail registration if admin notification fails
+        }
       }
 
       // Return success (user not logged in until email verified)

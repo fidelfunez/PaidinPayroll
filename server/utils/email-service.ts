@@ -24,6 +24,19 @@ export interface PaymentReminderData {
   paymentUrl: string;
 }
 
+export interface AdminNotificationData {
+  to: string; // Admin email
+  newUser: {
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    signupDate: Date;
+    plan?: string;
+  };
+}
+
 export async function sendPaymentReminderEmail(data: PaymentReminderData): Promise<void> {
   if (!resend) {
     console.warn('Resend API key not configured. Payment reminder email would be sent to:', data.email);
@@ -225,5 +238,145 @@ This link will expire in 24 hours. If you didn't create an account, you can safe
   } catch (error: any) {
     console.error('Failed to send verification email:', error);
     throw new Error('Failed to send verification email. Please try again.');
+  }
+}
+
+export async function sendAdminNotificationEmail(data: AdminNotificationData): Promise<void> {
+  if (!resend) {
+    console.warn('Resend API key not configured. Admin notification email would be sent to:', data.to);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 Admin Notification (dev mode):', {
+        to: data.to,
+        newUser: data.newUser,
+      });
+      return;
+    }
+    throw new Error('Email service not configured. Please set RESEND_API_KEY environment variable.');
+  }
+
+  const appUrl = process.env.APP_URL || 'https://app.paidin.io';
+  const adminUrl = `${appUrl}/admin`;
+  const signupDate = new Date(data.newUser.signupDate).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  try {
+    await resend.emails.send({
+      from: fromEmail,
+      to: data.to,
+      subject: `🔔 New PaidIn Signup: ${data.newUser.companyName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New PaidIn Signup</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; padding: 20px;">
+              <tr>
+                <td align="center">
+                  <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); padding: 30px 20px; text-align: center;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">🔔 New User Signup</h1>
+                      </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                          A new user has signed up for PaidIn:
+                        </p>
+                        
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">User:</strong>
+                              <span style="color: #6b7280; margin-left: 8px;">${data.newUser.firstName} ${data.newUser.lastName}</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">Username:</strong>
+                              <span style="color: #6b7280; margin-left: 8px;">${data.newUser.username}</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">Email:</strong>
+                              <span style="color: #6b7280; margin-left: 8px;">${data.newUser.email}</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">Company:</strong>
+                              <span style="color: #6b7280; margin-left: 8px;">${data.newUser.companyName}</span>
+                            </td>
+                          </tr>
+                          ${data.newUser.plan ? `
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">Plan:</strong>
+                              <span style="color: #6b7280; margin-left: 8px; text-transform: capitalize;">${data.newUser.plan}</span>
+                            </td>
+                          </tr>
+                          ` : ''}
+                          <tr>
+                            <td style="padding: 8px 0;">
+                              <strong style="color: #111827;">Signup Date:</strong>
+                              <span style="color: #6b7280; margin-left: 8px;">${signupDate}</span>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                          <a href="${adminUrl}" 
+                             style="background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                            View in Admin Console
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                          © ${new Date().getFullYear()} PaidIn. All rights reserved.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+      text: `
+New PaidIn Signup
+
+A new user has signed up for PaidIn:
+
+User: ${data.newUser.firstName} ${data.newUser.lastName}
+Username: ${data.newUser.username}
+Email: ${data.newUser.email}
+Company: ${data.newUser.companyName}
+${data.newUser.plan ? `Plan: ${data.newUser.plan}` : ''}
+Signup Date: ${signupDate}
+
+View in Admin Console: ${adminUrl}
+
+© ${new Date().getFullYear()} PaidIn. All rights reserved.
+      `.trim(),
+    });
+  } catch (error: any) {
+    console.error('Failed to send admin notification email:', error);
+    throw new Error('Failed to send admin notification email. Please try again.');
   }
 }

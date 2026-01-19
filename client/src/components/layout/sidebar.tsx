@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   BarChart3, Settings, LogOut, User, Menu, X,
-  Wallet, Download, ArrowUpDown, Tag, Coins
+  Wallet, Download, ArrowUpDown, Tag, Coins, Shield
 } from "lucide-react";
 
 export function Sidebar() {
@@ -29,6 +29,12 @@ export function Sidebar() {
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  // Admin navigation (only show for admin users)
+  const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
+  const adminNavigation = isAdmin ? [
+    { name: 'Admin Console', href: '/admin', icon: Shield },
+  ] : [];
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -77,6 +83,23 @@ export function Sidebar() {
         </nav>
 
         <div className="p-2 border-t space-y-2">
+          {isAdmin && adminNavigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.name} href={item.href}>
+                <a
+                  className={`flex items-center justify-center p-3 rounded-lg transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-orange-50 text-orange-600'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                  title={item.name}
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              </Link>
+            );
+          })}
           {bottomNavigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -192,6 +215,23 @@ export function Sidebar() {
 
         {/* Bottom navigation */}
         <div className="p-4 border-t space-y-1">
+          {adminNavigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.name} href={item.href}>
+                <a
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-orange-50 text-orange-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.name}</span>
+                </a>
+              </Link>
+            );
+          })}
           {bottomNavigation.map((item) => {
             const Icon = item.icon;
             return (

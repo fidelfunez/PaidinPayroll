@@ -7,7 +7,7 @@ import cors from 'cors';
 import session from 'express-session';
 import { registerAllRoutes } from './modules/routes';
 import { getDatabasePath } from './db-path.js';
-import { db } from './db.js';
+import { db, sqlite } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,10 +15,59 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
-// Note: Migrations disabled for MVP - use `npm run db:push` to apply schema
-// The database schema is defined in shared/schema.ts and applied via drizzle-kit push
-console.log('⚠️  Migrations skipped - using schema-first approach');
-console.log('💡 Run `npm run db:push` to apply schema changes');
+// Schema sync: Ensure required columns exist
+function syncSchema() {
+  try {
+    // Check if email_verified column exists in users table
+    const tableInfo = sqlite.prepare("PRAGMA table_info(users)").all() as Array<{ name: string; type: string }>;
+    const columnNames = tableInfo.map(col => col.name);
+    
+    // Check and add email_verified column
+    if (!columnNames.includes('email_verified')) {
+      console.log('📊 Adding email_verified column to users table...');
+      sqlite.exec(`
+        ALTER TABLE users 
+        ADD COLUMN email_verified INTEGER DEFAULT 0
+      `);
+      console.log('✅ email_verified column added successfully');
+    } else {
+      console.log('✅ email_verified column already exists');
+    }
+    
+    // Check and add email_verification_token column
+    if (!columnNames.includes('email_verification_token')) {
+      console.log('📊 Adding email_verification_token column to users table...');
+      sqlite.exec(`
+        ALTER TABLE users 
+        ADD COLUMN email_verification_token TEXT
+      `);
+      console.log('✅ email_verification_token column added successfully');
+    }
+    
+    // Check and add email_verification_token_expiry column
+    if (!columnNames.includes('email_verification_token_expiry')) {
+      console.log('📊 Adding email_verification_token_expiry column to users table...');
+      sqlite.exec(`
+        ALTER TABLE users 
+        ADD COLUMN email_verification_token_expiry INTEGER
+      `);
+      console.log('✅ email_verification_token_expiry column added successfully');
+    }
+    
+    console.log('✅ Schema sync complete');
+  } catch (error: any) {
+    // If column already exists, SQLite will throw an error - that's okay
+    if (error.message?.includes('duplicate column') || error.message?.includes('already exists')) {
+      console.log('✅ Columns already exist (detected via error)');
+    } else {
+      console.error('⚠️  Schema sync warning:', error.message);
+      // Don't throw - allow server to start even if schema sync fails
+    }
+  }
+}
+
+// Run schema sync on startup
+syncSchema();
 
 // CORS configuration
 const allowedOrigins = [

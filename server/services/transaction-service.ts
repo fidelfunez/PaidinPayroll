@@ -181,51 +181,94 @@ export async function fetchAddressTransactions(
 
 /**
  * Parse a raw Mempool transaction into our format
+ * @param rawTx - Raw transaction from Mempool API
+ * @param userAddress - Single address (for single address wallets) or one of the wallet addresses
+ * @param network - Network type
+ * @param walletAddresses - Optional: Set of all addresses in the wallet (for xpub wallets to detect change transactions)
  */
 export function parseTransaction(
   rawTx: MempoolTransaction,
   userAddress: string,
-  network: 'mainnet' | 'testnet' = 'mainnet'
+  network: 'mainnet' | 'testnet' = 'mainnet',
+  walletAddresses?: Set<string>
 ): ParsedTransaction {
+  // Use wallet addresses if provided, otherwise just use the single userAddress
+  const addressesToCheck = walletAddresses || new Set([userAddress]);
+  
   // Determine if user sent or received
   const userInputs = rawTx.vin.filter(
-    input => input.prevout?.scriptpubkey_address === userAddress
+    input => addressesToCheck.has(input.prevout?.scriptpubkey_address || '')
   );
   const userOutputs = rawTx.vout.filter(
-    output => output.scriptpubkey_address === userAddress
+    output => addressesToCheck.has(output.scriptpubkey_address || '')
+  );
+  
+  // Also find external outputs (to addresses not in the wallet)
+  const externalOutputs = rawTx.vout.filter(
+    output => output.scriptpubkey_address && !addressesToCheck.has(output.scriptpubkey_address)
   );
   
   const isSent = userInputs.length > 0;
   const isReceived = userOutputs.length > 0;
+  
+  // Calculate totals
+  const totalInputSatoshis = userInputs.reduce((sum, input) => sum + (input.prevout?.value || 0), 0);
+  const totalOutputSatoshis = userOutputs.reduce((sum, output) => sum + (output.value || 0), 0);
+  const totalExternalOutputSatoshis = externalOutputs.reduce((sum, output) => sum + (output.value || 0), 0);
+  const feeSatoshis = rawTx.fee || 0;
   
   // Determine transaction type
   let txType: 'sent' | 'received' | 'self';
   let amountSatoshis: number;
   
   if (isSent && isReceived) {
-    // Self-transfer (consolidation)
-    txType = 'self';
-    // Amount is just what moved (excluding change back to self)
-    const totalInput = userInputs.reduce((sum, input) => sum + input.prevout.value, 0);
-    const totalOutput = userOutputs.reduce((sum, output) => sum + output.value, 0);
-    amountSatoshis = Math.abs(totalInput - totalOutput);
+    // Transaction involves user addresses in both inputs and outputs
+    // This could be:
+    // 1. Change transaction: output amount ≈ input amount (minus fee), external output is small or zero
+    // 2. Self-transfer/consolidation: actual value movement between your addresses
+    // 3. Regular send with change: significant external output, small change back
+    
+    const netAmount = totalInputSatoshis - totalOutputSatoshis - totalExternalOutputSatoshis;
+    const feeTolerance = Math.max(feeSatoshis * 2, 1000); // At least 1000 satoshis tolerance, or 2x fee
+    
+    // Calculate the ratio of wallet output to input
+    const outputToInputRatio = totalInputSatoshis > 0 ? totalOutputSatoshis / totalInputSatoshis : 0;
+    
+    // Check if this is a change transaction:
+    // - Wallet output is close to input (within fee tolerance + small external output)
+    // - Output ratio is high (e.g., > 0.8, meaning most of the input came back as change)
+    // - External output is small compared to change output (or zero)
+    const isChangeTransaction = 
+      Math.abs(totalInputSatoshis - totalOutputSatoshis - feeSatoshis) <= feeTolerance &&
+      outputToInputRatio > 0.8 && // At least 80% of input came back as change
+      totalExternalOutputSatoshis < totalOutputSatoshis * 0.5; // External output is less than 50% of change
+    
+    if (isChangeTransaction) {
+      // Change transaction - sending from one of your addresses to another (change address)
+      txType = 'self';
+      amountSatoshis = 0; // Net amount is just the fee, no actual value moved
+    } else if (totalExternalOutputSatoshis > 0) {
+      // Regular send transaction with change back
+      txType = 'sent';
+      amountSatoshis = totalExternalOutputSatoshis; // Amount actually sent externally
+    } else {
+      // Self-transfer with actual value movement (e.g., consolidation)
+      txType = 'self';
+      amountSatoshis = Math.abs(totalInputSatoshis - totalOutputSatoshis - feeSatoshis);
+    }
   } else if (isSent) {
-    // Sent transaction
+    // Sent transaction - money left the wallet (no change back to wallet)
     txType = 'sent';
-    // Amount is total input from user minus change back to user
-    const totalInput = userInputs.reduce((sum, input) => sum + input.prevout.value, 0);
-    const totalOutput = userOutputs.reduce((sum, output) => sum + output.value, 0);
-    amountSatoshis = totalInput - totalOutput;
+    amountSatoshis = totalInputSatoshis - feeSatoshis; // All input minus fee was sent
   } else {
     // Received transaction
     txType = 'received';
-    // Amount is sum of outputs to user
-    amountSatoshis = userOutputs.reduce((sum, output) => sum + output.value, 0);
+    amountSatoshis = totalOutputSatoshis;
   }
   
   // Convert satoshis to BTC
   const amountBtc = amountSatoshis / 100000000;
-  const feeBtc = rawTx.fee / 100000000;
+  const feeBtc = feeSatoshis / 100000000;
   
   // Get timestamp from block time
   const timestamp = rawTx.status.block_time
@@ -377,6 +420,7 @@ async function fetchAddressBatchWithConcurrency(
 
 /**
  * Scan a single chain (external or internal) of an xpub
+ * Returns raw transactions and addresses found
  */
 async function scanXpubChain(
   xpub: string,
@@ -384,7 +428,8 @@ async function scanXpubChain(
   chain: number,
   chainName: string,
   deriveAddressesFromXpub: any,
-  allTransactionsMap: Map<string, TransactionWithUsd>
+  allRawTransactionsMap: Map<string, MempoolTransaction>,
+  allWalletAddresses: Set<string>
 ): Promise<{ addressesChecked: number; addressesWithTransactions: number }> {
   const GAP_LIMIT = 20;
   const BATCH_SIZE = 10; // Reduced batch size to avoid rate limits
@@ -406,6 +451,8 @@ async function scanXpubChain(
     console.log(`  Deriving ${chainName} addresses ${currentIndex} to ${currentIndex + BATCH_SIZE - 1}...`);
     const addresses = deriveAddressesFromXpub(xpub, BATCH_SIZE, currentIndex, chain);
     
+    // Add all addresses to the wallet addresses set
+    addresses.forEach(addr => allWalletAddresses.add(addr));
     
     // Fetch transactions for all addresses in this batch
     console.log(`  Checking ${chainName} addresses ${currentIndex} to ${currentIndex + BATCH_SIZE - 1}...`);
@@ -423,15 +470,10 @@ async function scanXpubChain(
         
         console.log(`    ✓ ${chainName} address ${address.substring(0, 20)}... has ${transactions.length} transaction(s)`);
         
-        
-        // Parse and add transactions
+        // Store raw transactions (deduplicated by txId)
         for (const rawTx of transactions) {
-          const parsedTx = parseTransaction(rawTx, address, network);
-          
-          
-          // Deduplicate by txId
-          if (!allTransactionsMap.has(parsedTx.txId)) {
-            allTransactionsMap.set(parsedTx.txId, parsedTx as any);
+          if (!allRawTransactionsMap.has(rawTx.txid)) {
+            allRawTransactionsMap.set(rawTx.txid, rawTx);
           }
         }
       } else {
@@ -473,7 +515,10 @@ export async function fetchXpubTransactions(
   xpub: string,
   network: 'mainnet' | 'testnet' = 'mainnet'
 ): Promise<TransactionWithUsd[]> {
-  const allTransactionsMap = new Map<string, TransactionWithUsd>();
+  // Store raw transactions (will be re-parsed with full wallet context)
+  const allRawTransactionsMap = new Map<string, MempoolTransaction>();
+  // Store all wallet addresses (external + internal chains)
+  const allWalletAddresses = new Set<string>();
   
   console.log(`\n${'='.repeat(60)}`);
   console.log(`Starting HD wallet scan for ${xpub.substring(0, 20)}... on ${network}`);
@@ -492,7 +537,8 @@ export async function fetchXpubTransactions(
     0,
     'External',
     deriveAddressesFromXpub,
-    allTransactionsMap
+    allRawTransactionsMap,
+    allWalletAddresses
   );
   totalAddressesChecked += externalResults.addressesChecked;
   totalAddressesWithTransactions += externalResults.addressesWithTransactions;
@@ -504,7 +550,8 @@ export async function fetchXpubTransactions(
     1,
     'Internal',
     deriveAddressesFromXpub,
-    allTransactionsMap
+    allRawTransactionsMap,
+    allWalletAddresses
   );
   totalAddressesChecked += internalResults.addressesChecked;
   totalAddressesWithTransactions += internalResults.addressesWithTransactions;
@@ -513,19 +560,28 @@ export async function fetchXpubTransactions(
   console.log(`Scan Complete!`);
   console.log(`  Total addresses checked: ${totalAddressesChecked}`);
   console.log(`  Addresses with transactions: ${totalAddressesWithTransactions}`);
-  console.log(`  Unique transactions found: ${allTransactionsMap.size}`);
+  console.log(`  Unique transactions found: ${allRawTransactionsMap.size}`);
+  console.log(`  Total wallet addresses: ${allWalletAddresses.size}`);
   console.log(`${'='.repeat(60)}\n`);
   
-  // Convert map to array
-  const allTransactions = Array.from(allTransactionsMap.values());
+  // Now parse all transactions with knowledge of all wallet addresses
+  // This allows us to correctly identify change transactions
+  console.log(`Parsing ${allRawTransactionsMap.size} transactions with full wallet context...`);
+  const allParsedTransactions: ParsedTransaction[] = [];
   
-  if (allTransactions.length === 0) {
+  for (const [txId, rawTx] of allRawTransactionsMap) {
+    // Parse with all wallet addresses - this will correctly detect change transactions
+    const parsedTx = parseTransaction(rawTx, '', network, allWalletAddresses);
+    allParsedTransactions.push(parsedTx);
+  }
+  
+  if (allParsedTransactions.length === 0) {
     return [];
   }
   
   // Calculate USD values for all transactions
-  console.log(`Calculating USD values for ${allTransactions.length} transactions...`);
-  const transactionsWithUsd = await calculateUsdValues(allTransactions);
+  console.log(`Calculating USD values for ${allParsedTransactions.length} transactions...`);
+  const transactionsWithUsd = await calculateUsdValues(allParsedTransactions);
   
   // Sort by timestamp (newest first)
   transactionsWithUsd.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());

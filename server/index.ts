@@ -203,9 +203,10 @@ async function createTables() {
       user_id INTEGER NOT NULL REFERENCES users(id),
       company_id INTEGER NOT NULL REFERENCES companies(id),
       amount_btc REAL NOT NULL,
-      usd_price REAL NOT NULL,
+      cost_basis_usd REAL NOT NULL,
       purchase_date INTEGER NOT NULL,
-      notes TEXT,
+      remaining_btc REAL NOT NULL,
+      source TEXT,
       created_at INTEGER NOT NULL
     );
     
@@ -214,6 +215,7 @@ async function createTables() {
       transaction_id INTEGER NOT NULL REFERENCES transactions(id),
       purchase_id INTEGER NOT NULL REFERENCES purchases(id),
       btc_amount_used REAL NOT NULL,
+      cost_basis_used REAL NOT NULL,
       created_at INTEGER NOT NULL
     );
     
@@ -257,6 +259,62 @@ function fixExchangeRatesTable() {
   }
 }
 
+// Fix purchases table if it has old column names
+function fixPurchasesTable() {
+  try {
+    const tableInfo = sqlite.prepare("PRAGMA table_info(purchases)").all() as Array<{ name: string; type: string }>;
+    const columnNames = tableInfo.map(col => col.name);
+    
+    // Check if table has old 'usd_price' column instead of 'cost_basis_usd'
+    if (columnNames.includes('usd_price') && !columnNames.includes('cost_basis_usd')) {
+      console.log('📊 Fixing purchases table: renaming usd_price to cost_basis_usd...');
+      sqlite.exec(`ALTER TABLE purchases RENAME COLUMN usd_price TO cost_basis_usd;`);
+      console.log('✅ Fixed purchases table: renamed usd_price to cost_basis_usd');
+    }
+    
+    // Add missing columns if they don't exist
+    if (!columnNames.includes('remaining_btc')) {
+      console.log('📊 Fixing purchases table: adding remaining_btc column...');
+      sqlite.exec(`ALTER TABLE purchases ADD COLUMN remaining_btc REAL NOT NULL DEFAULT 0;`);
+      // Set remaining_btc to amount_btc for existing records
+      sqlite.exec(`UPDATE purchases SET remaining_btc = amount_btc WHERE remaining_btc = 0;`);
+      console.log('✅ Fixed purchases table: added remaining_btc column');
+    }
+    
+    if (!columnNames.includes('source')) {
+      console.log('📊 Fixing purchases table: adding source column...');
+      sqlite.exec(`ALTER TABLE purchases ADD COLUMN source TEXT;`);
+      console.log('✅ Fixed purchases table: added source column');
+    }
+  } catch (error: any) {
+    if (error.message?.includes('no such table')) {
+      console.log('ℹ️  Purchases table does not exist yet (will be created if needed)');
+    } else {
+      console.error('❌ Error fixing purchases table:', error.message);
+    }
+  }
+}
+
+// Fix transaction_lots table if it's missing cost_basis_used column
+function fixTransactionLotsTable() {
+  try {
+    const tableInfo = sqlite.prepare("PRAGMA table_info(transaction_lots)").all() as Array<{ name: string; type: string }>;
+    const columnNames = tableInfo.map(col => col.name);
+    
+    if (!columnNames.includes('cost_basis_used')) {
+      console.log('📊 Fixing transaction_lots table: adding cost_basis_used column...');
+      sqlite.exec(`ALTER TABLE transaction_lots ADD COLUMN cost_basis_used REAL NOT NULL DEFAULT 0;`);
+      console.log('✅ Fixed transaction_lots table: added cost_basis_used column');
+    }
+  } catch (error: any) {
+    if (error.message?.includes('no such table')) {
+      console.log('ℹ️  Transaction_lots table does not exist yet (will be created if needed)');
+    } else {
+      console.error('❌ Error fixing transaction_lots table:', error.message);
+    }
+  }
+}
+
 // Run schema push on startup (wrapped to handle async)
 (async () => {
   try {
@@ -269,9 +327,19 @@ function fixExchangeRatesTable() {
     fixExchangeRatesTable();
     console.log('✅ Exchange rates table check completed');
     
+    // Fix purchases table if needed
+    console.log('📊 Checking purchases table...');
+    fixPurchasesTable();
+    console.log('✅ Purchases table check completed');
+    
+    // Fix transaction_lots table if needed
+    console.log('📊 Checking transaction_lots table...');
+    fixTransactionLotsTable();
+    console.log('✅ Transaction_lots table check completed');
+    
     // Run schema sync on startup (for column additions)
     console.log('📊 Running schema sync...');
-    syncSchema();
+syncSchema();
     console.log('✅ Schema sync completed');
     console.log('✅ Database schema initialization completed successfully');
   } catch (error: any) {

@@ -259,7 +259,10 @@ export function parseTransaction(
   } else if (isSent) {
     // Sent transaction - money left the wallet (no change back to wallet)
     txType = 'sent';
-    amountSatoshis = totalInputSatoshis - feeSatoshis; // All input minus fee was sent
+    // Use external output amount (what was actually sent), not total input
+    amountSatoshis = totalExternalOutputSatoshis > 0 
+      ? totalExternalOutputSatoshis 
+      : totalInputSatoshis - feeSatoshis; // Fallback if no external outputs (shouldn't happen)
   } else {
     // Received transaction
     txType = 'received';

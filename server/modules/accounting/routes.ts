@@ -1594,8 +1594,13 @@ router.get("/transactions/:id/cost-basis", async (req, res) => {
       }
 
       // Write-through: Create transaction lots and update purchases
+      // This MUST happen to persist the cost basis calculation
       if (costBasisResult.lots.length > 0) {
+        console.log(`[Cost Basis] Creating ${costBasisResult.lots.length} transaction lots for transaction ${transactionId}`);
         await createTransactionLots(transactionId, costBasisResult.lots, companyId);
+        console.log(`[Cost Basis] Successfully created transaction lots and updated purchase remainingBtc values`);
+      } else {
+        console.log(`[Cost Basis] No lots to create for transaction ${transactionId} (insufficient BTC: ${costBasisResult.insufficientBtc})`);
       }
 
       // Fetch the newly created lots from DB

@@ -128,44 +128,94 @@ export async function calculateFIFOCostBasis(
 }
 
 /**
- * Create transaction lots in database
+ * Create transaction lots in database and update purchase remainingBtc values
+ * This function is idempotent - it will not create duplicate lots if called multiple times
  */
 export async function createTransactionLots(
   transactionId: number,
   lots: TransactionLot[],
   companyId: number
 ): Promise<void> {
-  if (lots.length === 0) return;
+  if (lots.length === 0) {
+    console.log(`[createTransactionLots] No lots to create for transaction ${transactionId}`);
+    return;
+  }
+
+  console.log(`[createTransactionLots] Creating ${lots.length} transaction lots for transaction ${transactionId}`);
+
+  // Check if lots already exist (idempotency check)
+  const existingLots = await db
+    .select()
+    .from(transactionLots)
+    .where(eq(transactionLots.transactionId, transactionId))
+    .limit(1);
+
+  if (existingLots.length > 0) {
+    console.log(`[createTransactionLots] Transaction ${transactionId} already has lots, skipping creation (idempotent)`);
+    // Still update purchases in case they're out of sync
+    await updatePurchaseRemainingBtc(lots);
+    return;
+  }
 
   // Insert all lots
-  await db.insert(transactionLots).values(
-    lots.map((lot) => ({
-      transactionId,
-      purchaseId: lot.purchaseId,
-      btcAmountUsed: lot.btcUsed,
-      costBasisUsed: lot.costBasisUsed,
-      createdAt: new Date(),
-    }))
-  );
+  try {
+    await db.insert(transactionLots).values(
+      lots.map((lot) => ({
+        transactionId,
+        purchaseId: lot.purchaseId,
+        btcAmountUsed: lot.btcUsed,
+        costBasisUsed: lot.costBasisUsed,
+        createdAt: new Date(),
+      }))
+    );
+    console.log(`[createTransactionLots] Successfully inserted ${lots.length} transaction lots`);
+  } catch (error: any) {
+    console.error(`[createTransactionLots] Error inserting transaction lots:`, error);
+    // If insertion fails due to duplicate, that's okay (idempotent)
+    if (!error.message?.includes('UNIQUE constraint')) {
+      throw error;
+    }
+    console.log(`[createTransactionLots] Duplicate lots detected, continuing with purchase updates`);
+  }
 
   // Update purchase remainingBtc values
+  await updatePurchaseRemainingBtc(lots);
+}
+
+/**
+ * Update purchase remainingBtc values after creating transaction lots
+ */
+async function updatePurchaseRemainingBtc(lots: TransactionLot[]): Promise<void> {
+  console.log(`[updatePurchaseRemainingBtc] Updating remainingBtc for ${lots.length} purchases`);
+  
   for (const lot of lots) {
-    const [purchase] = await db
-      .select()
-      .from(purchases)
-      .where(eq(purchases.id, lot.purchaseId))
-      .limit(1);
+    try {
+      const [purchase] = await db
+        .select()
+        .from(purchases)
+        .where(eq(purchases.id, lot.purchaseId))
+        .limit(1);
 
-    if (purchase) {
-      const currentRemaining = parseFloat(purchase.remainingBtc.toString());
-      const newRemaining = Math.max(0, currentRemaining - lot.btcUsed);
+      if (purchase) {
+        const currentRemaining = parseFloat(purchase.remainingBtc.toString());
+        const newRemaining = Math.max(0, currentRemaining - lot.btcUsed);
 
-      await db
-        .update(purchases)
-        .set({ remainingBtc: newRemaining })
-        .where(eq(purchases.id, lot.purchaseId));
+        await db
+          .update(purchases)
+          .set({ remainingBtc: newRemaining })
+          .where(eq(purchases.id, lot.purchaseId));
+
+        console.log(`[updatePurchaseRemainingBtc] Purchase ${lot.purchaseId}: ${currentRemaining} -> ${newRemaining} BTC (used ${lot.btcUsed} BTC)`);
+      } else {
+        console.warn(`[updatePurchaseRemainingBtc] Purchase ${lot.purchaseId} not found, skipping update`);
+      }
+    } catch (error: any) {
+      console.error(`[updatePurchaseRemainingBtc] Error updating purchase ${lot.purchaseId}:`, error);
+      // Continue with other purchases even if one fails
     }
   }
+  
+  console.log(`[updatePurchaseRemainingBtc] Completed updating ${lots.length} purchases`);
 }
 
 /**

@@ -23,10 +23,18 @@ import { transactionLots, transactions, purchases, categories, wallets } from "@
 import { eq, inArray } from "drizzle-orm";
 import { sqlite } from "../db.js";
 
+// Safety check: Only allow in development
+if (process.env.NODE_ENV === 'production') {
+  console.error("❌ ERROR: This script cannot be run in production!");
+  console.error("   This is a development/testing script only.");
+  process.exit(1);
+}
+
 const companyIdArg = process.argv[2];
 const companyId = companyIdArg ? parseInt(companyIdArg) : null;
 
 console.log("🧹 Starting cleanup of wallets and transactions...\n");
+console.log("⚠️  This script will DELETE all wallets and transactions for the specified company!\n");
 
 if (!companyId) {
   console.log("⚠️  WARNING: No companyId provided. This will delete ALL wallets and transactions for ALL companies!");

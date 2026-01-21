@@ -2205,6 +2205,89 @@ router.post("/transactions/cleanup-duplicates", async (req, res) => {
 });
 
 // ===========================
+// DEBUG: Reset FIFO State (TEMPORARY - will be removed later)
+// ===========================
+
+// Reset FIFO state by deleting all transaction_lots and resetting purchase remainingBtc
+// TEMPORARY endpoint for production use - will be removed later
+router.post("/debug/reset-fifo", async (req, res) => {
+  try {
+    const companyId = req.user?.companyId;
+    
+    if (!companyId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`🔄 Resetting FIFO state for company ${companyId}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    // Step 1: Delete all transaction_lots for this company
+    // First, get all transaction IDs for this company
+    const companyTransactions = await db
+      .select({ id: transactions.id })
+      .from(transactions)
+      .where(eq(transactions.companyId, companyId));
+
+    const transactionIds = companyTransactions.map(tx => tx.id);
+    
+    let deletedLots = 0;
+    if (transactionIds.length > 0) {
+      const deleteResult = await db
+        .delete(transactionLots)
+        .where(inArray(transactionLots.transactionId, transactionIds));
+      deletedLots = deleteResult.changes || 0;
+      console.log(`✅ Deleted ${deletedLots} transaction lots`);
+    } else {
+      console.log(`ℹ️  No transactions found for company ${companyId}, skipping transaction_lots deletion`);
+    }
+
+    // Step 2: Reset all purchases.remainingBtc = purchases.amountBtc for this company
+    const allPurchases = await db
+      .select()
+      .from(purchases)
+      .where(eq(purchases.companyId, companyId));
+
+    let resetPurchases = 0;
+    for (const purchase of allPurchases) {
+      const amountBtc = parseFloat(purchase.amountBtc.toString());
+      const currentRemaining = parseFloat(purchase.remainingBtc.toString());
+      
+      // Only update if remainingBtc is different from amountBtc
+      if (Math.abs(currentRemaining - amountBtc) > 0.00000001) {
+        await db
+          .update(purchases)
+          .set({ remainingBtc: amountBtc })
+          .where(eq(purchases.id, purchase.id));
+        resetPurchases++;
+        console.log(`  Purchase ${purchase.id}: ${currentRemaining} -> ${amountBtc} BTC`);
+      }
+    }
+
+    console.log(`✅ Reset ${resetPurchases} purchases (remainingBtc = amountBtc)`);
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`✨ FIFO reset complete!`);
+    console.log(`  Deleted lots: ${deletedLots}`);
+    console.log(`  Reset purchases: ${resetPurchases}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    res.json({
+      success: true,
+      deletedLots,
+      resetPurchases,
+      message: `FIFO state reset: ${deletedLots} transaction lots deleted, ${resetPurchases} purchases reset`
+    });
+
+  } catch (error: any) {
+    console.error("Error resetting FIFO state:", error);
+    res.status(500).json({ 
+      error: "Failed to reset FIFO state",
+      message: error.message 
+    });
+  }
+});
+
+// ===========================
 // TEST DATA CLEANUP (for testing/demo page)
 // ===========================
 

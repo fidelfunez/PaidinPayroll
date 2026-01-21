@@ -168,7 +168,7 @@ export async function sendVerificationEmail(data: EmailVerificationData): Promis
                     <!-- Logo Section -->
                     <tr>
                       <td style="text-align: center; padding: 40px 20px 30px 20px; background-color: #ffffff;">
-                        <img src="${logoUrl}" alt="PaidIn Logo" style="height: 64px; width: 64px; border-radius: 50%; display: block; margin: 0 auto; object-fit: fill;" />
+                        <img src="${logoUrl}" alt="PaidIn Logo" style="height: 64px; width: 64px; border-radius: 50%; display: block; margin: 0 auto; object-fit: cover;" />
                       </td>
                     </tr>
                     

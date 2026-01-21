@@ -169,11 +169,11 @@ export default function SignupPage() {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl"></div>
-              <div className="relative bg-white rounded-full p-3 shadow-lg border border-gray-100">
+              <div className="relative bg-white rounded-full shadow-lg border border-gray-100">
                 <img 
                   src="/favicon/paidin-logo.png" 
                   alt="PaidIn Logo" 
-                  className="w-14 h-14 rounded-full object-fill"
+                  className="w-20 h-20 rounded-full object-cover"
                 />
               </div>
             </div>
@@ -201,12 +201,7 @@ export default function SignupPage() {
         {/* Form Card */}
         <Card className="border border-gray-200 bg-white shadow-xl">
           <CardHeader className="space-y-1 pb-6 pt-8 px-8">
-            <CardTitle className="text-xl font-semibold text-gray-900">Company Information</CardTitle>
-            <p className="text-sm text-gray-500 font-normal">
-              {selectedPlan === 'free' 
-                ? "Free forever plan - up to 3 employees"
-                : `Starting your ${selectedPlan} plan trial`}
-            </p>
+            <CardTitle className="text-xl font-semibold text-gray-900">Account Details</CardTitle>
           </CardHeader>
           <CardContent className="px-8 pb-8">
             <Form {...form}>

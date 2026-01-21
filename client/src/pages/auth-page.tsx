@@ -89,11 +89,11 @@ export default function AuthPage() {
               {/* Logo with glow effect */}
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
-                <div className="relative bg-white/80 backdrop-blur-md rounded-full p-3 shadow-xl border border-white/50">
+                <div className="relative bg-white/80 backdrop-blur-md rounded-full shadow-xl border border-white/50">
                   <img 
                     src="/favicon/paidin-logo.png" 
                     alt="PaidIn Logo" 
-                    className="w-16 h-16 rounded-full object-fill drop-shadow-lg"
+                    className="w-24 h-24 rounded-full object-cover drop-shadow-lg"
                   />
                 </div>
               </div>

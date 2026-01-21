@@ -512,10 +512,18 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
     // Insert new transactions
     let addedCount = 0;
     let failedCount = 0;
+    let purchasesCreated = 0;
     const errors: string[] = [];
+
+    // Get userId from request (needed for purchase creation)
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
 
     for (const tx of newTransactions) {
       try {
+        // Insert transaction
         await db.insert(transactions).values({
           walletId: walletId,
           companyId: companyId,
@@ -532,6 +540,45 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
           createdAt: new Date(),
         });
         addedCount++;
+
+        // Auto-create purchase for received transactions
+        if (tx.txType === 'received' && tx.amountBtc > 0 && tx.usdValue > 0) {
+          try {
+            // Check if purchase already exists for this transaction
+            const existingPurchases = await db
+              .select()
+              .from(purchases)
+              .where(
+                and(
+                  eq(purchases.companyId, companyId),
+                  eq(purchases.source, `Auto-created from received transaction ${tx.txId}`)
+                )
+              )
+              .limit(1);
+
+            if (existingPurchases.length === 0) {
+              // Create purchase record
+              await db.insert(purchases).values({
+                userId: userId,
+                companyId: companyId,
+                amountBtc: tx.amountBtc,
+                costBasisUsd: tx.usdValue,
+                purchaseDate: tx.timestamp,
+                remainingBtc: tx.amountBtc,
+                source: `Auto-created from received transaction ${tx.txId}`,
+                createdAt: new Date(),
+              });
+              purchasesCreated++;
+              
+              if (process.env.NODE_ENV !== 'production') {
+                console.log(`✓ Auto-created purchase for received transaction ${tx.txId.substring(0, 12)}...`);
+              }
+            }
+          } catch (purchaseError: any) {
+            // Log but don't fail the transaction insertion
+            console.error(`Failed to auto-create purchase for transaction ${tx.txId}:`, purchaseError);
+          }
+        }
       } catch (error: any) {
         console.error(`Failed to save transaction ${tx.txId}:`, error);
         failedCount++;
@@ -556,7 +603,8 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
         skipped: skippedCount,
         failed: failedCount,
         accountedFor: accountedFor,
-        discrepancy: discrepancy
+        discrepancy: discrepancy,
+        purchasesCreated: purchasesCreated
       },
       ...(process.env.NODE_ENV !== 'production' && skippedTxIds.length > 0 ? {
         skippedTxIds: skippedTxIds.map(id => id.substring(0, 16) + '...')
@@ -706,10 +754,12 @@ router.post("/wallets/:id/recalculate-transactions", async (req, res) => {
     // Step 3: Insert the re-fetched transactions
     let addedCount = 0;
     let failedCount = 0;
+    let purchasesCreated = 0;
     const errors: string[] = [];
 
     for (const tx of fetchedTransactions) {
       try {
+        // Insert transaction
         await db.insert(transactions).values({
           walletId: walletId,
           companyId: companyId,
@@ -726,6 +776,45 @@ router.post("/wallets/:id/recalculate-transactions", async (req, res) => {
           createdAt: new Date(),
         });
         addedCount++;
+
+        // Auto-create purchase for received transactions
+        if (tx.txType === 'received' && tx.amountBtc > 0 && tx.usdValue > 0) {
+          try {
+            // Check if purchase already exists for this transaction
+            const existingPurchases = await db
+              .select()
+              .from(purchases)
+              .where(
+                and(
+                  eq(purchases.companyId, companyId),
+                  eq(purchases.source, `Auto-created from received transaction ${tx.txId}`)
+                )
+              )
+              .limit(1);
+
+            if (existingPurchases.length === 0) {
+              // Create purchase record
+              await db.insert(purchases).values({
+                userId: userId,
+                companyId: companyId,
+                amountBtc: tx.amountBtc,
+                costBasisUsd: tx.usdValue,
+                purchaseDate: tx.timestamp,
+                remainingBtc: tx.amountBtc,
+                source: `Auto-created from received transaction ${tx.txId}`,
+                createdAt: new Date(),
+              });
+              purchasesCreated++;
+              
+              if (process.env.NODE_ENV !== 'production') {
+                console.log(`✓ Auto-created purchase for received transaction ${tx.txId.substring(0, 12)}...`);
+              }
+            }
+          } catch (purchaseError: any) {
+            // Log but don't fail the transaction insertion
+            console.error(`Failed to auto-create purchase for transaction ${tx.txId}:`, purchaseError);
+          }
+        }
       } catch (error: any) {
         console.error(`Failed to save transaction ${tx.txId}:`, error);
         failedCount++;
@@ -739,6 +828,7 @@ router.post("/wallets/:id/recalculate-transactions", async (req, res) => {
     console.log(`  Fetched: ${fetchedTransactions.length} transactions`);
     console.log(`  Added: ${addedCount} transactions`);
     console.log(`  Failed: ${failedCount} transactions`);
+    console.log(`  Purchases created: ${purchasesCreated}`);
     console.log(`${'='.repeat(60)}\n`);
 
     const response = {
@@ -748,7 +838,8 @@ router.post("/wallets/:id/recalculate-transactions", async (req, res) => {
         deleted: deletedCount,
         fetched: fetchedTransactions.length,
         added: addedCount,
-        failed: failedCount
+        failed: failedCount,
+        purchasesCreated: purchasesCreated
       },
       ...(errors.length > 0 && process.env.NODE_ENV !== 'production' ? {
         errors: errors.slice(0, 10) // Limit errors in response

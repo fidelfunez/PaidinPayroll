@@ -612,6 +612,159 @@ router.post("/wallets/:id/fetch-transactions", async (req, res) => {
   }
 });
 
+// Re-fetch and recalculate transactions for a wallet (clears old ones first)
+// This endpoint deletes all existing transactions for a wallet and re-fetches them
+// with the corrected parsing logic (external output amounts for sent transactions)
+router.post("/wallets/:id/recalculate-transactions", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const companyId = req.user?.companyId;
+    const walletId = parseInt(req.params.id);
+    
+    if (!userId || !companyId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    // Verify wallet belongs to user's company
+    const wallet = await db
+      .select()
+      .from(wallets)
+      .where(
+        and(
+          eq(wallets.id, walletId),
+          eq(wallets.companyId, companyId)
+        )
+      )
+      .limit(1);
+
+    if (wallet.length === 0) {
+      return res.status(404).json({ error: "Wallet not found" });
+    }
+
+    const walletData = wallet[0];
+
+    // Only support on-chain wallets
+    if (walletData.walletType !== 'on-chain') {
+      return res.status(400).json({ 
+        error: "Only on-chain addresses and xpubs are supported for transaction recalculation" 
+      });
+    }
+
+    // Detect if it's an xpub or single address
+    const xpubPrefixes = ['xpub', 'ypub', 'zpub', 'tpub', 'upub', 'vpub'];
+    const isXpub = xpubPrefixes.some(prefix => walletData.walletData.startsWith(prefix));
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`Recalculating transactions for wallet ${walletId} (${walletData.name})`);
+    console.log(`Type: ${isXpub ? 'xPub (HD Wallet)' : 'Single Address'}, Network: ${walletData.network}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    // Step 1: Delete all existing transactions for this wallet
+    console.log(`Deleting existing transactions for wallet ${walletId}...`);
+    const deleteResult = await db
+      .delete(transactions)
+      .where(
+        and(
+          eq(transactions.walletId, walletId),
+          eq(transactions.companyId, companyId)
+        )
+      );
+    
+    const deletedCount = deleteResult.changes || 0;
+    console.log(`✓ Deleted ${deletedCount} existing transactions`);
+
+    // Step 2: Re-fetch transactions with corrected logic
+    console.log(`\nRe-fetching transactions with corrected parsing logic...`);
+    
+    const { fetchXpubTransactions, fetchAndProcessTransactions } = await import('../../services/transaction-service.js');
+    
+    let fetchedTransactions: Awaited<ReturnType<typeof fetchXpubTransactions>> = [];
+    
+    if (isXpub) {
+      const network = walletData.network || 'mainnet';
+      fetchedTransactions = await fetchXpubTransactions(walletData.walletData, network);
+    } else {
+      // For single address wallets, walletData is the address itself
+      const network = walletData.network || 'mainnet';
+      fetchedTransactions = await fetchAndProcessTransactions(walletData.walletData, network);
+    }
+
+    if (fetchedTransactions.length === 0) {
+      return res.json({
+        success: true,
+        message: "No transactions found to re-fetch",
+        stats: {
+          deleted: deletedCount,
+          fetched: 0,
+          added: 0
+        }
+      });
+    }
+
+    console.log(`\nFetched ${fetchedTransactions.length} transactions from blockchain`);
+
+    // Step 3: Insert the re-fetched transactions
+    let addedCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+
+    for (const tx of fetchedTransactions) {
+      try {
+        await db.insert(transactions).values({
+          walletId: walletId,
+          companyId: companyId,
+          txId: tx.txId,
+          amountBtc: tx.amountBtc.toString(),
+          usdValue: tx.usdValue.toString(),
+          feeBtc: tx.feeBtc.toString(),
+          feeUsd: tx.feeUsd.toString(),
+          timestamp: tx.timestamp,
+          txType: tx.txType,
+          status: 'confirmed',
+          confirmations: tx.confirmations,
+          exchangeRate: tx.exchangeRate.toString(),
+          createdAt: new Date(),
+        });
+        addedCount++;
+      } catch (error: any) {
+        console.error(`Failed to save transaction ${tx.txId}:`, error);
+        failedCount++;
+        errors.push(`Transaction ${tx.txId.substring(0, 8)}...: ${error.message}`);
+      }
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`Recalculation Complete!`);
+    console.log(`  Deleted: ${deletedCount} old transactions`);
+    console.log(`  Fetched: ${fetchedTransactions.length} transactions`);
+    console.log(`  Added: ${addedCount} transactions`);
+    console.log(`  Failed: ${failedCount} transactions`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    const response = {
+      success: true,
+      message: `Successfully recalculated transactions for wallet ${walletId}`,
+      stats: {
+        deleted: deletedCount,
+        fetched: fetchedTransactions.length,
+        added: addedCount,
+        failed: failedCount
+      },
+      ...(errors.length > 0 && process.env.NODE_ENV !== 'production' ? {
+        errors: errors.slice(0, 10) // Limit errors in response
+      } : {})
+    };
+
+    res.json(response);
+  } catch (error: any) {
+    console.error("Error recalculating transactions:", error);
+    res.status(500).json({ 
+      error: "Failed to recalculate transactions", 
+      message: error.message 
+    });
+  }
+});
+
 // ===========================
 // TRANSACTIONS
 // ===========================

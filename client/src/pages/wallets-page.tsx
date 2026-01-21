@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Plus, Archive, Key, Bitcoin, RefreshCw } from "lucide-react";
+import { Wallet, Plus, Archive, Key, Bitcoin, RefreshCw, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 
@@ -27,6 +27,7 @@ export default function WalletsPage() {
   const [validationError, setValidationError] = useState("");
   const [archiveWalletId, setArchiveWalletId] = useState<number | null>(null);
   const [fetchingWalletId, setFetchingWalletId] = useState<number | null>(null);
+  const [recalculatingWalletId, setRecalculatingWalletId] = useState<number | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -81,6 +82,74 @@ export default function WalletsPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to archive wallet",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Recalculate transactions mutation
+  const recalculateTransactionsMutation = useMutation({
+    mutationFn: async (walletId: number) => {
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+      const fullUrl = `${backendUrl}/api/accounting/wallets/${walletId}/recalculate-transactions`;
+      
+      console.log('🔄 Recalculating transactions for wallet:', walletId);
+      console.log('🔄 Full URL:', fullUrl);
+      
+      const res = await fetch(fullUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to recalculate transactions' }));
+        throw new Error(errorData.error || 'Failed to recalculate transactions');
+      }
+      
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch all transaction queries
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && (
+            key[0] === "transactions" || 
+            (typeof key[0] === "string" && key[0].includes("/api/accounting/transactions"))
+          );
+        }
+      });
+      queryClient.refetchQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && (
+            key[0] === "transactions" || 
+            (typeof key[0] === "string" && key[0].includes("/api/accounting/transactions"))
+          );
+        }
+      });
+      setRecalculatingWalletId(null);
+      
+      const { stats } = data;
+      toast({
+        title: "Transactions recalculated",
+        description: `Deleted ${stats.deleted} old transaction(s) and added ${stats.added} recalculated transaction(s).`,
+      });
+    },
+    onError: (error: any) => {
+      setRecalculatingWalletId(null);
+      toast({
+        title: "Error recalculating transactions",
+        description: error.message || "Failed to recalculate transactions",
         variant: "destructive",
       });
     },
@@ -334,7 +403,7 @@ export default function WalletsPage() {
                   <div className="pt-3 border-t space-y-2">
                     <Button
                       onClick={() => handleFetchTransactions(wallet.id)}
-                      disabled={fetchingWalletId === wallet.id}
+                      disabled={fetchingWalletId === wallet.id || recalculatingWalletId === wallet.id}
                       className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                       size="sm"
                     >
@@ -364,6 +433,38 @@ export default function WalletsPage() {
                           {getWalletType(wallet.walletData) === 'Address' 
                             ? 'Retrieving transaction history from blockchain...'
                             : 'Scanning external and internal address chains. This may take 30-60 seconds...'}
+                        </p>
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => setRecalculatingWalletId(wallet.id)}
+                      disabled={fetchingWalletId === wallet.id || recalculatingWalletId === wallet.id}
+                      variant="outline"
+                      className="w-full"
+                      size="sm"
+                    >
+                      {recalculatingWalletId === wallet.id ? (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4 animate-spin" />
+                          Recalculating...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Recalculate Transactions
+                        </>
+                      )}
+                    </Button>
+                    {recalculatingWalletId === wallet.id && (
+                      <div className="space-y-1.5">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full bg-blue-600 rounded-full animate-pulse" style={{
+                            width: '60%',
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                          }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Deleting old transactions and re-fetching with corrected amounts. This may take a few minutes...
                         </p>
                       </div>
                     )}
@@ -408,6 +509,37 @@ export default function WalletsPage() {
               className="bg-orange-600 hover:bg-orange-700"
             >
               {archiveWalletMutation.isPending ? "Archiving..." : "Archive"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Recalculate Transactions Confirmation Dialog */}
+      <AlertDialog open={recalculatingWalletId !== null} onOpenChange={(open) => !open && setRecalculatingWalletId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Recalculate Transactions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete all existing transactions for this wallet and re-fetch them from the blockchain with corrected parsing logic. 
+              <br /><br />
+              <strong>This action will:</strong>
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Delete all current transactions for this wallet</li>
+                <li>Re-fetch transactions with corrected amounts (external output only for sent transactions)</li>
+                <li>Properly categorize change transactions as "self"</li>
+              </ul>
+              <br />
+              This process may take a few minutes. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={recalculateTransactionsMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => recalculatingWalletId && recalculateTransactionsMutation.mutate(recalculatingWalletId)}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={recalculateTransactionsMutation.isPending}
+            >
+              {recalculateTransactionsMutation.isPending ? "Recalculating..." : "Yes, Recalculate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

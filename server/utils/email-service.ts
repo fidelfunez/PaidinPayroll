@@ -168,7 +168,7 @@ export async function sendVerificationEmail(data: EmailVerificationData): Promis
                     <!-- Logo Section -->
                     <tr>
                       <td style="text-align: center; padding: 40px 20px 30px 20px; background-color: #ffffff;">
-                        <img src="${logoUrl}" alt="PaidIn Logo" style="height: 64px; width: 64px; border-radius: 50%; display: block; margin: 0 auto; object-fit: cover;" />
+                        <img src="${logoUrl}" alt="PaidIn Logo" style="height: 64px; width: 64px; border-radius: 50%; display: block; margin: 0 auto; object-fit: fill;" />
                       </td>
                     </tr>
                     
@@ -184,7 +184,7 @@ export async function sendVerificationEmail(data: EmailVerificationData): Promis
                       <td style="padding: 40px 30px; background-color: #ffffff;">
                         <p style="font-size: 16px; line-height: 1.6; color: #1f2937; margin: 0 0 20px 0;">Hi ${data.firstName},</p>
                         <p style="font-size: 16px; line-height: 1.6; color: #1f2937; margin: 0 0 30px 0;">
-                          Thank you for signing up for PaidIn! To complete your registration and start managing your Bitcoin business operations, please verify your email address.
+                          Thank you for signing up for PaidIn! To complete your registration and start tracking your Bitcoin transactions with automated accounting, please verify your email address.
                         </p>
                         
                         <!-- Orange Button (Solid Color for Email Client Compatibility) -->
@@ -233,7 +233,7 @@ Welcome to PaidIn!
 
 Hi ${data.firstName},
 
-Thank you for signing up for PaidIn! To complete your registration and start managing your Bitcoin business operations, please verify your email address.
+Thank you for signing up for PaidIn! To complete your registration and start tracking your Bitcoin transactions with automated accounting, please verify your email address.
 
 Click this link to verify: ${data.verificationUrl}
 

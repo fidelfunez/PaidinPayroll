@@ -173,7 +173,7 @@ export default function SignupPage() {
                 <img 
                   src="/favicon/paidin-logo.png" 
                   alt="PaidIn Logo" 
-                  className="w-14 h-14 rounded-full object-cover"
+                  className="w-14 h-14 rounded-full object-fill"
                 />
               </div>
             </div>

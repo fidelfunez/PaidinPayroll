@@ -93,7 +93,7 @@ export default function AuthPage() {
                   <img 
                     src="/favicon/paidin-logo.png" 
                     alt="PaidIn Logo" 
-                    className="w-16 h-16 rounded-full object-cover drop-shadow-lg"
+                    className="w-16 h-16 rounded-full object-fill drop-shadow-lg"
                   />
                 </div>
               </div>
